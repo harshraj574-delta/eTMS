@@ -2,8 +2,13 @@ import React from 'react';
 // import '../components/css/bootstrap.min.css';   
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../components/css/style.css';
+import {useNavigate} from 'react-router-dom';
 
 const Login = () => {
+    const navigate = useNavigate();
+    const handleSubmit = () => {
+        navigate('/myfeedback');
+    };
   return (
     <div className="container-fluid" id="loginBg">
       <div className="container">
@@ -60,7 +65,7 @@ const Login = () => {
                     </label>
                   </div>
                   <div className="d-grid">
-                    <button className="btn btn-primary btn-nor">Login</button>
+                    <button className="btn btn-primary btn-normal" onClick={handleSubmit}>Login</button>
                   </div>
                 </div>
               </div>
