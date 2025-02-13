@@ -10,11 +10,11 @@ const Sidebar = () => {
           </a>              
           <div id="collapseOne" className="accordion-collapse collapse show" data-bs-parent="#accordionExample">
             <ul>
-              <a href="./">Dashboard</a>
-              <a href="my-schedule.html">Schedules</a>
-              <a href="adhoc-management.html">ADHOC'S Management</a>
+              <a href="/Dashboard" className="active">Dashboard</a>
+              <a href="#">Schedules</a>
+              <a href="#">ADHOC'S Management</a>
               <a href="./MyNoShow">My No Shows</a>
-              <a href="./MyFeedback" className="active">My Feedbacks</a>
+              <a href="./MyFeedback">My Feedbacks</a>
             </ul>
           </div>
         </div>

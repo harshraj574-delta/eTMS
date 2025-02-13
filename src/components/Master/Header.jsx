@@ -20,7 +20,7 @@ return (
 
       <ul className="link-right">
         <li><a href="#!"><span className="material-icons">grid_view</span></a></li>
-        <li><a href="#!" className="company_logo"><img src="images/accenture-logo.png" alt="" /></a></li>
+        <li><a href="#!" className="company_logo"><img src="images/logo.svg" alt="" /></a></li>
         <li><a href="#!" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">
           <span className="notifications-value"><span className="material-icons">notifications</span></span>
         </a></li>

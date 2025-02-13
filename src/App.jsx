@@ -7,6 +7,7 @@ import MyNoShow from './components/MyNoShow'
 import {  Routes, Route } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import Dashboard from './components/Dashboard'
 
 function App() {
 
@@ -16,6 +17,7 @@ function App() {
       <Route path='/' element={<Login/>} />
       <Route path='/myfeedback' element={<MyFeedback/>} />
       <Route path='/mynoshow' element={<MyNoShow/>} />
+      <Route path='/Dashboard' element={<Dashboard/>} />
     </Routes>
     
   )
