@@ -8,7 +8,7 @@ const Dashboard = () => {
     return(
     <div className="container-fluid p-0">
        {/* Header */}
-       <Header pageTitle={"Dashboard"} />
+       <Header pageTitle={"Dashboard"}  />
 
          {/* Sidebar */}
           <Sidebar />

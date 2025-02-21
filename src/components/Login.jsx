@@ -112,11 +112,11 @@ const Login = () => {
               <a href="/"><img src="/images/logo.svg" alt="ETMS Logo" /></a>
 
               <div className="d-flex justify-content-between align-items-center">
-                <ul className="d-flex">
+                {/* <ul className="d-flex">
                   <a href="#!">FAQ'S</a>
                   <a href="#!">Contact Us</a>
                   <a href="#!">Transport Policy</a>
-                </ul>
+                </ul> */}
                 <button className="btn btn-primary btn-sm">Need Help?</button>
               </div>
             </nav>

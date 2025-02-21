@@ -8,7 +8,7 @@ import {  Routes, Route } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import Dashboard from './components/Dashboard'
-
+import MySchedule from './components/MySchedule'
 function App() {
 
 
@@ -18,6 +18,7 @@ function App() {
       <Route path='/myfeedback' element={<MyFeedback/>} />
       <Route path='/mynoshow' element={<MyNoShow/>} />
       <Route path='/Dashboard' element={<Dashboard/>} />
+      <Route path='/MySchedule' element={<MySchedule/>} />
     </Routes>
     
   )
