@@ -14,7 +14,8 @@ class SessionManager {
       'empName',
       'isSpoc',
       'locationId',
-      'userName'
+      'userName',
+      'ComplaintCategoryId'
     ];
   }
 

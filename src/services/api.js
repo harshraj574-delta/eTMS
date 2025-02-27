@@ -235,7 +235,41 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
-
-
-
+  //Get Feedback CategoryDropDown Data
+  Spr_GetComplaintCategory: async (credentials) => {
+    try {
+      const response = await api.post('/GetComplaintCategory', {
+        facID: credentials.facID
+      });   
+      const DropDown = Array.isArray(response.data) ? response.data.map(item => ({
+       id:item.id || 0,
+       Category: item.Category || ''
+      })) : [];
+      console.log('Category DropDown Data:', DropDown);
+      return DropDown;
+    }catch (error) {
+      console.error('API Error:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+  //Get Feedback TypeDropDown Data
+  Spr_GetComplaintType: async (credentials) => {
+    try {
+      const response = await api.post('/GetComplaintType', {
+        ComplaintCategoryID: credentials.ComplaintCategoryID
+      });
+      const DropDown = Array.isArray(response.data) ? response.data.map(item => ({
+       id:item.id || 0,
+        Category: item.Category || '',
+        CompName: item.CompName || '',
+        C_Type: item.C_Type || '',
+        severity: item.severity || 0
+      })) : [];
+      console.log('Type DropDown Data:', DropDown);
+      return DropDown;
+    }catch (error) {
+      console.error('API Error:', error);
+      throw error.response?.data || error.message;
+    }
+  }
 };

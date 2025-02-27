@@ -1,14 +1,14 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Master/SidebarMenu';
 import Header from './Master/Header';
 import Notifications from './Master/Notifications';
 import sessionManager from '../utils/SessionManager.js';
 import { apiService } from '../services/api';
 
-const addDay = (dateString,days) => {
+const addDay = (dateString, days) => {
   if (!dateString) return '';
-  const date = new Date(dateString); 
-  date.setDate(date.getDate() + days+1);
+  const date = new Date(dateString);
+  date.setDate(date.getDate() + days + 1);
   return date.toISOString().split('T')[0];
 };
 const generateWeekDays = (fromDate) => {
@@ -16,80 +16,80 @@ const generateWeekDays = (fromDate) => {
   // Convert fromDate string to Date object
   const startDate = new Date(fromDate);
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
   // Start directly from fromDate instead of calculating start of week
   const startOfWeek = new Date(startDate);
-  
+
   for (let i = 0; i < 7; i++) {
     const currentDate = new Date(startOfWeek);
     currentDate.setDate(startOfWeek.getDate() + i);
-    
+
     days.push({
       day: dayNames[currentDate.getDay()],
       date: `${currentDate.getDate()} ${monthNames[currentDate.getMonth()]}`,
       fullDate: currentDate.toISOString().split('T')[0]
     });
   }
-  
+
   return days;
 };
 
 const MySchedule = () => {
-const facID = sessionManager.getUserSession().FacilityID;
-const empid = sessionManager.getUserSession().ID;
-const [processes, setProcesses] = useState([]);
-const [selectedProcess, setSelectedProcess] = useState('');
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState(null);
-const [managers, setManagers] = useState([]);
-const [selectedManager, setSelectedManager] = useState('');
-const [mgrscheduledata, setMgrscheduledata] = useState([]);
-const [weekDays, setWeekDays] = useState([]);
-const [loginfacility, setloginfacility] = useState([]);
-const [selectedloginfacility, setSelectedloginfacility] = useState('');
-const [selectedlogoutfacility, setSelectedlogoutfacility] = useState('');
-const [mgrassociate, setMgrassociate] = useState([]);
-const [LoginNewShiftPickup, setLoginNewShiftPickup] = useState([]);
-const [LoginNewShiftDrop, setLoginNewShiftDrop] = useState([]);
-const [LoginWeekEndShiftPickup, setLoginWeekEndShiftPickup] = useState([]);
-const [LoginWeekEndShiftDrop, setLoginWeekEndShiftDrop] = useState([]);
+  const facID = sessionManager.getUserSession().FacilityID;
+  const empid = sessionManager.getUserSession().ID;
+  const [processes, setProcesses] = useState([]);
+  const [selectedProcess, setSelectedProcess] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [managers, setManagers] = useState([]);
+  const [selectedManager, setSelectedManager] = useState('');
+  const [mgrscheduledata, setMgrscheduledata] = useState([]);
+  const [weekDays, setWeekDays] = useState([]);
+  const [loginfacility, setloginfacility] = useState([]);
+  const [selectedloginfacility, setSelectedloginfacility] = useState('');
+  const [selectedlogoutfacility, setSelectedlogoutfacility] = useState('');
+  const [mgrassociate, setMgrassociate] = useState([]);
+  const [LoginNewShiftPickup, setLoginNewShiftPickup] = useState([]);
+  const [LoginNewShiftDrop, setLoginNewShiftDrop] = useState([]);
+  const [LoginWeekEndShiftPickup, setLoginWeekEndShiftPickup] = useState([]);
+  const [LoginWeekEndShiftDrop, setLoginWeekEndShiftDrop] = useState([]);
 
-const [weekendDays, setWeekendDays] = useState({
-  sat: true,
-  sun: true
-});
+  const [weekendDays, setWeekendDays] = useState({
+    sat: true,
+    sun: true
+  });
 
-// Initialize lockDetails with default values
-const [lockDetails, setLockDetailsState] = useState({
-  AdhocMaxDay: '',
-  DayNames: '',
-  DelayBuffer: '',
-  DelayBufferDrop: '',
-  LockHrs: '',
-  Lockpickhrs: '',
-  dropLockDateTime: '',
-  lockDiffDays: 0,
-  lockEDate: '',
-  lockSDate: '',
-  lockdrophrs: '',
-  lockweekenddrop: '',
-  lockweekendpick: '',
-  lockweekenddrophrs: '',
-  pickLockDateTime: ''
-});
+  // Initialize lockDetails with default values
+  const [lockDetails, setLockDetailsState] = useState({
+    AdhocMaxDay: '',
+    DayNames: '',
+    DelayBuffer: '',
+    DelayBufferDrop: '',
+    LockHrs: '',
+    Lockpickhrs: '',
+    dropLockDateTime: '',
+    lockDiffDays: 0,
+    lockEDate: '',
+    lockSDate: '',
+    lockdrophrs: '',
+    lockweekenddrop: '',
+    lockweekendpick: '',
+    lockweekenddrophrs: '',
+    pickLockDateTime: ''
+  });
 
-// Fetch data on component mount
-useEffect(() => {
-  fetchMgrSchedule();
-  fetchScheduleDetails();
-  const fromDate =  document.getElementById('fromDate').value; // Replace with your fromDate
-  const days = generateWeekDays(fromDate);
-  setWeekDays(days);
-  fetchLockDetails();
-  fetchFacilityDetails();
-}, []);
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchMgrSchedule();
+    fetchScheduleDetails();
+    const fromDate = document.getElementById('fromDate').value; // Replace with your fromDate
+    const days = generateWeekDays(fromDate);
+    setWeekDays(days);
+    fetchLockDetails();
+    fetchFacilityDetails();
+  }, []);
 
   const fetchMgrAssociate = async () => {
     try {
@@ -97,8 +97,8 @@ useEffect(() => {
       const response = await apiService.GetMgrAssociate({
         mgrId: empid,
         ProcessId: document.getElementById('ddlProcess').value
-      }); 
-      console.log("Mgr Associate",response);
+      });
+      console.log("Mgr Associate", response);
       setMgrassociate(response);
     } catch (error) {
       console.error('Error fetching manager associates:', error);
@@ -107,218 +107,218 @@ useEffect(() => {
     }
   };
 
-const fetchLockDetails = async () => {
-  try {
-    setLoading(true);
-    const response = await apiService.GetLockDetails({
-      facID: facID
-    });
-    
-    if (response && response[0]) {
-      setLockDetailsState({
-        AdhocMaxDay: response[0].AdhocMaxDay || '',
-        DayNames: response[0].DayNames || '',
-        DelayBuffer: response[0].DelayBuffer || '',
-        DelayBufferDrop: response[0].DelayBufferDrop || '',
-        LockHrs: response[0].LockHrs || '',
-        Lockpickhrs: response[0].Lockpickhrs || '',
-        dropLockDateTime: response[0].dropLockDateTime || '',
-        lockDiffDays: response[0].lockDiffDays || 0,
-        lockEDate: response[0].lockEDate || '',
-        lockSDate: response[0].lockSDate ? addDay(response[0].lockSDate, 1) : '',
-        lockdrophrs: response[0].lockdrophrs || '',
-        lockweekenddrop: response[0].lockweekenddrop || '',
-        lockweekendpick: response[0].lockweekendpick || '',
-        lockweekenddrophrs: response[0].lockweekenddrophrs || '',
-        pickLockDateTime: response[0].pickLockDateTime || ''
+  const fetchLockDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.GetLockDetails({
+        facID: facID
       });
+
+      if (response && response[0]) {
+        setLockDetailsState({
+          AdhocMaxDay: response[0].AdhocMaxDay || '',
+          DayNames: response[0].DayNames || '',
+          DelayBuffer: response[0].DelayBuffer || '',
+          DelayBufferDrop: response[0].DelayBufferDrop || '',
+          LockHrs: response[0].LockHrs || '',
+          Lockpickhrs: response[0].Lockpickhrs || '',
+          dropLockDateTime: response[0].dropLockDateTime || '',
+          lockDiffDays: response[0].lockDiffDays || 0,
+          lockEDate: response[0].lockEDate || '',
+          lockSDate: response[0].lockSDate ? addDay(response[0].lockSDate, 1) : '',
+          lockdrophrs: response[0].lockdrophrs || '',
+          lockweekenddrop: response[0].lockweekenddrop || '',
+          lockweekendpick: response[0].lockweekendpick || '',
+          lockweekenddrophrs: response[0].lockweekenddrophrs || '',
+          pickLockDateTime: response[0].pickLockDateTime || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching lock details:', error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error fetching lock details:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const fetchFacilityDetails = async () => {
-  try {
-    setLoading(true);
+  const fetchFacilityDetails = async () => {
+    try {
+      setLoading(true);
 
-    let empid=0;
+      let empid = 0;
 
-    if((!sessionManager.isBackupManager()) && sessionManager.getUserSession().ManagerId==='0'){
-      empid=empid;
+      if ((!sessionManager.isBackupManager()) && sessionManager.getUserSession().ManagerId === '0') {
+        empid = empid;
+      }
+      else {
+        empid = -1;
+      }
+
+      const response = await apiService.SelectFacilityByGroup({
+        empid: empid
+      });
+
+      console.log("Facility Details", response);
+      if (response) {
+        setloginfacility(response);
+        console.log("loginfacility", response);
+      }
+    } catch (error) {
+      console.error('Error fetching facility details:', error);
+    } finally {
+      setLoading(false);
     }
-    else{
-      empid=-1;
+  };
+
+  const fetchMgrSchedule = async () => {
+    try {
+      setLoading(true);
+      let mgrid = empid;
+      if (document.getElementById('ddlManager').value !== '') {
+        mgrid = document.getElementById('ddlManager').value;
+      }
+      const mgrscheduledata = await apiService.GetMgrSchedule({
+        mgrid: mgrid,
+        sdate: document.getElementById('fromDate').value
+      });
+      setMgrscheduledata(mgrscheduledata);
+    } catch (error) {
+      console.error('Error fetching manager schedule:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const response = await apiService.SelectFacilityByGroup({
-      empid: empid
-    });
 
-    console.log("Facility Details",response);
-    if (response) {
-      setloginfacility(response);
-     console.log("loginfacility",response);
+
+  const fetchScheduleDetails = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        backupmgrid: empid
+      }
+
+      const managerResponse = await apiService.GetBackupMgrId(params);
+
+      //console.log("managerResponse",managerResponse);
+      if (managerResponse) {
+
+        setManagers(managerResponse);
+      }
+
+      const ProjectResponse = await apiService.GetSpocAssignedProcess({
+        empid: empid,
+        type: 'M'
+      });
+
+      if (ProjectResponse) {
+        setProcesses(ProjectResponse);
+      }
+
+    } catch (error) {
+      console.error('Error fetching details:', error);
     }
-  } catch (error) {
-    console.error('Error fetching facility details:', error);
-  } finally { 
-    setLoading(false);
-  }
-};
-
-const fetchMgrSchedule = async () => {
-  try {
-    setLoading(true);
-    let mgrid=empid;
-    if(document.getElementById('ddlManager').value !== ''){
-      mgrid=document.getElementById('ddlManager').value;
+    finally {
+      setLoading(false);
     }
-    const mgrscheduledata = await apiService.GetMgrSchedule({
-      mgrid: mgrid ,   
-      sdate: document.getElementById('fromDate').value
-    });
-    setMgrscheduledata(mgrscheduledata);
-  } catch (error) {
-    console.error('Error fetching manager schedule:', error);
-  } finally { 
-    setLoading(false);
-  }
-};  
+  };
 
+  const fetchAllShiftData = async (processId, facilityId) => {
+    try {
+      const [pickupWeekday, dropWeekday, pickupWeekend, dropWeekend] = await Promise.all([
+        apiService.GetShiftsbyDays({
+          facilityid: facilityId,
+          type: 'P',
+          weekday: 0,
+          ProcessId: processId
+        }),
+        apiService.GetShiftsbyDays({
+          facilityid: facilityId,
+          type: 'D',
+          weekday: 0,
+          ProcessId: processId
+        }),
+        apiService.GetShiftsbyDays({
+          facilityid: facilityId,
+          type: 'P',
+          weekday: 1,
+          ProcessId: processId
+        }),
+        apiService.GetShiftsbyDays({
+          facilityid: facilityId,
+          type: 'D',
+          weekday: 1,
+          ProcessId: processId
+        })
+      ]);
 
-
-const fetchScheduleDetails = async () => {
-  try {
-    setLoading(true);
-    const params = {  
-      backupmgrid: empid
+      setLoginNewShiftPickup(pickupWeekday);
+      setLoginNewShiftDrop(dropWeekday);
+      setLoginWeekEndShiftPickup(pickupWeekend);
+      setLoginWeekEndShiftDrop(dropWeekend);
+    } catch (error) {
+      console.error('Error fetching shift data:', error);
     }
+  };
 
-    const managerResponse = await apiService.GetBackupMgrId(params);
+  const handleProcessChange = async (e) => {
+    const newProcessId = e.target.value;
+    setSelectedProcess(newProcessId);
 
-    //console.log("managerResponse",managerResponse);
-    if (managerResponse) {
-     
-      setManagers(managerResponse);
-    }
+    const facilityId = document.getElementById('ddlNewLoginFacility').value;
 
-    const ProjectResponse = await apiService.GetSpocAssignedProcess({
-      empid: empid,
-      type: 'M'
-    });
-
-    if (ProjectResponse) {
-      setProcesses(ProjectResponse);
-    }
- 
-  } catch (error) {
-    console.error('Error fetching details:', error);
-  }
-  finally {
-    setLoading(false);
-  }
-};
-
-const fetchAllShiftData = async (processId, facilityId) => {
-  try {
-    const [pickupWeekday, dropWeekday, pickupWeekend, dropWeekend] = await Promise.all([
-      apiService.GetShiftsbyDays({
-        facilityid: facilityId,
-        type: 'P',
-        weekday: 0,
-        ProcessId: processId
-      }),
-      apiService.GetShiftsbyDays({
-        facilityid: facilityId,
-        type: 'D',
-        weekday: 0,
-        ProcessId: processId
-      }),
-      apiService.GetShiftsbyDays({
-        facilityid: facilityId,
-        type: 'P',
-        weekday: 1,
-        ProcessId: processId
-      }),
-      apiService.GetShiftsbyDays({
-        facilityid: facilityId,
-        type: 'D',
-        weekday: 1,
-        ProcessId: processId
-      })
+    await Promise.all([
+      fetchAllShiftData(newProcessId, facilityId),
+      fetchMgrAssociate()
     ]);
+  };
 
-    setLoginNewShiftPickup(pickupWeekday);
-    setLoginNewShiftDrop(dropWeekday);
-    setLoginWeekEndShiftPickup(pickupWeekend);
-    setLoginWeekEndShiftDrop(dropWeekend);
-  } catch (error) {
-    console.error('Error fetching shift data:', error);
-  }
-};
+  const handleManagerChange = (e) => {
+    setSelectedManager(e.target.value);
+    fetchMgrSchedule();
+  };
 
-const handleProcessChange = async (e) => {
-  const newProcessId = e.target.value;
-  setSelectedProcess(newProcessId);
-  
-  const facilityId = document.getElementById('ddlNewLoginFacility').value;
-  
-  await Promise.all([
-    fetchAllShiftData(newProcessId, facilityId),
-    fetchMgrAssociate()
-  ]);
-};
+  // Add pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(7); // Show 7 employees per page
 
-const handleManagerChange = (e) => {
-  setSelectedManager(e.target.value);
-  fetchMgrSchedule();
-};
+  // Calculate pagination indexes
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = mgrscheduledata.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(mgrscheduledata.length / itemsPerPage);
 
-// Add pagination states
-const [currentPage, setCurrentPage] = useState(1);
-const [itemsPerPage] = useState(7); // Show 7 employees per page
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
-// Calculate pagination indexes
-const indexOfLastItem = currentPage * itemsPerPage;
-const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-const currentItems = mgrscheduledata.slice(indexOfFirstItem, indexOfLastItem);
-const totalPages = Math.ceil(mgrscheduledata.length / itemsPerPage);
+  // Add this function to handle date changes
+  const handleFromDateChange = (e) => {
+    const newDate = e.target.value;
 
-// Handle page change
-const handlePageChange = (pageNumber) => {
-  setCurrentPage(pageNumber);
-};
+    // You can add validation or additional logic here if needed
+  };
 
-// Add this function to handle date changes
-const handleFromDateChange = (e) => {
-  const newDate = e.target.value;
-  
-  // You can add validation or additional logic here if needed
-};
+  const onchangedFromDate = (e) => {
+    const newDate = e.target.value;
+    fetchMgrSchedule();
+    const days = generateWeekDays(newDate);
+    setWeekDays(days);
+  };
 
-const onchangedFromDate = (e) => {
-  const newDate = e.target.value;
-  fetchMgrSchedule();
-  const days = generateWeekDays(newDate);
-  setWeekDays(days);
-};
+  // Add these handler functions
+  const handleToDateChange = (e) => {
+    // Add any validation logic here if needed
+    console.log('To date changed:', e.target.value);
+  };
 
-// Add these handler functions
-const handleToDateChange = (e) => {
-  // Add any validation logic here if needed
-  console.log('To date changed:', e.target.value);
-};
+  const handleLoginFacilityChange = (e) => {
+    setSelectedloginfacility(e.target.value);
+  };
 
-const handleLoginFacilityChange = (e) => {
-  setSelectedloginfacility(e.target.value);
-};
-
-const handleLogoutFacilityChange = (e) => {
-  setSelectedlogoutfacility(e.target.value);
-};
+  const handleLogoutFacilityChange = (e) => {
+    setSelectedlogoutfacility(e.target.value);
+  };
 
   return (
     <div className="container-fluid p-0">
@@ -339,30 +339,30 @@ const handleLogoutFacilityChange = (e) => {
                 </button>
               </div>
               <div className="col-1">
-              <label className="form-label">Manager</label>
+                <label className="form-label">Manager</label>
               </div>
               <div className="col-2">
-              <select className="form-select" id="ddlManager"
-              value={selectedManager}
-              onChange={handleManagerChange}
-              >
-             
-                {managers.map((manager) => (
-                  <option key={manager.MgrId} value={manager.MgrId}>
-                    {manager.ManagerName}
-                  </option>
-                ))}
-              </select>
+                <select className="form-select" id="ddlManager"
+                  value={selectedManager}
+                  onChange={handleManagerChange}
+                >
+
+                  {managers.map((manager) => (
+                    <option key={manager.MgrId} value={manager.MgrId}>
+                      {manager.ManagerName}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="col-1">
-              <label className="form-label">From Date</label>
+                <label className="form-label">From Date</label>
               </div>
               <div className="col-2">
-              <input type="date" className="form-control" defaultValue={new Date().toISOString().split('T')[0]} 
-              id="fromDate" 
-             
-              onChange={onchangedFromDate}
-              />
+                <input type="date" className="form-control" defaultValue={new Date().toISOString().split('T')[0]}
+                  id="fromDate"
+
+                  onChange={onchangedFromDate}
+                />
               </div>
             </div>
           </div>
@@ -418,65 +418,65 @@ const handleLogoutFacilityChange = (e) => {
                       ))
                     )}
                   </tbody>
-                  
+
                 </table>
-                  {/* Pagination controls */}
-        <div className="d-flex justify-content-between align-items-center mt-3">
-          <div className="text-muted">
-            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, mgrscheduledata.length)} of {mgrscheduledata.length} entries
-          </div>
+                {/* Pagination controls */}
+                <div className="d-flex justify-content-between align-items-center mt-3">
+                  <div className="text-muted">
+                    Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, mgrscheduledata.length)} of {mgrscheduledata.length} entries
+                  </div>
 
-          <nav aria-label="Schedule pagination">
-            <ul className="pagination mb-0">
-              {/* Previous button */}
-              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                <button
-                  className="page-link"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </button>
-              </li>
+                  <nav aria-label="Schedule pagination">
+                    <ul className="pagination mb-0">
+                      {/* Previous button */}
+                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                        <button
+                          className="page-link"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </button>
+                      </li>
 
-              {/* Page numbers */}
-              {[...Array(totalPages)].map((_, index) => (
-                <li
-                  key={index}
-                  className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}
-                >
-                  <button
-                    className="page-link"
-                    onClick={() => handlePageChange(index + 1)}
-                  >
-                    {index + 1}
-                  </button>
-                </li>
-              ))}
+                      {/* Page numbers */}
+                      {[...Array(totalPages)].map((_, index) => (
+                        <li
+                          key={index}
+                          className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}
+                        >
+                          <button
+                            className="page-link"
+                            onClick={() => handlePageChange(index + 1)}
+                          >
+                            {index + 1}
+                          </button>
+                        </li>
+                      ))}
 
-              {/* Next button */}
-              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                <button
-                  className="page-link"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      </div>
+                      {/* Next button */}
+                      <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                        <button
+                          className="page-link"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-      
+
 
       {/* Notification Sidebar */}
-     <Notifications/>
+      <Notifications />
       {/* Profile Sidebar */}
       <div className="offcanvas offcanvas-end" tabIndex="-1" id="profileSidebar" aria-labelledby="offcanvasRightLabel">
         <div className="offcanvas-body position-relative p-0">
@@ -511,23 +511,23 @@ const handleLogoutFacilityChange = (e) => {
                 <div className="card-body d-flex justify-content-start align-items-center cutoff p-0">
                   <div className="overline_textB">Cut Off Timings </div>
                   <div>
-                    <small className="fw-bold fs-11 me-2">Weekday</small>  
-                    <small className="fs-11">Pick </small> 
+                    <small className="fw-bold fs-11 me-2">Weekday</small>
+                    <small className="fs-11">Pick </small>
                     <span className="overline_textB text-danger me-4">
                       {lockDetails?.Lockpickhrs || '0'} Hrs
                     </span>
-                    <small className="fs-11">Drop </small>  
+                    <small className="fs-11">Drop </small>
                     <span className="overline_textB text-danger">
                       {lockDetails?.lockdrophrs || '0'} Mins
                     </span>
                   </div>
                   <div className="ms-5">
                     <small className="fw-bold fs-11 me-2">Weekend</small>
-                    <small className="fs-11">Pick </small> 
+                    <small className="fs-11">Pick </small>
                     <span className="overline_textB text-danger me-4">
                       {lockDetails?.lockweekendpick || '0'} Hrs
                     </span>
-                    <small className="fs-11">Drop </small> 
+                    <small className="fs-11">Drop </small>
                     <span className="overline_textB text-danger">
                       {lockDetails?.lockweekenddrophrs || '0'} Mins
                     </span>
@@ -556,30 +556,30 @@ const handleLogoutFacilityChange = (e) => {
             </div>
             <div className="col">
               <label className="form-label">From</label>
-              <input 
-                type="date" 
-                className="form-control" 
-                value={lockDetails?.lockSDate} 
+              <input
+                type="date"
+                className="form-control"
+                value={lockDetails?.lockSDate}
                 onChange={handleFromDateChange}
-                
+
                 id="txtNewfromDate"
               />
             </div>
             <div className="col">
               <label className="form-label">To</label>
-              <input 
-                type="date" 
-                className="form-control" 
-                value={addDay(lockDetails?.lockSDate,lockDetails?.lockDiffDays-2)}
+              <input
+                type="date"
+                className="form-control"
+                value={addDay(lockDetails?.lockSDate, lockDetails?.lockDiffDays - 2)}
                 onChange={handleToDateChange}
-                
+
                 id="txtNewtoDate"
               />
             </div>
             <div className="col">
               <label className="form-label">Login Facility</label>
-              <select 
-                className="form-select" 
+              <select
+                className="form-select"
                 value={selectedloginfacility}
                 onChange={handleLoginFacilityChange}
                 id="ddlNewLoginFacility"
@@ -590,78 +590,78 @@ const handleLogoutFacilityChange = (e) => {
                     {loginfacility.facilityName}
                   </option>
                 ))}
-             
+
               </select>
             </div>
             <div className="col">
-                <label className="form-label">Logout Facility</label>
-                <select 
-                  className="form-select" 
-                  value={selectedlogoutfacility}
-                  onChange={handleLogoutFacilityChange}
-                  id="ddlNewLogoutFacility"
-                  disabled
-                > 
+              <label className="form-label">Logout Facility</label>
+              <select
+                className="form-select"
+                value={selectedlogoutfacility}
+                onChange={handleLogoutFacilityChange}
+                id="ddlNewLogoutFacility"
+                disabled
+              >
                 {loginfacility.map((loginfacility) => (
                   <option key={loginfacility.Id} value={loginfacility.Id}>
                     {loginfacility.facilityName}
                   </option>
                 ))}
-                </select>
-            </div>
-        </div>
-
-        <div className="row mb-4">
-          <div className="col-12">
-            <div className="form-check form-check-inline ps-0">
-              <button type="button" className="btn btn-light rounded-pill px-3">Weekly Off</button>
-            </div>
-            <div className="form-check form-check-inline me-5">
-              <input className="form-check-input" type="checkbox" id="Mon" value="Mon"/>
-              <label className="form-check-label" htmlFor="Mon">Mon</label>
-            </div>
-            <div className="form-check form-check-inline me-5">
-              <input className="form-check-input" type="checkbox" id="Tue" value="Tue"/>
-              <label className="form-check-label" htmlFor="Tue">Tue</label>
-            </div>
-            <div className="form-check form-check-inline me-5">
-              <input className="form-check-input" type="checkbox" id="Wed" value="Wed"/>
-              <label className="form-check-label" htmlFor="Wed">Wed</label>
-            </div>
-            <div className="form-check form-check-inline me-5">
-              <input className="form-check-input" type="checkbox" id="Thu" value="Thu"/>
-              <label className="form-check-label" htmlFor="Thu">Thu</label>
-            </div>
-            <div className="form-check form-check-inline me-5">
-              <input className="form-check-input" type="checkbox" id="Fri" value="Fri"/>
-              <label className="form-check-label" htmlFor="Fri">Fri</label>
-            </div>
-            <div className="form-check form-check-inline me-5">
-              <input 
-                className="form-check-input" 
-                type="checkbox" 
-                id="Sat" 
-                value="Sat"
-                checked={weekendDays.sat}
-                onChange={(e) => setWeekendDays(prev => ({...prev, sat: e.target.checked}))}
-              />
-              <label className="form-check-label" htmlFor="Sat">Sat</label>
-            </div>
-            <div className="form-check form-check-inline me-5">
-              <input 
-                className="form-check-input" 
-                type="checkbox" 
-                id="Sun" 
-                value="Sun"
-                checked={weekendDays.sun}
-                onChange={(e) => setWeekendDays(prev => ({...prev, sun: e.target.checked}))}
-              />
-              <label className="form-check-label" htmlFor="Sun">Sun</label>
+              </select>
             </div>
           </div>
-        </div>
 
-        <div className="row mb-4">
+          <div className="row mb-4">
+            <div className="col-12">
+              <div className="form-check form-check-inline ps-0">
+                <button type="button" className="btn btn-light rounded-pill px-3">Weekly Off</button>
+              </div>
+              <div className="form-check form-check-inline me-5">
+                <input className="form-check-input" type="checkbox" id="Mon" value="Mon" />
+                <label className="form-check-label" htmlFor="Mon">Mon</label>
+              </div>
+              <div className="form-check form-check-inline me-5">
+                <input className="form-check-input" type="checkbox" id="Tue" value="Tue" />
+                <label className="form-check-label" htmlFor="Tue">Tue</label>
+              </div>
+              <div className="form-check form-check-inline me-5">
+                <input className="form-check-input" type="checkbox" id="Wed" value="Wed" />
+                <label className="form-check-label" htmlFor="Wed">Wed</label>
+              </div>
+              <div className="form-check form-check-inline me-5">
+                <input className="form-check-input" type="checkbox" id="Thu" value="Thu" />
+                <label className="form-check-label" htmlFor="Thu">Thu</label>
+              </div>
+              <div className="form-check form-check-inline me-5">
+                <input className="form-check-input" type="checkbox" id="Fri" value="Fri" />
+                <label className="form-check-label" htmlFor="Fri">Fri</label>
+              </div>
+              <div className="form-check form-check-inline me-5">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="Sat"
+                  value="Sat"
+                  checked={weekendDays.sat}
+                  onChange={(e) => setWeekendDays(prev => ({ ...prev, sat: e.target.checked }))}
+                />
+                <label className="form-check-label" htmlFor="Sat">Sat</label>
+              </div>
+              <div className="form-check form-check-inline me-5">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="Sun"
+                  value="Sun"
+                  checked={weekendDays.sun}
+                  onChange={(e) => setWeekendDays(prev => ({ ...prev, sun: e.target.checked }))}
+                />
+                <label className="form-check-label" htmlFor="Sun">Sun</label>
+              </div>
+            </div>
+          </div>
+
+          <div className="row mb-4">
             <div className="col-4">
               <div className="card form_card border-0">
                 <div className="card-header">Weekdays</div>
@@ -682,7 +682,7 @@ const handleLogoutFacilityChange = (e) => {
                     <div className="col-6">
                       <label className="form-label">Logout Shift</label>
                       <select className="form-select" defaultValue="0" id="ddlNewLogoutShift">
-                      <option value="0">Select</option>
+                        <option value="0">Select</option>
                         <option value="N/A">N/A</option>
                         {LoginNewShiftDrop.map((loginnewshiftdrop) => (
                           <option key={loginnewshiftdrop.shiftTime} value={loginnewshiftdrop.shiftTime}>
@@ -703,7 +703,7 @@ const handleLogoutFacilityChange = (e) => {
                     <div className="col-6">
                       <label className="form-label">Login Shift</label>
                       <select className="form-select" defaultValue="0" id="ddlNewLoginWeekEndShift">
-                      <option value="0">Select</option>
+                        <option value="0">Select</option>
                         <option value="N/A">N/A</option>
                         {LoginWeekEndShiftPickup.map((loginweekendshiftpickup) => (
                           <option key={loginweekendshiftpickup.shiftTime} value={loginweekendshiftpickup.shiftTime}>
@@ -715,7 +715,7 @@ const handleLogoutFacilityChange = (e) => {
                     <div className="col-6">
                       <label className="form-label">Logout Shift</label>
                       <select className="form-select" defaultValue="0" id="ddlNewLogoutWeekEndShift">
-                      <option value="0">Select</option>
+                        <option value="0">Select</option>
                         <option value="N/A">N/A</option>
                         {LoginWeekEndShiftDrop.map((loginweekendshiftdrop) => (
                           <option key={loginweekendshiftdrop.shiftTime} value={loginweekendshiftdrop.shiftTime}>
@@ -728,54 +728,54 @@ const handleLogoutFacilityChange = (e) => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* <!-- Table start --> */}
+          {mgrassociate.length > 0 && (
+            <table className="tb_raiseAdhoc table table-borderless table-hover" id="tblMgrAssociate">
+              <thead>
+                <tr>
+                  <th width="4%"><input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" /></th>
+                  <th>Employee</th>
+                  <th>Gender</th>
+                  <th>Project</th>
+                  <th>Manager</th>
+                  <th>Facility</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mgrassociate.map((mgrassociate) => (
+                  <tr key={mgrassociate.EmployeeID}>
+                    <td><input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" /></td>
+                    <td>{mgrassociate.EmpName}
+
+
+                      {mgrassociate.geoCode !== 'Y' && (
+                        <span className="material-icons md-18 text-danger mx-2">location_off</span>
+                      )}
+                      {mgrassociate.tptReq !== 'Y' && (
+                        <span className="material-icons md-18 text-danger">no_transfer</span>
+                      )}
+
+                    </td>
+                    <td>{mgrassociate.Gender}</td>
+                    <td>{mgrassociate.processName}</td>
+                    <td>{mgrassociate.Manager}</td>
+                    <td>{mgrassociate.facility}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        {/* <!-- Table start --> */}
-        {mgrassociate.length > 0 && (
-        <table className="tb_raiseAdhoc table table-borderless table-hover" id="tblMgrAssociate">
-        <thead>
-            <tr>
-                <th width="4%"><input className="form-check-input" type="checkbox" value="" id="flexCheckDefault"/></th>
-                <th>Employee</th>
-                <th>Gender</th>
-                <th>Project</th>
-                <th>Manager</th>
-                <th>Facility</th>
-            </tr>
-        </thead>
-        <tbody>
-            {mgrassociate.map((mgrassociate) => (
-              <tr key={mgrassociate.EmployeeID}>
-                <td><input className="form-check-input" type="checkbox" value="" id="flexCheckDefault"/></td>
-                <td>{mgrassociate.EmpName}
- 
-
-                  {mgrassociate.geoCode !== 'Y' && (
-                              <span className="material-icons md-18 text-danger mx-2">location_off</span>
-                            )}
-                            {mgrassociate.tptReq !== 'Y' && (
-                              <span className="material-icons md-18 text-danger">no_transfer</span>
-                            )}
-
-                </td>
-                <td>{mgrassociate.Gender}</td>
-                <td>{mgrassociate.processName}</td>
-                <td>{mgrassociate.Manager}</td>
-                <td>{mgrassociate.facility}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-      )}
-    </div>
-
-            {/* Add more form fields */}
+        {/* Add more form fields */}
         <div className="offcanvas-footer">
           <button className="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancel</button>
           <button className="btn btn-success mx-3">Submit</button>
         </div>
       </div>
-      </div>
+    </div>
   );
 };
 
