@@ -13,7 +13,8 @@ const MyFeedback = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [categoryDropDown, setCategoryDropDown] = useState([]);
   const [complaintTypeDropDown, setComplaintTypeDropDown] = useState([]);
-  const [isOffcanvasOpen,setIsOffcanvasOpen]=useState(false);
+  const [isOffcanvasOpen, setIsOffcanvasOpen] = useState(false);
+  const [isRaiseFeedbackOpen, setIsRaiseFeedbackOpen] = useState(false); // State for Raise Feedback offcanvas
 
   const handleReopen = (ticketNo) => {
     setSelectedTicket(ticketNo); // Set the selected ticket number
@@ -22,7 +23,8 @@ const MyFeedback = () => {
   useEffect(() => {
     fetchFeedbackData();
     fetchCategories();
-    fetchComplaintType();
+    refreshData();
+    //fetchComplaintType();
   }, []);
 
   const fetchFeedbackData = async () => {
@@ -57,28 +59,46 @@ const MyFeedback = () => {
       const result = await apiService.Spr_GetComplaintCategory({ facID });
       console.log("Category DropDown Data:", result);
       setCategoryDropDown(result);
+      // Set the first category ID as ComplaintCategoryID
+      if (result.length > 0) {
+        const ComplaintCategoryID = result[0].id; // Get the ID of the first category
+        sessionStorage.setItem("ComplaintCategoryId", ComplaintCategoryID); // Store it in session storage
+      }
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
-  const fetchComplaintType = async () => {
+  const fetchComplaintType = async (selectedCategoryId) => {
     try {
-      const ComplaintCategoryID = sessionStorage.getItem("ComplaintCategoryId");
+      const ComplaintCategoryID = selectedCategoryId; // Use the selected category ID directly
+
+      // Check if ComplaintCategoryID is valid
+      if (!ComplaintCategoryID) {
+        throw new Error('ComplaintCategoryID is not available. Please select a category first.');
+      }
+
       const result = await apiService.Spr_GetComplaintType({
         ComplaintCategoryID,
       });
       console.log("Complaint Type DropDown Data:", result);
-      setComplaintTypeDropDown(result);
+      setComplaintTypeDropDown(result); // Update the complaint type dropdown
     } catch (error) {
       console.error("Error fetching complaint types:", error);
     }
   };
+  const handleCategorySelect = (categoryId) => {
+    if (categoryId) {
+      fetchComplaintType(categoryId); // Call with the selected category ID
+    } else {
+      setComplaintTypeDropDown([]); // Clear complaint types if no category is selected
+    }
+  };
+  // Function to refresh data
+  const refreshData = () => {
+    fetchFeedbackData(); // Refresh feedback data
+    fetchCategories(); // Refresh categories
 
-  // const handleRevoke = async (ticketNo) => {
-  //   // Implement revoke functionality here
-  //   console.log('Revoking ticket:', ticketNo);
-  // };
-
+  };
   return (
     <div className="container-fluid p-0">
       {/* Header */}
@@ -127,7 +147,7 @@ const MyFeedback = () => {
               <table className="table" id="example">
                 <thead>
                   <tr>
-                    <th width="4%"></th>
+                    {/* <th width="4%"></th> */}
                     <th>Ticket No.</th>
                     <th>Shift Date</th>
                     <th>Type</th>
@@ -160,7 +180,7 @@ const MyFeedback = () => {
                             : ""
                         }
                       >
-                        <td>
+                        {/* <td>
                           <a
                             href="#!"
                             className="btn-text"
@@ -173,10 +193,10 @@ const MyFeedback = () => {
                           >
                             <span className="material-icons">
                               question_answer
-                            </span>
-                            <span className="new-alert-oi"></span>
+                            </span> 
+                             <span className="new-alert-oi"></span>
                           </a>
-                        </td>
+                        </td> */}
                         <td>
                           <a
                             href="#!"
@@ -195,31 +215,33 @@ const MyFeedback = () => {
                           {new Date(feedback.RaisedDate).toLocaleDateString()}
                         </td>
                         <td>{feedback.TypeName}</td>
-                        <td>{feedback.Desrp}</td>
+                        <td title={feedback.Desrp} style={{ maxWidth: '200px', overflow: 'hidden', cursor: 'pointer', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {feedback.Desrp}
+                        </td>
                         <td>{feedback.RouteId}</td>
                         <td>{`${feedback.ActionBy}`}</td>
                         <td>
                           <span
                             className={`badgee ${feedback.Status.toLowerCase() === "open"
-                                ? "badge_warning"
-                                : "badge_muted"
+                              ? "badge_warning"
+                              : "badge_muted"
                               }`}
                           >
                             {feedback.Status}
                           </span>
                         </td>
                         <td>
-                        <button  
+                          <button
                             data-bs-toggle="offcanvas"
                             data-bs-target="#raise_Reopen"
                             aria-controls="offcanvasRightReope"
-                            className={`btn btn-sm ${feedback.Status.toLowerCase() === "closed" 
-                              ? "btn-outline-success" 
+                            className={`btn btn-sm ${feedback.Status.toLowerCase() === "closed"
+                              ? "btn-outline-success"
                               : "btn-outline-danger"}`}
                             onClick={() => feedback.ReOpenStatus && handleReopen(feedback.TicketNo)}
                             disabled={!feedback.ReOpenStatus}
                           >
-                              <span style={{ whiteSpace: 'nowrap' }}>{feedback.StatusText}</span>
+                            <span style={{ whiteSpace: 'nowrap' }}>{feedback.StatusText}</span>
                           </button>
                         </td>
                       </tr>
@@ -238,17 +260,18 @@ const MyFeedback = () => {
         </div>
       </div>
       {/* // Offcanvas component reopen*/}
-      <div className={`offcanvas offcanvas-end ${isOffcanvasOpen ? 'show' : ''}`} tabindex="-1" id="raise_Reopen" aria-labelledby="offcanvasRightReope">
+      <div className={`offcanvas offcanvas-end ${isOffcanvasOpen ? 'show' : ''}`} tabindex="-1" id="raise_Reopen" aria-labelledby="offcanvasRightReope"
+        onHide={() => { setIsOffcanvasOpen(false); refreshData(); }}>
         <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
           <h5 class="subtitle fw-normal">Re-open Remark</h5>
-          <button type="button" class="btn-close btn-close-white" onClick={()=>setIsOffcanvasOpen(false)} data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          <button type="button" class="btn-close btn-close-white" onClick={() => setIsOffcanvasOpen(false)} data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body px-4">
           <div class="row">
-          <div className="col-12 mb-3">
-        <label className="form-label">Ticket No:</label>
-        <input type="text" className="form-control" value={selectedTicket || ''} readOnly /> {/* Display the selected ticket number */}
-      </div>
+            <div className="col-12 mb-3">
+              <label className="form-label">Ticket No:</label>
+              <input type="text" className="form-control" value={selectedTicket || ''} readOnly /> {/* Display the selected ticket number */}
+            </div>
             <div class="col-12 mb-3">
               <label class="form-label">Please Enter Reason for Reopening this Ticket:</label>
               <textarea class="form-control" rows="3" placeholder="Please Select"></textarea>
@@ -256,7 +279,7 @@ const MyFeedback = () => {
           </div>
         </div>
         <div class="offcanvas-footer">
-          <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={()=>setIsOffcanvasOpen(false)}>Cancel</button>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => setIsOffcanvasOpen(false)}>Cancel</button>
           <button class="btn btn-success mx-3">Save</button>
         </div>
       </div>
@@ -264,17 +287,18 @@ const MyFeedback = () => {
       {/* // Offcanvas component reopen */}
       {/* <!-- Raise Feedback Rightbar --> */}
       <div
-        class="offcanvas offcanvas-end"
+        class={`offcanvas offcanvas-end ${isRaiseFeedbackOpen ? 'show' : ''}`}
         tabindex="-1"
         id="raise_Feedback"
         aria-labelledby="offcanvasRightLabel"
+        onHide={() => { setIsRaiseFeedbackOpen(false); refreshData(); }}
       >
         <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
           <h5 class="subtitle fw-normal">Raise Feedback</h5>
           <button
             type="button"
             class="btn-close btn-close-white"
-            data-bs-dismiss="offcanvas"
+            data-bs-dismiss="offcanvas" onClick={() => { setIsRaiseFeedbackOpen(false); refreshData(); }}
             aria-label="Close"
           ></button>
         </div>
@@ -282,10 +306,11 @@ const MyFeedback = () => {
           <div class="row">
             <div class="col-12 mb-3">
               <label class="form-label">Category</label>
-              <select class="form-select">
+              <select class="form-select" onChange={(e) => handleCategorySelect(e.target.value)}>
                 <option value="">Please Select</option>
-                {categoryDropDown.map((category) => (
-                  <option key={category.id} value={category.id}>
+                {categoryDropDown.map((category, index) => (
+                  //<option key={category.id} value={category.id}>
+                  <option key={`${category.id}-${index}`} value={category.id}>
                     {category.Category}
                   </option>
                 ))}
@@ -295,9 +320,10 @@ const MyFeedback = () => {
               <label class="form-label">Complaint Type</label>
               <select class="form-select">
                 <option value="">Please Select</option>
-                {complaintTypeDropDown.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.CompName} - {type.C_Type} (Severity: {type.severity})
+                {complaintTypeDropDown.map((type, index) => (
+                  //<option key={type.id} value={type.id}>
+                  <option key={`${type.id}-${index}`} value={type.id}>
+                    {type.CompName}
                   </option>
                 ))}
               </select>
@@ -323,7 +349,7 @@ const MyFeedback = () => {
           </div>
         </div>
         <div class="offcanvas-footer">
-          <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => { setIsRaiseFeedbackOpen(false); refreshData(); }}>
             Cancel
           </button>
           <button class="btn btn-success mx-3">Submit</button>

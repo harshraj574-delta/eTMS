@@ -279,7 +279,7 @@ const MySchedule = () => {
 
   // Add pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7); // Show 7 employees per page
+  const [itemsPerPage] = useState(25); // Show 7 employees per page
 
   // Calculate pagination indexes
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -320,6 +320,8 @@ const MySchedule = () => {
     setSelectedlogoutfacility(e.target.value);
   };
 
+ 
+
   return (
     <div className="container-fluid p-0">
       <Header pageTitle="My Schedule" showNewButton={true} />
@@ -335,7 +337,7 @@ const MySchedule = () => {
                   Replicate Schedule
                 </button>
                 <button type="button" className="btn btn-light">
-                  Roaster Bulk Upload
+                  Roster Bulk Upload
                 </button>
               </div>
               <div className="col-1">

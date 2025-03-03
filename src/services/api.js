@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { map } from 'lodash';
 
 const api = axios.create({
   baseURL: '/api/api/v1',
@@ -9,7 +10,7 @@ const api = axios.create({
 });
 
 export const apiService = {
-    //Login Validation
+  //Login Validation
   login: async (credentials) => {
     try {
       const response = await api.post('/GetPassword', {
@@ -22,8 +23,8 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
- 
- //Get User Details
+
+  //Get User Details
   Spr_GetuserId: async (credentials) => {
     try {
       const response = await api.post('/Spr_GetuserId', {
@@ -36,12 +37,12 @@ export const apiService = {
     }
   },
 
-   //Get User Details
-   GetLockDetails: async (params) => {
+  //Get User Details
+  GetLockDetails: async (params) => {
     try {
       const response = await api.post('/GetLockDetails', {
         facID: params.facID
-      });    
+      });
 
       return JSON.parse(response.data);
     } catch (error) {
@@ -50,10 +51,10 @@ export const apiService = {
     }
   },
 
-  
 
 
-//get menu details
+
+  //get menu details
   Spr_GetMenuItem: async (credentials) => {
     try {
       const response = await api.post('/Spr_GetMenuItem', {
@@ -140,7 +141,7 @@ export const apiService = {
         weekday: params.weekday,
         ProcessId: params.ProcessId,
       });
-      return JSON.parse(response.data); 
+      return JSON.parse(response.data);
     } catch (error) {
       console.error('API Error:', error);
       throw error.response?.data || error.message;
@@ -153,7 +154,7 @@ export const apiService = {
         mgrId: params.mgrId,
         ProcessId: params.ProcessId
       });
-      return JSON.parse(response.data); 
+      return JSON.parse(response.data);
     } catch (error) {
       console.error('API Error:', error);
       throw error.response?.data || error.message;
@@ -163,8 +164,8 @@ export const apiService = {
 
   ///Feedback pages
 
-   //Get Feedback Data
-   Spr_sprSelectFeedBack: async (credentials) => {
+  //Get Feedback Data
+  Spr_sprSelectFeedBack: async (credentials) => {
     try {
       const userId = credentials.userId || sessionStorage.getItem('ID');
 
@@ -240,14 +241,14 @@ export const apiService = {
     try {
       const response = await api.post('/GetComplaintCategory', {
         facID: credentials.facID
-      });   
+      });
       const DropDown = Array.isArray(response.data) ? response.data.map(item => ({
-       id:item.id || 0,
-       Category: item.Category || ''
+        id: item.id || 0,
+        Category: item.Category || ''
       })) : [];
       console.log('Category DropDown Data:', DropDown);
       return DropDown;
-    }catch (error) {
+    } catch (error) {
       console.error('API Error:', error);
       throw error.response?.data || error.message;
     }
@@ -259,7 +260,7 @@ export const apiService = {
         ComplaintCategoryID: credentials.ComplaintCategoryID
       });
       const DropDown = Array.isArray(response.data) ? response.data.map(item => ({
-       id:item.id || 0,
+        id: item.id || 0,
         Category: item.Category || '',
         CompName: item.CompName || '',
         C_Type: item.C_Type || '',
@@ -267,7 +268,26 @@ export const apiService = {
       })) : [];
       console.log('Type DropDown Data:', DropDown);
       return DropDown;
-    }catch (error) {
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  Spr_sprInsertReopen: async (credentials) => {
+    try {
+      const response = await api.post('/credentials', {
+        ticketno: credentials.ticketNo,
+        desc: credentials.desc,
+        actionid: credentials.actionid,
+        statusid: credentials.statusid
+      });
+      const Reopen = Array.isArray(response.data) ? response.data.map(item => ({
+        RESULT:item.RESULT,
+        EmpEmailId:item.EmpEmailId,
+        manEmailId:item.manEmailId,
+      })) : [];
+    } catch (error) {
       console.error('API Error:', error);
       throw error.response?.data || error.message;
     }
