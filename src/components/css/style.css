@@ -162,7 +162,6 @@ h6 strong{ font-size: 21px; font-weight: 600;}
 
 .lead_text_sm{ font-size: 16px; font-weight: 600;}
 
-
 .small{ font-size: 12px; line-height: 13px; color: var(--grey-4);}
 .overline_text_sm{ font-size: 13px; font-weight: 600; line-height: 19px; letter-spacing: 0.39px; color: var(--secondary-color);}
 .overline_text{ font-size: 13px; font-weight: 500; line-height: 19px; letter-spacing: 0.39px; color: var(--grey-3);}
@@ -522,3 +521,38 @@ input[type="number"] {
 .table .tbIcons li{ width: 28px; height: 28px; border: 1px solid var(--grey-3); border-radius: 14px; text-align: center; margin: 0 3px;}
 
 .btn-dark:hover{ background: var(--primary-color); border-color: var(--primary-color);}
+
+
+.offcanvas_list {
+    /* width: 100%;
+    background-color: var(--offwhite);
+    padding: 26px; */
+    
+    margin-top: 20px;
+}
+
+.offcanvas_list li small {
+    display: block;
+    font-size: 12px;
+    font-weight: normal;
+    color: var(--grey-4);
+}
+
+.offcanvas_list li {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--secondary-color);
+    width: 49%;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.offcanvas_list li:last-child{ width: 100%; margin-bottom: 0;}
+
+.offcanvas_alert small{ display: block; margin-bottom: 15px; font-size: 12px;}
+
+.offcanvas_alert small:last-child{ margin-bottom: 0;}
+
+.trip_tb th, .trip_tb td{ font-size: 12px; white-space: nowrap;}
+
+.trip_tb img{ height: 20px;}

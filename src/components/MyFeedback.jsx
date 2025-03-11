@@ -5,6 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../components/css/style.css";
 import Header from "./Master/Header";
 import { apiService } from "../services/api";
+import sessionManager from '../utils/SessionManager.js';
 
 const MyFeedback = () => {
   const [feedbackData, setFeedbackData] = useState([]);
@@ -15,6 +16,8 @@ const MyFeedback = () => {
   const [complaintTypeDropDown, setComplaintTypeDropDown] = useState([]);
   const [isOffcanvasOpen, setIsOffcanvasOpen] = useState(false);
   const [isRaiseFeedbackOpen, setIsRaiseFeedbackOpen] = useState(false); // State for Raise Feedback offcanvas
+  const [feedbackText, setFeedbackText] = useState(''); // State for feedback text
+  const [reopenRemark, setReopenRemark] = useState(''); // State for the remark entered in the offcanvas
 
   const handleReopen = (ticketNo) => {
     setSelectedTicket(ticketNo); // Set the selected ticket number
@@ -98,6 +101,59 @@ const MyFeedback = () => {
     fetchFeedbackData(); // Refresh feedback data
     fetchCategories(); // Refresh categories
 
+  };
+  const handleSubmitFeedback = async () => {
+
+    const ticketNo = selectedTicket; // Assuming you have the selected ticket number
+    const desc = feedbackText; // Use the feedbackText state for the description
+    const actionid = 0; // Set the appropriate action ID if needed
+    const statusid = 0; // Set the appropriate status ID if needed
+    const FeedTypeId = document.querySelector('.form-select').value; // Get selected complaint type ID
+    const RaisedDate = new Date().toISOString(); // Current date as raised date
+    const RaisedById = sessionManager.getUserSession()?.ID; // Assuming you have the user ID from the session
+    const RouteId = ""; // Set the appropriate route ID if needed
+
+    const params = {
+      ticketNo,
+      desc,
+      actionid,
+      statusid,
+      FeedTypeId,
+      RaisedDate,
+      RaisedById,
+      RouteId,
+    };
+
+    try {
+      const response = await apiService.sprInsertFeedBackDetails(params);
+      console.log("Feedback submitted successfully:", response);
+      // Optionally, you can show a success message or close the offcanvas
+      setIsRaiseFeedbackOpen(false);
+      refreshData(); // Refresh data if needed
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      // Optionally, show an error message to the user
+    }
+  };
+  const handleReopenSave = async () => {
+    const params = {
+      ticketNo: selectedTicket, // Assuming you have the selected ticket number
+      desc: reopenRemark, // Use the remark entered by the user
+      actionid: sessionManager.getUserSession()?.ID, // Set the appropriate action ID if needed
+      statusid: 0, // Set the appropriate status ID if needed
+    };
+
+    try {
+      const response = await apiService.Spr_sprInsertReopen(params);
+      console.log("Reopen Remark submitted successfully:", response);
+      // Reset the remark state
+      setReopenRemark('');
+      setIsOffcanvasOpen(false); // Close the offcanvas
+      // Optionally, refresh data or show a success message
+    } catch (error) {
+      console.error("Error submitting reopen remark:", error);
+      // Optionally, show an error message to the user
+    }
   };
   return (
     <div className="container-fluid p-0">
@@ -274,13 +330,16 @@ const MyFeedback = () => {
             </div>
             <div class="col-12 mb-3">
               <label class="form-label">Please Enter Reason for Reopening this Ticket:</label>
-              <textarea class="form-control" rows="3" placeholder="Please Select"></textarea>
+              <textarea class="form-control" rows="3" placeholder="Please Select"
+                value={reopenRemark} // Bind the textarea value to the state
+                onChange={(e) => setReopenRemark(e.target.value)} // Update state on change
+              ></textarea>
             </div>
           </div>
         </div>
         <div class="offcanvas-footer">
           <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => setIsOffcanvasOpen(false)}>Cancel</button>
-          <button class="btn btn-success mx-3">Save</button>
+          <button class="btn btn-success mx-3" onClick={handleReopenSave}>Save</button>
         </div>
       </div>
 
@@ -344,6 +403,8 @@ const MyFeedback = () => {
                 class="form-control"
                 rows="3"
                 placeholder="Please Select"
+                value={feedbackText} // Bind the textarea value to the state
+                onChange={(e) => setFeedbackText(e.target.value)} // Update state on change
               ></textarea>
             </div>
           </div>
@@ -352,7 +413,7 @@ const MyFeedback = () => {
           <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => { setIsRaiseFeedbackOpen(false); refreshData(); }}>
             Cancel
           </button>
-          <button class="btn btn-success mx-3">Submit</button>
+          <button class="btn btn-success mx-3" onClick={handleSubmitFeedback}>Submit</button>
         </div>
       </div>
       {/* <!-- Raise Feedback Rightbar  --> */}
