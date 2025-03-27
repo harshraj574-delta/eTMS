@@ -7,6 +7,11 @@ import Header from "./Master/Header";
 import { apiService } from "../services/api";
 import sessionManager from '../utils/SessionManager.js';
 
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Badge } from 'primereact/badge';
+import { Paginator } from 'primereact/paginator';
+
 const MyFeedback = () => {
   const [feedbackData, setFeedbackData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -155,6 +160,39 @@ const MyFeedback = () => {
       // Optionally, show an error message to the user
     }
   };
+
+
+  const RaisedDateBodyTemplate = (feedback) => {
+    return <>
+      {new Date(feedback.RaisedDate).toLocaleDateString()}
+    </>
+  };
+
+  // const StatusData = ({ Status }) => {
+  //   const statusClass = Status.toLowerCase() === "open" ? "badge_warning" : "badge_muted";
+  
+  //   return (
+  //     <span className={`badgee ${statusClass}`}>
+  //       {Status}
+  //     </span>
+  //   );
+  // };
+  
+
+  const StatusData = ({ Status }) => {
+    return <Badge value={Status} severity={Status.toLowerCase() === "open "? "warning" : "secondary"} />;
+  };
+
+  const ActionData = ({Action}) => {
+    return <Badge value={Action} severity={Action.toLowerCase() === "re-open" ? "danger" : "info"} />;
+  }
+
+  // const ActionData = ({ Action }) => (
+  //   <Badge value={Action} severity={Action.toLowerCase() === "re-open" ? "danger" : "info"} />
+  // );
+  
+
+
   return (
     <div className="container-fluid p-0">
       {/* Header */}
@@ -200,7 +238,20 @@ const MyFeedback = () => {
         <div className="row">
           <div className="col-12">
             <div className="card_tb">
-              <table className="table" id="example">
+
+              {/* <DataTable value={feedbackData} paginator rows={10} rowsPerPageOptions={[5, 10, 25, 50]} filterDisplay="row" loading={loading} emptyMessage="No customers found." showGridlines stripedRows>
+                <Column sortable filter filterPlaceholder="Search by Ticket No" field="TicketNo" header="Ticket No"></Column>
+                <Column sortable body={RaisedDateBodyTemplate} header="Shift Date"></Column> 
+                <Column sortable field="TypeName" header="Type"></Column>
+                <Column sortable field="Desrp" header="Description"></Column>
+                <Column sortable field="RouteId" header="Route ID"></Column>
+                <Column sortable field="ActionBy" header="Last Action By"></Column>
+                <Column sortable header="Status" body={StatusData}></Column>
+                <Column sortable header="Action"></Column>
+              </DataTable> */}
+
+
+              <table className="table mt-5" id="example">
                 <thead>
                   <tr>
                     {/* <th width="4%"></th> */}
@@ -236,23 +287,6 @@ const MyFeedback = () => {
                             : ""
                         }
                       >
-                        {/* <td>
-                          <a
-                            href="#!"
-                            className="btn-text"
-                            data-bs-toggle="offcanvas"
-                            data-bs-target="#ticketNumber"
-                            aria-controls="offcanvasRight"
-                            onClick={() =>
-                              fetchTicketReplies(feedback.TicketNo)
-                            }
-                          >
-                            <span className="material-icons">
-                              question_answer
-                            </span> 
-                             <span className="new-alert-oi"></span>
-                          </a>
-                        </td> */}
                         <td>
                           <a
                             href="#!"

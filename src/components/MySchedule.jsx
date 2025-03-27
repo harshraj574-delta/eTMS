@@ -4,6 +4,7 @@ import Header from "./Master/Header";
 import Notifications from "./Master/Notifications";
 import sessionManager from "../utils/SessionManager.js";
 import { apiService } from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 const addDay = (dateString, days) => {
   if (!dateString) return "";
@@ -369,6 +370,8 @@ const MySchedule = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <div className="container-fluid p-0">
       <Header pageTitle="My Schedule" showNewButton={true} />
@@ -380,7 +383,7 @@ const MySchedule = () => {
           <div className="col-lg-12">
             <div className="row">
               <div className="col-4">
-                <button type="button" className="btn btn-dark me-3">
+                <button type="button" className="btn btn-dark me-3" onClick={() => navigate("/ReplicateSchedule")}>
                   Replicate Schedule
                 </button>
                 <button type="button" className="btn btn-light">
@@ -591,27 +594,27 @@ const MySchedule = () => {
 
       {/* <!-- Employee Shift Detail --> */}
       <div
-        class={`offcanvas offcanvas-end ${isEmployeeShiftOpen ? 'show' : ''}`}
+        className={`offcanvas offcanvas-end ${isEmployeeShiftOpen ? 'show' : ''}`}
         tabindex="-1"
         id="Employee_Shift"
         aria-labelledby="offcanvasRightLabel"
          data-bs-backdrop="true"
       >
-        <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
-          <h5 class="subtitle fw-normal">
+        <div className="offcanvas-header bg-secondary text-white offcanvas-header-lg">
+          <h5 className="subtitle fw-normal">
             Employee Shift Detail - TMP Sharat Jain
           </h5>
           <button
             type="button"
-            class="btn-close btn-close-white"
+            className="btn-close btn-close-white"
             data-bs-dismiss="offcanvas"
             aria-label="Close" onClick={() => setIsEmployeeShiftOpen(false)}
           ></button>
         </div>
-        <div class="offcanvas-body px-4">
-          <div class="row">
-            <div class="col-12">
-              <div class="alert  alert-light offcanvas_alert" role="alert">
+        <div className="offcanvas-body px-4">
+          <div className="row">
+            <div className="col-12">
+              <div className="alert  alert-light offcanvas_alert" role="alert">
                 <small>
                   * Login. Last Updated By - Sharat Jain (TMP123) | At - Jan 3
                   2025 3:16 PM
@@ -622,8 +625,8 @@ const MySchedule = () => {
                 </small>
               </div>
             </div>
-            <div class="col-12 mb-3">
-              <ul class="offcanvas_list">
+            <div className="col-12 mb-3">
+              <ul className="offcanvas_list">
                 <li>
                   <small>Employee ID</small> TMP123
                 </li>
@@ -635,35 +638,35 @@ const MySchedule = () => {
                 </li>
               </ul>
             </div>
-            <div class="col-6 mb-3">
-              <label class="form-label">Select Log-In</label>
-              <select class="form-select">
+            <div className="col-6 mb-3">
+              <label className="form-label">Select Log-In</label>
+              <select className="form-select">
                 <option selected>GGN</option>
               </select>
             </div>
-            <div class="col-6 mb-3">
-              <label class="form-label">Select Log-Out</label>
-              <select class="form-select">
+            <div className="col-6 mb-3">
+              <label className="form-label">Select Log-Out</label>
+              <select className="form-select">
                 <option selected>GGN</option>
               </select>
             </div>
-            <div class="col-6">
-              <select class="form-select">
+            <div className="col-6">
+              <select className="form-select">
                 <option>Select</option>
               </select>
             </div>
-            <div class="col-6">
-              <select class="form-select">
+            <div className="col-6">
+              <select className="form-select">
                 <option>Select</option>
               </select>
             </div>
           </div>
         </div>
-        <div class="offcanvas-footer">
-          <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => setIsEmployeeShiftOpen(false)}>
+        <div className="offcanvas-footer">
+          <button className="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => setIsEmployeeShiftOpen(false)}>
             Cancel
           </button>
-          <button class="btn btn-success mx-3">Submit</button>
+          <button className="btn btn-success mx-3">Submit</button>
         </div>
       </div>
       {/* {<!-- Employee Shift Detail  -->} */}

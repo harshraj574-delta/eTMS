@@ -15,8 +15,8 @@ const SidebarMenu = () => {
         const userID = sessionStorage.getItem('ID');
         const response = await apiService.Spr_GetMenuItem({ userID });
 
-       // console.log('Menu Items:', response); 
-        
+        // console.log('Menu Items:', response); 
+
         // Organize menu items into hierarchy
         const organizedMenu = organizeMenuItems(response);
         setMenuItems(organizedMenu);
@@ -68,7 +68,7 @@ const SidebarMenu = () => {
   // Render main menu items with their submenus
   const renderMenuItems = (items) => {
     return items.map((item) => (
-       <div key={item.MenuId} className="menu-item">
+      <div key={item.MenuId} className="menu-item">
         <div className="accordion-item border-0">
           <a
             href="#!"
@@ -83,7 +83,6 @@ const SidebarMenu = () => {
             )}
             {item.MenuName}
           </a>
-          
           {item.subItems?.length > 0 && (
             <div
               id={`collapse${item.MenuId}`}
@@ -94,7 +93,7 @@ const SidebarMenu = () => {
             </div>
           )}
         </div>
-       </div>
+      </div>
     ));
   };
 

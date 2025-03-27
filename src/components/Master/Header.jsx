@@ -9,13 +9,13 @@ return (
     <div className="header">
     <div className="logo"><img src="images/logo.svg" alt="" /></div>
     <div className="header-mid">
-      <div className="breadcrumb-cnt">
+      {/* <div className="breadcrumb-cnt">
         <ol className="breadcrumb mb-0">
           <li className="breadcrumb-item text1-body"><a href="#">Etms</a></li>
           <li className="breadcrumb-item text1-body active" aria-current="page">{pageTitle}</li>
         </ol>
         <span className="subtitle"><strong className="text-grey5">{pageTitle}</strong></span>
-      </div>
+      </div> */}
       {showAdhocButton && (
       <button className="btn btn-primary ms-auto" data-bs-toggle="offcanvas" data-bs-target="#addAdhoc" aria-controls="addAdhoc">
         <span className="material-icons me-2">add_circle</span> add Adhoc</button>
