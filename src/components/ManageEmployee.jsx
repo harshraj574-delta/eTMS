@@ -375,7 +375,7 @@ function ManageEmployee() {
             <div className="middle">
                 <div className="row">
                     <div className="col-12">
-                        <h6 className="pageTitle">Manage Employee</h6>
+                        <h6 className="pageTitle">Manage Emplyoee</h6>
                         <div className="card_tb">
 
                             <div className="row mb-3">
@@ -462,61 +462,61 @@ function ManageEmployee() {
             {/* Edit Employee Sidebar */}
             <PrimeSidebar visible={visibleLeft} position="right" onHide={() => setVisibleLeft(false)} width="50%" showCloseIcon={false} dismissable={false}>
                 <div className="d-flex justify-content-between align-items-center sidebarTitle p-0">
-                    <h6 className="sidebarTitle">Edit Employee Details</h6>
+                    <h6 className="sidebarTitle">{selectedEmployee?.empName || ''} - {selectedEmployee?.empCode || ''}</h6>
                     <Button icon="pi pi-times" className="p-button-rounded p-button-text" onClick={() => setVisibleLeft(false)} />
                 </div>
                 {selectedEmployee && (
                     <div className="sidebarBody">
-                        <div className="row">
+                    <div className="row">
                             <div className="col-12 mb-3">
                                 <h6 className="sidebarSubTitle">Edit Personal Details</h6>
                             </div>
                             <div className="field col-3 mb-3">
                                 <label>Employee Code</label>
                                 <InputText className="form-control" name="empid" value={selectedEmployee.empCode || ""} onChange={handleInputChange} />
-                            </div>
+                        </div>
                             <div className="field col-3 mb-3">
-                                <label>Employee Name</label>
-                                <InputText className="form-control" name="empName" value={selectedEmployee.empName || ""} onChange={handleInputChange} />
-                            </div>
+                            <label>Employee Name</label>
+                            <InputText className="form-control" name="empName" value={selectedEmployee.empName || ""} onChange={handleInputChange} />
+                        </div>
                             <div className="field col-3 mb-3">
-                                <label>User Name</label>
-                                <InputText className="form-control" name="userName" value={selectedEmployee.userName || ""} onChange={handleInputChange} />
-                            </div>
+                            <label>User Name</label>
+                            <InputText className="form-control" name="userName" value={selectedEmployee.userName || ""} onChange={handleInputChange} />
+                        </div>
 
                             <div className="field col-3 mb-3">
-                                <label>Gender</label>
+                            <label>Gender</label>
                                 <div className="d-flex gap-3">
                                     <div className="d-flex align-items-center gap-2">
-                                        <RadioButton
-                                            inputId="genderMale"
-                                            name="Gender"
-                                            value="Male"
-                                            onChange={handleInputChange}
-                                            checked={selectedEmployee.Gender === "Male"}
-                                        />
+                                    <RadioButton
+                                        inputId="genderMale"
+                                        name="Gender"
+                                        value="Male"
+                                        onChange={handleInputChange}
+                                        checked={selectedEmployee.Gender === "Male"}
+                                    />
                                         <label htmlFor="ingredient1" className="ml-2">Male</label>
-                                    </div>
+                                </div>
                                     <div className="d-flex align-items-center gap-2">
-                                        <RadioButton
-                                            inputId="genderFemale"
-                                            name="Gender"
-                                            value="Female"
-                                            onChange={handleInputChange}
-                                            checked={selectedEmployee.Gender === "Female"}
-                                        />
+                                    <RadioButton
+                                        inputId="genderFemale"
+                                        name="Gender"
+                                        value="Female"
+                                        onChange={handleInputChange}
+                                        checked={selectedEmployee.Gender === "Female"}
+                                    />
                                         <label htmlFor="ingredient2" className="ml-2">Female</label>
                                     </div>
                                 </div>
                             </div>
                             <div className="field col-3 mb-3">
-                                <label>Mobile</label>
-                                <InputText className="form-control" name="tptReq" value={selectedEmployee.mobile || ""} onChange={handleInputChange} />
-                            </div>
+                            <label>Mobile</label>
+                            <InputText className="form-control" name="tptReq" value={selectedEmployee.mobile || ""} onChange={handleInputChange} />
+                        </div>
                             <div className="field col-3 mb-3">
-                                <label>Phone</label>
-                                <InputText className="form-control" name="attrited" value={selectedEmployee.phone || ""} onChange={handleInputChange} />
-                            </div>
+                            <label>Phone</label>
+                            <InputText className="form-control" name="attrited" value={selectedEmployee.phone || ""} onChange={handleInputChange} />
+                        </div>
                             <div className="field col-6 mb-3">
                                 <label>Email</label>
                                 <InputText className="form-control" name="email" value={selectedEmployee.email || ""} onChange={handleInputChange} />

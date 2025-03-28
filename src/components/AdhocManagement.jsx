@@ -29,12 +29,12 @@ const AdhocManagement = () => {
 
     return (
         <>
-            <Header pageTitle="" showNewButton={true} />
+            <Header pageTitle="" showNewButton={true} onNewButtonClick={() => setVisibleLeft(true)} />
             <Sidebar />
             <div className="middle">
                 <div className="row">
                     <div className="col-12">
-                        <h6 className="pageTitle" onClick={() => {setVisibleLeft(true); }}>Adhoc's Management </h6>
+                        <h6 className="pageTitle" onClick={() => { setVisibleLeft(true); }}>Adhoc's Management </h6>
                     </div>
                 </div>
                 <div className="row mt-3">
@@ -106,7 +106,23 @@ const AdhocManagement = () => {
                         <div className="sidebarBody">
                             <div className="row">
                                 <div className="col-12">
-                                    <h2>Hi</h2>
+                                    <div className="row">
+                                        <div className="field col-3 mb-3">
+                                            <label>Name</label>
+                                            <InputText className="form-control" name="" placeholder="" />
+                                        </div>
+                                        <div className="field col-3 mb-3">
+                                            <label>Select</label>
+                                            <Dropdown optionLabel="name" placeholder="Select " className="w-100" filter />
+                                        </div>
+                                        {/* Fixed button container at bottom of sidebar */}
+                                        <div className="sidebar-fixed-bottom">
+                                            <div className="d-flex gap-3 justify-content-end">
+                                                <Button label="Cancel" className="btn btn-outline-secondary" onClick={() => setVisibleLeft(false)} />
+                                                <Button label="Save Changes" className="btn btn-success" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
