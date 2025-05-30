@@ -1,6 +1,6 @@
 import axios from "axios";
 import { map } from "lodash";
-// import { api } from "./axios/api";
+
 const api = axios.create({
   baseURL: "/api/api/v1",
   headers: {
@@ -36,7 +36,6 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
-
 
   //Get User Details
   GetLockDetails: async (params) => {
@@ -197,6 +196,116 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
+  GetPickShiftTime: async (params) => {
+    try {
+      const response = await api.post("/GetPickShiftTime", {
+        facilityid: params.facilityid,
+        sdate: params.sdate,
+        empid: params.empid,
+        processid: params.processid,
+      });
+      console.log("GetPickShiftTime", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+  GetDropShiftTime: async (params) => {
+    try {
+      const response = await api.post("/GetDropShiftTime", {
+        facilityid: params.facilityid,
+        sdate: params.sdate,
+        callfrom: params.callfrom,
+        empid: params.empid,
+        processid: params.processid,
+      });
+      console.log("GetDropShiftTime", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+  GetMyTrips: async (params) => {
+    try {
+      const response = await api.post("/GetMyTrips", {
+        empid: params.empid,
+        sDate: params.sDate,
+        eDate: params.eDate
+      });
+      console.log("GetMyTrips Data:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+  GetMyRoutesDetails: async (params) => {
+    try {
+      const response = await api.post("/GetMyRoutesDetails", {
+        empid:params.empid,
+        sDate:params.sDate,
+        triptype:params.triptype,
+        routeid:params.routeid,
+      });
+      console.log("GetMyRoutesDetaails List:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Response", error);
+      throw error.response?.data || error.message;
+    }
+  },
+ async CancelTrip(params) {
+    try {
+      const response = await api.post("/CancelTrip", {
+        routeid: params.routeid,
+        EmployeeId: params.EmployeeId,
+        updatedby: params.updatedby,
+        shiftdate: params.shiftdate,
+        triptype: params.triptype,
+        Reason: params.Reason,
+      });
+      console.log("CancelTrip Response:", response.data);
+      return response.data; 
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  } ,
+   ReplicateSchedule:async(params)=> {
+      try {
+          // Validate required parameters
+          if (!params.EmpIds || !params.FromSDate || !params.FromEDate || !params.ToSDate || !params.ToEDate ||!params.updatedBy) {
+              throw new Error('Missing required parameters');
+          }
+  
+          // Format the request body according to the API requirements
+          const requestBody = {
+              EmpIds: params.EmpIds,
+              FromSDate: params.FromSDate,
+              FromEDate: params.FromEDate,
+              ToSDate: params.ToSDate,
+              ToEDate: params.ToEDate,
+              updatedBy: params.updatedBy
+          };
+  
+          console.log("ReplicateSchedule request params:", requestBody);
+          
+          const response = await api.post("/ReplicateSchedule", requestBody);
+          console.log("ReplicateSchedule raw response:", response);
+          
+          if (!response.data) {
+              throw new Error('No data received from server');
+          }
+          
+          console.log("ReplicateSchedule data:", response.data);
+          return response.data;
+      } catch (error) {
+          console.error("Error in ReplicateSchedule:", error);
+          throw error;
+      }
+  },
   ///Feedback pages
 
   //Get Feedback Data
@@ -353,286 +462,4 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
-
-  //Get Employee
-  GetEmployee: async (params) => {
-    try {
-      const response = await api.post("/GetEmployee", {
-        Userid: params.userID,
-      });
-      return JSON.parse(response.data);
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error.response?.data || error.message;
-    }
-  },
-
-  //Get Employee List
-  GetEmployeeList: async (params) => {
-    try {
-      const response = await api.post("/GetEmployeeList", {
-        facilityid: params.facilityid,
-      });
-      return JSON.parse(response.data);
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error.response?.data || error.message;
-    }
-  },
-
-  //Get Manager List
-  GetManagerList: async (params) => {
-    try {
-      const response = await api.post("/GetManagerList", {
-        empidname: params.empName,
-      });
-      console.log("GetManagerList:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error.response?.data || error.message;
-    }
-  },
-
-  //Input Employee Search
-  EmpSearch: async (params) => {
-    try {
-      const response = await api.post("/EmpSearch", {
-        locationid: params.locationid,
-        empidname: params.empidname,
-        IsAdmin: params.IsAdmin,
-      });
-      return JSON.parse(response.data);
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error.response?.data || error.message;
-    }
-  },
-
-  //Get Process By Facility
-  GetProcessByFacility: async (params) => {
-    try {
-      const response = await api.post("/GetProcessByFacility", {
-        facilityid: params.facilityid,
-      });
-      //console.log("GetProcessByFacility:", response.data);
-      return JSON.parse(response.data);
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error.response?.data || error.message;
-    }
-  },
-
-  //Get Sub Process
-  GetSubProcess: async (params) => {
-    try {
-      const response = await api.post("/GetSubProcess", {
-        processid: params.processid,
-      });
-      //console.log("GetSubProcess--xx-->:", response.data);
-      return JSON.parse(response.data);
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error.response?.data || error.message;
-    }
-  },
-
-  //Get Geo City By RS
-  locationid: async (params) => {
-    try {
-      const response = await api.post("/GetGeoCityByRS", {
-        locationid: params.locationid,
-      });
-      //console.log("locationid--xx-->:", response.data);
-      return JSON.parse(response.data);
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error.response?.data || error.message;
-    }
-  },
-
-  //Select Facility
-  // selectFacility: async (params) => {
-  //   try {
-  //     const response = await api.post("/SelectFacility", {
-  //       Userid: params.Userid,
-  //     });
-  //     return JSON.parse(response.data);
-  //   } catch (error) {
-  //     console.error("API Error:", error);
-  //     throw error.response?.data || error.message;
-  //   }
-  // },
-
-  //Select All Facility
-  // selectAllFacility: async (params) => {
-  //   try {
-  //     const response = await api.post("/SelectAllFacility", {
-  //       Userid: params.Userid,
-  //     });
-  //     return JSON.parse(response.data);
-  //   } catch (error) {
-  //     console.error("API Error:", error);
-  //     throw error.response?.data || error.message;
-  //   }
-  // },
-
-// Deepak Kumar
-
-SelectLocation: async (params) => {
-  try {
-    const response = await api.post("/SelectLocation", {
-      Userid: params.Userid,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-InsertLocation: async (params) => {
-  try {
-    const response = await api.post("/InsertLocation", {
-      locationname: params.locationname,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-UpdateLocation: async (params) => {
-  try {
-    const response = await api.post("/UpdateLocation", {
-      locationname: params.locationname,
-      id:params.id,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-// UpdateLocation: async (params) => {
-//   try {
-//     const response = await api.post("/UpdateLocation", {
-//       locationname: params.locationname,
-//       id:params.id,
-//     });
-//     return JSON.parse(response.data);
-//   } catch (error) {
-//     console.error("API Error:", error);
-//     throw error.response?.data || error.message;
-//   }
-// },
-
-GetFacility: async (params) => {
-  try {
-    const response = await api.post("/GetFacility", {
-      locationid: params.locationid,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-SelectAllFacility: async (params) => {
-  try {
-    const response = await api.post("/SelectAllFacility");
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-SelectFacility: async (params) => {
-  try {
-    const response = await api.post("/SelectFacility", {
-      Userid: params.Userid,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-
-InsertFacility: async (params) => {
-  try {
-    const response = await api.post("/InsertFacility", {
-      facility: params.facility,
-      geoX: params.geoX,
-      geoY: params.geoY,
-      tptEmail: params.tptEmail,
-      tptContactNo: params.tptContactNo,
-      locationId: params.locationId,
-      locationName: params.locationName,
-      ShiftInchargeMail: params.ShiftInchargeMail,
-      SiteLeadMail: params.SiteLeadMail,
-      CityLeadMail: params.CityLeadMail,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-UpdateFacility: async (params) => {
-  try {
-    const response = await api.post("/UpdateFacility", {
-      facility: params.facility,
-      geoX: params.geoX,
-      geoY: params.geoY,
-      tptEmail: params.tptEmail,
-      tptContactNo: params.tptContactNo,
-      Id: params.Id,
-      locationId: params.locationId,
-      locationName: params.locationName,
-      ShiftInchargeMail: params.ShiftInchargeMail,
-      SiteLeadMail: params.SiteLeadMail,
-      CityLeadMail: params.CityLeadMail,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-GetLevelDetail: async (params) => {
-  try {
-    const response = await api.post("/GetLevelDetail", {
-      locationid: params.locationid,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
-AddLevelDetails: async (params) => {
-  try {
-    const response = await api.post("/AddLevelDetails", {
-      ContactName: params.ContactName,
-      ContactNo: params.ContactNo,
-      Email: params.Email,
-      LocationId: params.LocationId,
-      Level: params.Level,
-    });
-    return JSON.parse(response.data);
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error.response?.data || error.message;
-  }
-},
-
 };

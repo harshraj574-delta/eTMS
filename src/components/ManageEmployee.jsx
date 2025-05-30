@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense } from "react";
 import Sidebar from "./Master/SidebarMenu";
 import Header from "./Master/Header";
 import { apiService } from "../services/api";
 
 import { Calendar } from "primereact/calendar";
-import { AutoComplete } from "primereact/autocomplete";
-import { classNames } from 'primereact/utils';
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Dropdown } from 'primereact/dropdown';
@@ -13,40 +11,59 @@ import { Checkbox } from 'primereact/checkbox';
 import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
-import { IconField } from 'primereact/iconfield';
-import { InputIcon } from 'primereact/inputicon';
 import { RadioButton } from 'primereact/radiobutton';
 import { FilterMatchMode } from "primereact/api";
-import { Sidebar as PrimeSidebar } from "primereact/sidebar"; // Renamed to avoid conflict with your Sidebar component
-import { get } from "lodash";
+import { Sidebar as PrimeSidebar } from "primereact/sidebar";
 import sessionManager from "../utils/SessionManager";
+import { Landmark } from "lucide-react";
+
+// Move constants to a separate file
+const CONSTANTS = {
+    ROWS_PER_PAGE: 10,
+    PAGE_OPTIONS: [5, 10, 25, 50],
+    MEDICAL_CASE_OPTIONS: [
+        { label: 'No', value: '0' },
+        { label: 'Family Way', value: '1' },
+        { label: 'Special Category', value: '2' },
+    ]
+};
 
 function ManageEmployee() {
+    const [selectedEmployee, setSelectedEmployee] = useState({});
+    const [addEmployee, setAddEmployee] = useState(false);
     const [employees, setEmployees] = useState([]);
     const [managers, setManagers] = useState([]);
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [visibleLeft, setVisibleLeft] = useState(false);
     const [filters, setFilters] = useState({
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     });
     const [loading, setLoading] = useState(false);
     const [searchKeyword, setSearchKeyword] = useState('');
-    const dt = useRef(null); // Add this line for DataTable reference
+    const dt = useRef(null);
     const [processes, setProcesses] = useState([]);
     const [subProcesses, setSubProcesses] = useState([]);
-    //const [facility, setFacility] = useState(null);
     const [locations, setLocations] = useState(null);
     const [facilitys, setFacilitys] = useState(null);
     const [allFacilitys, setAllFacilitys] = useState(null);
+    // Add the missing renderTime state
+    const [renderTime, setRenderTime] = useState(0);
+    const renderStartTime = useRef(null);
+    
     useEffect(() => {
+        // Start timing when component mounts
+        renderStartTime.current = performance.now();
+        
+        // Load data
         getEmployeeData();
         getManagersList();
         GetProcessByFacility();
+        
+        // Measure render time when component is mounted
+        const endTime = performance.now();
+        setRenderTime(endTime - renderStartTime.current);
     }, []);
 
-
-
-    //Get ProcessBy Facility
+    // Get ProcessBy Facility
     const GetProcessByFacility = async () => {
         try {
             setLoading(true);
@@ -72,42 +89,32 @@ function ManageEmployee() {
         }
     };
 
-    //Get Sub Process
+    // Get Sub Process
     const GetSubProcess = async (processId) => {
         try {
             setLoading(true);
-            //const facilityid = sessionManager.getUserSession().FacilityID;
-
-            // Make API call to get subprocess data
             const response = await apiService.GetSubProcess({
                 processid: processId,
             });
 
-            // Format response data if it's an array
             if (Array.isArray(response)) {
                 const formattedSubProcesses = response.map(subprocess => ({
-                    label: subprocess.subProcessName, // Display name
-                    value: subprocess.Id // ID value
+                    label: subprocess.subProcessName,
+                    value: subprocess.Id
                 }));
-                console.log("formattedSubProcesses: ", formattedSubProcesses);
-                // Update state with formatted data
                 setSubProcesses(formattedSubProcesses);
             } else {
-                // Set empty array if response is not valid
                 setSubProcesses([]);
             }
         } catch (error) {
-            // Handle any errors that occur during API call
             console.error("Error fetching subprocess data:", error);
             setSubProcesses([]);
         } finally {
-            // Reset loading state
             setLoading(false);
         }
     };
 
-
-    //Get Geo City By RS
+    // Get Geo City By RS
     const locationid = async (id) => {
         try {
             setLoading(true);
@@ -115,28 +122,23 @@ function ManageEmployee() {
                 locationid: id
             });
 
-            console.log("locationid--xxx-->", response);
             if (Array.isArray(response)) {
                 const formattedCities = response.map(locations => ({
                     label: locations.City,
-                    value: locations.City // Display name
+                    value: locations.City
                 }));
-                console.log("formattedCities: ", formattedCities);
-                // Update state with formatted data
                 setLocations(formattedCities);
             } else {
-                // Set empty array if response is not valid
                 setLocations([]);
             }
         } catch (error) {
             console.error("Error fetching location data:", error);
-
         } finally {
             setLoading(false);
         }
     };
 
-    //selectFacility
+    // selectFacility
     const selectFacility = async (id) => {
         try {
             setLoading(true);
@@ -144,16 +146,13 @@ function ManageEmployee() {
                 Userid: id
             });
 
-            console.log("selectFacility response:", response);
             if (Array.isArray(response)) {
                 const formattedFacility = response.map(facility => ({
-                    label: facility.facilityName, // Use facility name as label
-                    value: facility.Id // Use facility ID as value
+                    label: facility.facilityName,
+                    value: facility.Id
                 }));
-                console.log("Formatted facility data:", formattedFacility);
                 setFacilitys(formattedFacility);
             } else {
-                console.log("Response is not an array:", response);
                 setFacilitys([]);
             }
         } catch (error) {
@@ -164,7 +163,7 @@ function ManageEmployee() {
         }
     };
 
-    //selectFacility
+    // selectFacility
     const selectAllFacility = async (id) => {
         try {
             setLoading(true);
@@ -172,16 +171,13 @@ function ManageEmployee() {
                 Userid: id
             });
 
-            console.log("selectAllFacility response:", response);
             if (Array.isArray(response)) {
                 const formattedAllFacility = response.map(allFacility => ({
-                    label: allFacility.facilityName, // Use facility name as label
-                    value: allFacility.Id // Use facility ID as value
+                    label: allFacility.facilityName,
+                    value: allFacility.Id
                 }));
-                console.log("All facility data:", formattedAllFacility);
                 setAllFacilitys(formattedAllFacility);
             } else {
-                console.log("Response is not an array:", response);
                 setAllFacilitys([]);
             }
         } catch (error) {
@@ -192,10 +188,6 @@ function ManageEmployee() {
         }
     };
 
-
-
-
-
     // Add this function to fetch managers
     const getManagersList = async () => {
         try {
@@ -205,9 +197,6 @@ function ManageEmployee() {
                 IsAdmin: ""
             });
 
-            console.log("Managers response:", response);
-
-            // Process the response and set managers state
             if (Array.isArray(response)) {
                 const formattedManagers = response.map(manager => ({
                     label: manager.empName || manager.EmpName || manager.userName || manager.UserName || manager.id,
@@ -229,25 +218,22 @@ function ManageEmployee() {
                     setManagers([]);
                 }
             } else {
-                console.error("Unexpected manager response format:", response);
                 setManagers([]);
             }
         } catch (error) {
             console.error("Error fetching managers:", error);
-            // Use a default or empty array for managers if the API fails
             setManagers([]);
         }
     };
+    
     // Get Employee Data
     const getEmployeeData = async () => {
         try {
             setLoading(true);
             const facilityid = sessionManager.getUserSession().FacilityID;
-            console.log("facid", facilityid);
             const response = await apiService.GetEmployeeList({
                 facilityid: facilityid
             });
-            console.log("EmployeeList", response);
             if (Array.isArray(response)) {
                 setEmployees(response);
             } else {
@@ -264,14 +250,11 @@ function ManageEmployee() {
     const handleEmpSearch = async () => {
         try {
             setLoading(true);
-            //const locationId = sessionManager.getUserSession().locationId;
-            //console.log("isadmin", sessionManager.getUserSession().locationId);
             const response = await apiService.EmpSearch({
                 locationid: sessionManager.getUserSession().locationId,
                 empidname: searchKeyword,
                 IsAdmin: sessionManager.getUserSession().ISadmin,
             });
-            //console.log("Search Results:", response);
 
             if (Array.isArray(response)) {
                 setEmployees(response);
@@ -281,7 +264,6 @@ function ManageEmployee() {
                     if (Array.isArray(parsedResponse)) {
                         setEmployees(parsedResponse);
                     } else {
-                        console.error("Parsed response is not an array:", parsedResponse);
                         setEmployees([]);
                     }
                 } catch (e) {
@@ -289,7 +271,6 @@ function ManageEmployee() {
                     setEmployees([]);
                 }
             } else {
-                console.error("Unexpected search response format:", response);
                 setEmployees([]);
             }
         } catch (error) {
@@ -300,12 +281,68 @@ function ManageEmployee() {
         }
     };
 
+    const handleUpdateEmployee = async (e) => {
+        if(e) e.preventDefault();
+        try {
+            setLoading(true);
+            const employeeData = {
+              id: selectedEmployee.id || "",
+              empCode: selectedEmployee.empCode || "",
+              empName: selectedEmployee.empName || "",
+              userName: selectedEmployee.userName || "",
+              designation: selectedEmployee.designation || "",
+              Gender: selectedEmployee.Gender || "",
+              mobile: selectedEmployee.mobile || "",
+              phone: selectedEmployee.phone || "",
+              email: selectedEmployee.email || "",
+              attrited: selectedEmployee.attrited || "",
+              tptReq: selectedEmployee.tptReq || "",
+              managerId: selectedEmployee.managerId || "",
+              facilityId: selectedEmployee.facilityId || "",
+              processId: selectedEmployee.processId || "",
+              subProcessId: selectedEmployee.subProcessId || "",
+              nodalId: selectedEmployee.nodalId || "",
+              address: selectedEmployee.address || "",
+              pincode: selectedEmployee.pincode || "",
+              geoCodeId: selectedEmployee.geoCodeId || "",
+              updatedBy: selectedEmployee.updatedBy || "",
+              address2: selectedEmployee.address2 || "",
+              geocodeid2: selectedEmployee.geocodeid2 || "",
+              lastworkingday: selectedEmployee.lastworkingday || "",
+              specialCase: selectedEmployee.specialCase || "",
+              pincode2: selectedEmployee.pincode2 || "",
+              coscenter: selectedEmployee.coscenter || "",
+              EmergencyNo: selectedEmployee.EmergencyNo || "",
+              EmegencyName: selectedEmployee.EmegencyName || "",
+              MedicalRemark: selectedEmployee.MedicalRemark || "",
+              MedicalExpiryDate: selectedEmployee.MedicalExpiryDate || "",
+              FacEnable: selectedEmployee.FacEnable || "",
+              GuardReq: selectedEmployee.GuardReq || "",
+              Tptfor: selectedEmployee.Tptfor || "",
+              VaccineName: selectedEmployee.VaccineName || "",
+              FirstDoseDate: selectedEmployee.FirstDoseDate || "",
+              SecondDoesDate: selectedEmployee.SecondDoesDate || "",
+            };
+
+            const response = await apiService.UpdateEmployee(employeeData);
+
+            if(response){
+               // alert("Employee Updated Successfully");
+                getEmployeeData();
+                setVisibleLeft(false);
+            }
+        }catch(error){
+            console.error("Error updating employee:", error);
+            alert("Error updating employee");
+        }finally{
+            setLoading(false);
+        };
+    }
 
     // Open sidebar with employee data
     const openEditSidebar = (employee) => {
-        console.log("Employee", employee)
-        setSelectedEmployee(employee); // Set selected employee data
-        setVisibleLeft(true); // Open sidebar
+        setSelectedEmployee(employee);
+        setVisibleLeft(true);
 
         if (employee.processId) {
             GetSubProcess(employee.processId);
@@ -323,9 +360,6 @@ function ManageEmployee() {
                 selectFacility(employee.id);
             }
         }
-
-
-
     };
 
     // Handle input changes
@@ -338,68 +372,44 @@ function ManageEmployee() {
     const StatusData = (rowData) => (
         <Badge value={rowData.attrited === "N" ? "Active" : "Inactive"} severity={rowData.attrited === "N" ? "badgee badge_success" : "badgee badge_danger"} />
     );
-
-    // Add debounce function
-    const debounce = (func, wait) => {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    };
-
-    // Create memoized search handler
-    const handleSearch = useCallback(
-        debounce((value) => {
-            setFilters({
-                global: { value, matchMode: FilterMatchMode.CONTAINS },
-            });
-        }, 300),
-        []
-    );
+    
+    // Memoize the StatusData function
+    const memoizedStatusData = useCallback(StatusData, []);
 
     // Add this function for Excel export
     const exportExcel = () => {
-        if (dt && dt.current) {
-            dt.current.exportCSV();
+        if (dt.current) {
+            const fileName = `employee_list_${new Date().toISOString().slice(0,10)}`;
+            dt.current.exportCSV({ fileName });
         }
     };
 
     const paginatorLeft = <Button type="button" icon="pi pi-refresh" text onClick={() => getEmployeeData()} />;
     const paginatorRight = <Button type="button" icon="pi pi-download" text onClick={exportExcel} />;
 
+    // Memoize expensive computations and callbacks
+    const memoizedProcesses = useMemo(() => 
+        processes.map(process => ({
+            label: process.ProcessName,
+            value: process.Id
+        })), [processes]);
+
     return (
         <>
-            <Header pageTitle="Manage Employee" showNewButton={true} />
+            <Header pageTitle="Manage Employee" showNewButton={true} onNewButtonClick={setAddEmployee} />
             <Sidebar />
             <div className="middle">
                 <div className="row">
                     <div className="col-12">
                         <h6 className="pageTitle">Manage Emplyoee</h6>
+                        {renderTime > 0 && (
+                            <div className="performance-info" style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
+                                Page render time: {renderTime.toFixed(2)}ms
+                            </div>
+                        )}
                         <div className="card_tb">
-
                             <div className="row mb-3">
-                                {/* <div className="col-3">
-                                    <IconField iconPosition="left">
-                                    <InputIcon className="pi pi-search" />
-                                    <InputText className="mb-3 p-inputtext-sm" onChange={(e) => handleSearch(e.target.value)} placeholder="Keyword Search" />
-                                </IconField>
-                                </div> */}
                                 <div className="col-3">
-                                    {/* <div className="p-inputgroup flex-1">
-                                        <InputText
-                                            placeholder="Keyword Search"
-                                            value={searchKeyword}
-                                            onChange={(e) => setSearchKeyword(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleEmpSearch()}
-                                        />
-                                        <Button
-                                            icon="pi pi-search"
-                                            className="p-button-primary"
-                                            onClick={handleEmpSearch}
-                                        />
-                                    </div> */}
-
                                     <div className="p-inputgroup m-3 mb-0">
                                         <InputText
                                             placeholder="Keyword Search"
@@ -415,7 +425,6 @@ function ManageEmployee() {
                                 </div>
                             </div>
 
-
                             <DataTable
                                 ref={dt}
                                 value={employees}
@@ -424,13 +433,14 @@ function ManageEmployee() {
                                 rows={10}
                                 rowsPerPageOptions={[5, 10, 25, 50]}
                                 filters={filters}
-                                //showGridlines
-                                //className="p-datatable-gridlines"
                                 stripedRows
                                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} employees"
                                 paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                                 paginatorLeft={paginatorLeft}
                                 paginatorRight={paginatorRight}
+                                rowClassName={(rowData) => {
+                                    return rowData[0]?.status === "Y" ? "bg-danger-subtle" : "";
+                                }}
                                 removableSort
                             >
                                 <Column sortable field="empCode" header="Employee Id" body={(rowData) => (
@@ -446,13 +456,7 @@ function ManageEmployee() {
                                 <Column sortable field="facilityName" header="Facility Name"></Column>
                                 <Column sortable field="email" header="E-mail Address"></Column>
                                 <Column sortable field="tptReq" header="TptReq"></Column>
-                                <Column sortable header="Status" body={StatusData}></Column>
-                                {/* <Column
-                                    header="Action"
-                                    body={(rowData) => (
-                                        <Button label="Edit" className="btn btn-sm btn-outline-warning" onClick={() => openEditSidebar(rowData)} />
-                                    )}
-                                /> */}
+                                <Column sortable header="Status" body={memoizedStatusData}></Column>
                             </DataTable>
                         </div>
                     </div>
@@ -460,31 +464,68 @@ function ManageEmployee() {
             </div>
 
             {/* Edit Employee Sidebar */}
-            <PrimeSidebar visible={visibleLeft} position="right" onHide={() => setVisibleLeft(false)} width="50%" showCloseIcon={false} dismissable={false}>
+            <PrimeSidebar 
+                visible={visibleLeft} 
+                position="right" 
+                onHide={() => setVisibleLeft(false)} 
+                width="50%" 
+                showCloseIcon={false} 
+                dismissable={false} 
+                style={{
+                    width:'50%',
+                }}
+            >
                 <div className="d-flex justify-content-between align-items-center sidebarTitle p-0">
                     <h6 className="sidebarTitle">{selectedEmployee?.empName || ''} - {selectedEmployee?.empCode || ''}</h6>
-                    <Button icon="pi pi-times" className="p-button-rounded p-button-text" onClick={() => setVisibleLeft(false)} />
+                    <span className="d-flex align-items-center">
+                    <p className="text-warning">{selectedEmployee && selectedEmployee.attrited === "Y" ? "Attrited" : ""}</p>
+                    <Button icon="pi pi-times" className="p-button-rounded p-button-text ms-3" onClick={() => setVisibleLeft(false)} />
+                    </span>
                 </div>
                 {selectedEmployee && (
-                    <div className="sidebarBody">
-                    <div className="row">
+                    <form className="sidebarBody">
+                    <div className="row" style={{marginBottom:'66px'}}>
                             <div className="col-12 mb-3">
-                                <h6 className="sidebarSubTitle">Edit Personal Details</h6>
+                                <div className="bg-light-blue w-100 d-flex justify-content-between align-items-center">
+                                <h6 className="sidebarSubTitle">Personal Details</h6>
+                                <div className="d-flex justify-content-between">                                
+                                <Checkbox checked={selectedEmployee.attrited === "Y"}
+                                    onChange={(e) => handleInputChange({
+                                        target: {
+                                            name: "attrited",
+                                            value: e.target.checked ? "Y" : "N"
+                                        }
+                                    })}></Checkbox>
+                                    <label className="mx-2">Attrited</label>
                             </div>
-                            <div className="field col-3 mb-3">
+                                </div>
+                            </div>
+                            <div className="field col-4 mb-3">
                                 <label>Employee Code</label>
                                 <InputText className="form-control" name="empid" value={selectedEmployee.empCode || ""} onChange={handleInputChange} />
                         </div>
-                            <div className="field col-3 mb-3">
-                            <label>Employee Name</label>
+                            <div className="field col-4 mb-3">
+                            <label>Employee Name <span>*</span></label>
                             <InputText className="form-control" name="empName" value={selectedEmployee.empName || ""} onChange={handleInputChange} />
                         </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                             <label>User Name</label>
                             <InputText className="form-control" name="userName" value={selectedEmployee.userName || ""} onChange={handleInputChange} />
                         </div>
-
-                            <div className="field col-3 mb-3">
+                            
+                            <div className="field col-4 mb-3">
+                            <label>Mobile</label>
+                            <InputText className="form-control" name="tptReq" value={selectedEmployee.mobile || ""} onChange={handleInputChange} />
+                        </div>
+                            <div className="field col-4 mb-3">
+                            <label>Phone</label>
+                            <InputText className="form-control" name="attrited" value={selectedEmployee.phone || ""} onChange={handleInputChange} />
+                        </div>
+                            <div className="field col-4 mb-3">
+                                <label>Email</label>
+                                <InputText className="form-control" name="email" value={selectedEmployee.email || ""} onChange={handleInputChange} />
+                            </div>
+                            <div className="field col-4 mb-3">
                             <label>Gender</label>
                                 <div className="d-flex gap-3">
                                     <div className="d-flex align-items-center gap-2">
@@ -509,45 +550,12 @@ function ManageEmployee() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="field col-3 mb-3">
-                            <label>Mobile</label>
-                            <InputText className="form-control" name="tptReq" value={selectedEmployee.mobile || ""} onChange={handleInputChange} />
-                        </div>
-                            <div className="field col-3 mb-3">
-                            <label>Phone</label>
-                            <InputText className="form-control" name="attrited" value={selectedEmployee.phone || ""} onChange={handleInputChange} />
-                        </div>
-                            <div className="field col-6 mb-3">
-                                <label>Email</label>
-                                <InputText className="form-control" name="email" value={selectedEmployee.email || ""} onChange={handleInputChange} />
-                            </div>
                             <div className="col-12 my-3">
-                                <h6 className="sidebarSubTitle">Edit Transport Details</h6>
+                                <h6 className="sidebarSubTitle">Official Details</h6>
                             </div>
 
-                            {/* <div className="field col-3 mb-3">
-                                <label className="d-block">Facility</label>
-                                <Dropdown value={selectedEmployee.facilityId || ""} onChange={handleInputChange} options={[{ label: 'New York', value: 'NY' }, { label: 'Rome', value: 'RM' }, { label: 'London', value: 'LDN' }, { label: 'Istanbul', value: 'IST' }, { label: 'Paris', value: 'PRS' }]}
-                                    placeholder="Select a Facility" className="w-full md:w-14rem w-100" />
-                            </div> */}
-                            {/* <div className="field col-3 mb-3">
-                                <label className="d-block">Facility</label>
-                                <Dropdown
-                                    name="facilityId"
-                                    value={selectedEmployee.facilityId || ""}
-                                    onChange={handleInputChange}
-                                    options={facility.map(facility => ({
-                                        label: facility.facilityName,
-                                        value: facility.facilityId
-                                    }))}
-                                    placeholder="Select a Facility"
-                                    className="w-full md:w-14rem w-100"
-                                    emptyMessage="No facilities available"
-                                    filter
-                                />
-                            </div> */}
-                            <div className="field col-3 mb-3">
-                                <label className="d-block">Facility</label>
+                            <div className="field col-4 mb-3">
+                                <label className="d-block">Facility <span>*</span></label>
                                 <Dropdown
                                     name="facilities"
                                     value={selectedEmployee.id || ""}
@@ -559,22 +567,21 @@ function ManageEmployee() {
                                     filter
                                 />
                             </div>
-                            <div className="field col-3 mb-3">
-                                <label className="d-block">Process</label>
+                            <div className="field col-4 mb-3">
+                                <label className="d-block">Process <span>*</span></label>
                                 <Dropdown
                                     name="ProcessName"
                                     value={selectedEmployee.processId || ""}
                                     onChange={handleInputChange}
-                                    options={processes}
+                                    options={memoizedProcesses}
                                     placeholder="Select a Process"
                                     className="w-full md:w-14rem w-100"
                                     emptyMessage="No Process available"
                                     filter
                                 />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>Sub Process</label>
-                                {/* <InputText className="form-control" name="password" value={selectedEmployee.subProcessId || ""} onChange={handleInputChange} /> */}
                                 <Dropdown
                                     name="subProcessName"
                                     value={selectedEmployee.subProcessId || ""}
@@ -586,7 +593,7 @@ function ManageEmployee() {
                                     filter
                                 />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label className="d-block">Manager</label>
                                 <Dropdown
                                     name="managerId"
@@ -598,24 +605,17 @@ function ManageEmployee() {
                                     className="w-full md:w-14rem w-100"
                                     emptyMessage="No managers available"
                                 />
-
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label className="d-block">Medical Case</label>
-                                {/* <InputText className="form-control" name="password" value={selectedEmployee.password || ""} onChange={handleInputChange} /> */}
-
                                 <Dropdown
                                     name="MedicalCase"
                                     className="w-full md:w-14rem w-100"
                                     placeholder="Select Medical Case"
-                                    options={[
-                                        { label: 'No', value: '0' },
-                                        { label: 'Family Way', value: '1' },
-                                        { label: 'Special Category', value: '2' },
-                                    ]}
+                                    options={CONSTANTS.MEDICAL_CASE_OPTIONS}
                                 />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>Medical Expiry Date</label>
                                 <Calendar
                                     name="MedicalExpiryDate"
@@ -626,45 +626,33 @@ function ManageEmployee() {
                                             value: e.value
                                         }
                                     })}
-                                    //showIcon
                                     className="w-100"
                                     dateFormat="dd/mm/yy"
                                 />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>Project Code</label>
                                 <InputText className="form-control" name="MedicalCaseDetails" value={selectedEmployee.ProcessName || ""} onChange={handleInputChange} />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>Emergency Contact No</label>
                                 <InputText className="form-control" name="EmergencyContact" value={selectedEmployee.EmergencyContact || ""} onChange={handleInputChange} />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>Emergency Name</label>
                                 <InputText className="form-control" name="EmergencyName" value={selectedEmployee.EmergencyName || ""} onChange={handleInputChange} />
                             </div>
-                            <div className="field col-3 mb-3">
-                                <label className="d-block">Transport Required</label>
+                            <div className="field col-4 mb-3 d-flex align-items-center">
                                 <Checkbox checked={selectedEmployee.tptReq === "Y"}
                                     onChange={(e) => handleInputChange({
                                         target: {
                                             name: "tptReq",
                                             value: e.target.checked ? "Y" : "N"
                                         }
-                                    })} className=""></Checkbox>
+                                    })} className="me-2"></Checkbox>
+                                    <label>Transport Required</label>
                             </div>
-                            <div className="field col-3 mb-3">
-                                <label className="d-block">Attrited</label>
-                                <Checkbox checked={selectedEmployee.attrited === "Y"}
-                                    onChange={(e) => handleInputChange({
-                                        target: {
-                                            name: "attrited",
-                                            value: e.target.checked ? "Y" : "N"
-                                        }
-                                    })} className=""></Checkbox>
-
-                                {/* <InputText className="form-control" name="attrited" value={selectedEmployee.attrited || ""} onChange={handleInputChange} /> */}
-                            </div>
+                            
                             <div className="col-12 my-3">
                                 <h6 className="sidebarSubTitle">Edit Address Details</h6>
                             </div>
@@ -672,13 +660,12 @@ function ManageEmployee() {
                                 <label>Address</label>
                                 <InputText className="form-control" name="TransportType" value={selectedEmployee.address || ""} onChange={handleInputChange} />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>Pincode</label>
                                 <InputText className="form-control" name="TransportNumber" value={selectedEmployee.pincode || ""} onChange={handleInputChange} />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>City</label>
-                                {/* <InputText className="form-control" name="TransportExpiryDate" value={selectedEmployee.City || ""} onChange={handleInputChange} /> */}
                                 <Dropdown
                                     name="subProcessName"
                                     value={selectedEmployee.City || ""}
@@ -690,24 +677,53 @@ function ManageEmployee() {
                                     filter
                                 />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>Area</label>
                                 <InputText className="form-control" name="TransportContact" value={selectedEmployee.Colony || ""} onChange={handleInputChange} />
                             </div>
-                            <div className="field col-3 mb-3">
+                            <div className="field col-4 mb-3">
                                 <label>Landmark</label>
                                 <InputText className="form-control" name="TransportName" value={selectedEmployee.Landmark || ""} onChange={handleInputChange} />
                             </div>
-
-
-
-                            <div className="d-flex gap-3 justify-content-end">
+                        </div>
+                        {/* Fixed button container at bottom of sidebar */}
+                        <div className="sidebar-fixed-bottom position-absolute pe-3">
+                            <div className="d-flex gap-3 justify-content-end me-3">
                                 <Button label="Cancel" className="btn btn-outline-secondary" onClick={() => setVisibleLeft(false)} />
-                                <Button label="Update Changes" className="btn btn-success" onClick={() => setVisibleLeft(false)} />
+                                <Button label="Update" className="btn btn-success" onClick={handleUpdateEmployee}/>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 )}
+            </PrimeSidebar>
+
+            {/* Add Employee Sidebar */}
+            <PrimeSidebar
+                visible={addEmployee}
+                position="right"
+                onHide={() => setAddEmployee(false)}
+                showCloseIcon={false}
+                dismissable={false}
+                style={{
+                    width: '50%',
+                }}
+            >
+                <div className="d-flex justify-content-between align-items-center sidebarTitle p-0">
+                    <h6 className="sidebarTitle">Add Employee</h6>
+                    <Button icon="pi pi-times" className="p-button-rounded p-button-text" onClick={() => setAddEmployee(false)} />
+                </div>
+                <div className="sidebarBody">
+                    <div className="row">
+                        <div className="col-12 mb-3"> 1</div>
+                    </div>
+                </div> 
+                {/* Fixed button container at bottom of sidebar */}
+                <div className="sidebar-fixed-bottom position-absolute pe-3">
+                    <div className="d-flex gap-3 justify-content-end me-3">
+                        <Button label="Cancel" className="btn btn-outline-secondary" onClick={() => setAddEmployee(false)} />
+                        <Button label="Update" className="btn btn-success" onClick={() => setAddEmployee(false)} />
+                    </div>
+                </div>              
             </PrimeSidebar>
         </>
     );

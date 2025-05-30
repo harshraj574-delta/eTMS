@@ -33,6 +33,7 @@ const DriverMaster = () => {
 
     const [visibleLeft, setVisibleLeft] = useState(false);
     const [driverDetails, setDriverDetails] = useState([]);
+    const [addDriverMaster, setAddDriverMaster] = useState(false);
     const [loading, setLoading] = useState(false);
     const localtionId = sessionManager.getUserSession().locationId;
     const userId = sessionManager.getUserSession().ID;
@@ -134,12 +135,12 @@ const DriverMaster = () => {
 
     return (
         <>
-            <Header pageTitle="Driver Master" showNewButton={true} />
+            <Header pageTitle="Driver Master" showNewButton={true} onNewButtonClick={setAddDriverMaster} />
             <Sidebar />
             <div className="middle">
                 <div className="row">
                     <div className="col-12">
-                        <h6 className="pageTitle">Driver Master <small>Allows to View, Edit and Add New Driver.</small></h6>
+                        <h6 className="pageTitle">Driver Master</h6>
                     </div>
                     {/* Search Box */}
                     <div className="col-12">
@@ -203,9 +204,10 @@ const DriverMaster = () => {
                         </div>
                     </div>
 
-                    <PrimeSidebar visible={visibleLeft} position="right" onHide={() => setVisibleLeft(false)} width="50%" showCloseIcon={false} dismissable={false}>
+                    {/* Edit Driver Master */}
+                    <PrimeSidebar visible={visibleLeft} position="right" onHide={() => setVisibleLeft(false)} width="50%" showCloseIcon={false} dismissable={false} style={{width:'70%', backdropFilter: 'blur(8px)'}}>
                         <div className="sidebarHeader d-flex justify-content-between align-items-center sidebarTitle p-0">
-                            <h6 className="sidebarTitle">Driver Details</h6>
+                            <h6 className="sidebarTitle">Edit Driver Details</h6>
                             <Button icon="pi pi-times" className="p-button-rounded p-button-text" onClick={() => setVisibleLeft(false)} />
                         </div>
                         <div className="sidebarBody">
@@ -214,7 +216,7 @@ const DriverMaster = () => {
                                     <h6 className="sidebarSubTitle">Personal Details</h6>
                                 </div>
                                 <div className="field col-3 mb-3">
-                                    <label>Driver Id</label>
+                                    <label>Driver ID</label>
                                     <InputText className="form-control" name="" placeholder="Driver Id" />
                                 </div>
                                 <div className="field col-3 mb-3">
@@ -249,14 +251,7 @@ const DriverMaster = () => {
                                     <label>Mother's Name</label>
                                     <InputText className="form-control" name="" placeholder="Mother's Name" />
                                 </div>
-                                <div className="field col-3 mb-3">
-                                    <label>Facility Name</label>
-                                    <Dropdown optionLabel="name" placeholder="Select Facility Name" className="w-100" filter />
-                                </div>
-                                <div className="field col-3 mb-3">
-                                    <label>Vendor Name</label>
-                                    <Dropdown optionLabel="name" placeholder="Select Vendor Name" className="w-100" filter />
-                                </div>
+                                
                                 <div className="field col-6 mb-3">
                                     <label>Present Address</label>
                                     <InputText className="form-control" name="" placeholder="Present Address" />
@@ -266,7 +261,7 @@ const DriverMaster = () => {
                                     <InputText className="form-control" name="" placeholder="Permanent Address" />
                                 </div>
                                 <div className="col-12 mb-3">
-                                    <h6 className="sidebarSubTitle">Vehical Details</h6>
+                                    <h6 className="sidebarSubTitle">Vehicle Details</h6>
                                 </div>
                                 <div className="field col-3 mb-3">
                                     <label>Vehicle Number</label>
@@ -297,6 +292,14 @@ const DriverMaster = () => {
                                     <Calendar className="w-100" name="" placeholder="Attrited Date" />
                                 </div>
                                 <div className="field col-3 mb-3">
+                                    <label>Facility Name</label>
+                                    <Dropdown optionLabel="name" placeholder="Select Facility Name" className="w-100" filter />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Vendor Name</label>
+                                    <Dropdown optionLabel="name" placeholder="Select Vendor Name" className="w-100" filter />
+                                </div>
+                                {/* <div className="field col-3 mb-3">
                                     <label>Warning-1</label>
                                     <InputText className="form-control" name="" placeholder="Warning-1" />
                                 </div>
@@ -307,7 +310,7 @@ const DriverMaster = () => {
                                 <div className="field col-3 mb-3">
                                     <label>Final Warning</label>
                                     <InputText className="form-control" name="" placeholder="Final Warning" />
-                                </div>
+                                </div> */}
                                 <div className="field col-3 d-flex align-items-center">
                                     <div className="d-flex mt-3">
                                         <Checkbox inputId="AadharVerification" className="" name="" />
@@ -325,7 +328,7 @@ const DriverMaster = () => {
                                     <InputText className="form-control" name="" placeholder="Remark" />
                                 </div>
                                 <div className="col-12 mb-3">
-                                    <h6 className="sidebarSubTitle">Document Upload Details</h6>
+                                    <h6 className="sidebarSubTitle">Document Details</h6>
                                 </div>
                                 <div className="field col-3 mb-3">
                                     <label>Document Type</label>
@@ -355,15 +358,183 @@ const DriverMaster = () => {
                                     </div>
                                 </div>
 
-                                {/* Fixed button container at bottom of sidebar */}
-                                <div className="sidebar-fixed-bottom">
+                                
+
+                            </div>
+                            {/* Fixed button container at bottom of sidebar */}
+                            <div className="sidebar-fixed-bottom">
                                     <div className="d-flex gap-3 justify-content-end">
                                         <Button label="Cancel" className="btn btn-outline-secondary" onClick={() => setVisibleLeft(false)} />
                                         <Button label="Save Changes" className="btn btn-success" />
                                     </div>
                                 </div>
+                        </div>
+                    </PrimeSidebar>
+
+                    {/* Add Driver Master */}
+                    <PrimeSidebar visible={addDriverMaster} position="right" onHide={() => setAddDriverMaster(false)} showCloseIcon={false} dismissable={false} style={{width:'70%'}}>
+                        <div className="sidebarHeader d-flex justify-content-between align-items-center sidebarTitle p-0">
+                            <h6 className="sidebarTitle">Add Driver Details</h6>
+                            <Button icon="pi pi-times" className="p-button-rounded p-button-text" onClick={() => setAddDriverMaster(false)} />
+                        </div>
+                        <div className="sidebarBody">
+                            <div className="row">
+                                <div className="col-12 mb-3">
+                                    <h6 className="sidebarSubTitle">Personal Details</h6>
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Driver ID</label>
+                                    <InputText className="form-control" name="" placeholder="Driver Id" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Driver Name</label>
+                                    <InputText className="form-control" name="" placeholder="Driver Name" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Date of Birth</label>
+                                    <Calendar className="w-100" name="" placeholder="Date of Birth" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Contact Number</label>
+                                    <InputText className="form-control" name="" placeholder="Contact Number" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Blood Group</label>
+                                    <InputText className="form-control" name="" placeholder="Blood Group" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Qualification</label>
+                                    <InputText className="form-control" name="" placeholder="Qualification" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Marital Status</label>
+                                    <InputText className="form-control" name="" placeholder="Marital Status" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Father’s Name</label>
+                                    <InputText className="form-control" name="" placeholder="Father’s Name" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Mother's Name</label>
+                                    <InputText className="form-control" name="" placeholder="Mother's Name" />
+                                </div>
+                                
+                                <div className="field col-6 mb-3">
+                                    <label>Present Address</label>
+                                    <InputText className="form-control" name="" placeholder="Present Address" />
+                                </div>
+                                <div className="field col-6 mb-3">
+                                    <label>Permanent Address</label>
+                                    <InputText className="form-control" name="" placeholder="Permanent Address" />
+                                </div>
+                                <div className="col-12 mb-3">
+                                    <h6 className="sidebarSubTitle">Vehicle Details</h6>
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Vehicle Number</label>
+                                    <Dropdown optionLabel="name" placeholder="Select Vehicle Number" className="w-100" filter />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Licence Number</label>
+                                    <InputText className="form-control" name="" placeholder="Licence Number" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Licence Expiry Date</label>
+                                    <Calendar className="w-100" name="" placeholder="Licence Expiry Date" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Badge Number</label>
+                                    <InputText className="form-control" name="" placeholder="Badge Number" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Badge Expiry Date</label>
+                                    <Calendar className="w-100" name="" placeholder="Badge Expiry Date" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Driver Status</label>
+                                    <Dropdown optionLabel="name" placeholder="Select Driver Status" className="w-100" filter />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Attrited Date</label>
+                                    <Calendar className="w-100" name="" placeholder="Attrited Date" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Facility Name</label>
+                                    <Dropdown optionLabel="name" placeholder="Select Facility Name" className="w-100" filter />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Vendor Name</label>
+                                    <Dropdown optionLabel="name" placeholder="Select Vendor Name" className="w-100" filter />
+                                </div>
+                                {/* <div className="field col-3 mb-3">
+                                    <label>Warning-1</label>
+                                    <InputText className="form-control" name="" placeholder="Warning-1" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Warning-2</label>
+                                    <InputText className="form-control" name="" placeholder="Warning-2" />
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Final Warning</label>
+                                    <InputText className="form-control" name="" placeholder="Final Warning" />
+                                </div> */}
+                                <div className="field col-3 d-flex align-items-center">
+                                    <div className="d-flex mt-3">
+                                        <Checkbox inputId="AadharVerification" className="" name="" />
+                                        <label htmlFor="AadharVerification" className="ms-2">Aadhar Verification</label>
+                                    </div>
+                                </div>
+                                <div className="field col-3 d-flex align-items-center">
+                                    <div className="d-flex mt-3">
+                                        <Checkbox inputId="PVStatus" className="" name="" />
+                                        <label htmlFor="PVStatus" className="ms-2">PV Status</label>
+                                    </div>
+                                </div>
+                                <div className="field col-12 mb-3">
+                                    <label>Remark</label>
+                                    <InputText className="form-control" name="" placeholder="Remark" />
+                                </div>
+                                <div className="col-12 mb-3">
+                                    <h6 className="sidebarSubTitle">Document Details</h6>
+                                </div>
+                                <div className="field col-3 mb-3">
+                                    <label>Document Type</label>
+                                    <Dropdown optionLabel="name" placeholder="Select Document Type" className="w-100" filter />
+                                </div>
+                                <div className="field col-4 mb-3">
+                                    <label>Choose File</label>
+                                    <FileUpload mode="basic" name="demo[]" url="/api/upload" accept="image/*" className="w-100" />
+                                </div>
+                                <div className="col-12 mb-3">
+                                    <h6 className="sidebarSubTitle">Other Details</h6>
+                                </div>
+                                <div className="field col-12 d-flex align-items-center gap-4">
+                                    <div className="d-flex mt-3">
+                                        <Checkbox inputId="AadharVerification" className="" name="" />
+                                        <label htmlFor="AadharVerification" className="ms-2">Medical Fitness Certificate</label>
+                                    </div>
+
+                                    <div className="d-flex mt-3">
+                                        <Checkbox inputId="AadharVerification" className="" name="" />
+                                        <label htmlFor="AadharVerification" className="ms-2">Driver Information Display Dangler</label>
+                                    </div>
+
+                                    <div className="d-flex mt-3">
+                                        <Checkbox inputId="AadharVerification" className="" name="" />
+                                        <label htmlFor="AadharVerification" className="ms-2">Induction Form</label>
+                                    </div>
+                                </div>
+
+                                
 
                             </div>
+                            {/* Fixed button container at bottom of sidebar */}
+                            <div className="sidebar-fixed-bottom">
+                                    <div className="d-flex gap-3 justify-content-end">
+                                        <Button label="Cancel" className="btn btn-outline-secondary" onClick={() => setVisibleLeft(false)} />
+                                        <Button label="Save Changes" className="btn btn-success" />
+                                    </div>
+                                </div>
                         </div>
                     </PrimeSidebar>
                 </div>

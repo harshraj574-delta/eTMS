@@ -302,7 +302,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        {/* Charts */}
+        {/* Charts */} 
         <div className="row mt-4">
           <div className="col-4">
             <div className="col-12">

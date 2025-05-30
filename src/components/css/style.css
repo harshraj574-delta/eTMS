@@ -177,6 +177,7 @@ button {
     font-weight: 600;
     border-radius: 8px;
     box-shadow: 0 1px 2px -1px rgba(17, 12, 34, 0.08);
+    padding: 8px 20px;
 }
 
 .btn1 {
@@ -204,6 +205,12 @@ button {
 
 .btn-success {
     background-color: var(--success-color) !important;
+    border-color:  var(--success-color) !important;
+}
+
+.btn-success:hover {
+    background-color: var(--bs-btn-hover-bg) !important;
+    border-color:  var(--bs-btn-hover-border-color) !important;
 }
 
 .bg-purple {
@@ -288,7 +295,7 @@ button {
 }
 
 .btn-text {
-    color: #3377ff;
+    color: var(--primary-color) !important;
 }
 
 .btn-outline-secondary {
@@ -508,7 +515,7 @@ label {
 }
 
 .header {
-    box-shadow: 0 0 0 0 rgba(163, 163, 163, 0.1), 0 4px 8px 0 rgba(163, 163, 163, 0.1), 0 15px 15px 0 rgba(163, 163, 163, 0.09), 0 33px 20px 0 rgba(163, 163, 163, 0.05), 0 58px 23px 0 rgba(163, 163, 163, 0.01), 0 91px 25px 0 rgba(163, 163, 163, 0);
+    /* box-shadow: 0 0 0 0 rgba(163, 163, 163, 0.1), 0 4px 8px 0 rgba(163, 163, 163, 0.1), 0 15px 15px 0 rgba(163, 163, 163, 0.09), 0 33px 20px 0 rgba(163, 163, 163, 0.05), 0 58px 23px 0 rgba(163, 163, 163, 0.01), 0 91px 25px 0 rgba(163, 163, 163, 0); */
     padding: 14px 15px;
     display: flex;
     justify-content: start;
@@ -516,6 +523,7 @@ label {
     width: 100%;
     background: #fff;
     z-index: 99;
+    border-bottom: 1px solid var(--grey-1);
 }
 
 /* .header-mid{ position: absolute; left: 300px;} */
@@ -647,18 +655,21 @@ label {
 
 .sidebar {
     width: 268px;
-    height: calc(100vh - 69px);
+    /* height: calc(100vh - 69px); */
+    height: 100vh;
     border: 1px solid var(--grey-1);
     padding: 90px 18px 30px 18px;
     position: fixed;
     background: #fff;
     transition: 0.3s;
+    
 }
 
 .sidebar .accordion-button:not(.collapsed) {
     background-color: var(--light-purple);
     box-shadow: none;
     border-radius: 15px;
+    transition: all 0.3s ease-in-out;
 }
 
 .sidebar .accordion-item a .material-icons {
@@ -731,6 +742,7 @@ label {
 .sidebarClose {
     margin-left: -268px !important;
 }
+
 
 /* .offcanvas-menu {
     position: fixed;
@@ -872,7 +884,7 @@ label {
     width: calc(100% - 268px);
     margin-left: 268px;
     transition: 0.3s;
-    padding-top: 90px;
+    padding-top: 74px;
 }
 
 .middle-full {
@@ -1084,8 +1096,10 @@ label {
     font-weight: 800;
     color: var(--grey-4);
     padding: 16px 10px;
-    background-color: var(--offwhite);
+    /* background-color: var(--offwhite); */
+    background-color: #f9f9fb !important;
     white-space: nowrap;
+    border-top: 1px solid var(--grey-1);
 }
 
 .card_tb th:first-child {
@@ -1165,6 +1179,7 @@ label {
     font-size: 13px !important;
     font-weight: 500 !important;
     display: inline !important;
+    list-style: inherit !important;
 }
 
 .badge_success {
@@ -1241,7 +1256,7 @@ label {
     color: var(--secondary-color);
 }
 
-.p-dropdown-label,
+.p-dropdown-label, .p-multiselect-label,
 .p-inputtext {
     font-size: 13px;
     font-weight: normal;
@@ -1279,7 +1294,7 @@ label {
 }
 
 .no-label {
-    margin-top: 26px;
+    margin-top: 30px;
 }
 
 .no-label-prime {
@@ -1863,9 +1878,9 @@ input[type="number"] {
 }
 
 /* New prime react UI Css */
-.p-sidebar-right .p-sidebar {
+/* .p-sidebar-right .p-sidebar {
     width: 50%;
-}
+} */
 
 .p-icon-field>.p-input-icon {
     margin-top: -0.9rem;
@@ -1890,12 +1905,13 @@ input[type="number"] {
 }
 
 .sidebarTitle {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
     background-color: var(--secondary-color);
     color: #fff;
     padding: 27px 16px;
     letter-spacing: 0.42px;
+    text-transform: capitalize;
 }
 
 .sidebarTitle .p-button-icon {
@@ -1906,8 +1922,8 @@ input[type="number"] {
     padding: 12px 8px;
     font-size: 14px;
     font-weight: bold;
-    background-color: var(--offwhite);
-    color: #333;
+    color: var(--primary-color);
+    background-color: #efedff;
 }
 
 .p-sidebar .p-sidebar-content,
@@ -1928,7 +1944,7 @@ input[type="number"] {
     font-size: 16px;
     margin-top: 15px;
     font-weight: 500;
-    color: #000;
+    color: #000; display: none;
 }
 
 .pageTitle small {
@@ -1940,7 +1956,7 @@ input[type="number"] {
 }
 
 .sidebar-fixed-bottom {
-    position: absolute;
+    position: sticky;
     bottom: 0;
     background-color: white;
     padding: 15px 0;
@@ -1999,6 +2015,27 @@ input[type="number"] {
     border-left: 0;
 }
 
+
+.cardNew1 {
+    background-color: var(--white);
+    border-radius: 12px;
+    background-color: var(--white);
+}
+.cardNew1 ul li {
+    border-left: solid 1px var(--grey-2);
+    padding: 17px 20px;
+    /* height: 110px; */
+    width: 33%;
+    
+}
+.cardNew1 ul li span{
+    display: block;
+}
+
+.cardNew1 ul li:first-child {
+    border-left: 0;
+}
+
 .cardx h6{ font-size: 16px; font-weight: 600; color: var(--grey-4);}
 /* Add this to your CSS file */
 .p-datatable .p-sortable-column:not(.p-highlight) .p-sortable-column-icon {
@@ -2023,3 +2060,153 @@ input[type="number"] {
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
 }
+
+.p-selectbutton .p-button.p-highlight {
+    background: #1c1d20;
+    border-color: #1c1d20;
+    color: #ffffff;
+    font-size: 13px; width: 50%;
+}
+
+.p-selectbutton .p-button {
+ font-size: 13px; width: 50%;
+}
+
+.sidebarBtn{ position: relative; top: 0px; left: 249px; display: block; background: #ff0; padding: 10px 20px;}
+
+.p-datepicker table td{ padding: 0 !important;}
+.p-datepicker table td > span{ width: 2rem; height: 2rem;}
+
+.p-component-overlay-enter, .p-component-overlay {
+    backdrop-filter: blur(2px);
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    transition: background-color 0.2s;
+}
+
+.titleStrip {
+    color: var(--primary-color);
+    background-color: #efedff;
+    padding: 8px;
+}
+
+.p-fileupload-choose{ padding: 6px 8px !important; background: transparent !important; color: #1c1d20; border-color: #1c1d20; font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;}
+
+.card_tb td th:first-child{ border-top-left-radius:0;}
+.card_tb td th:last-child{ border-top-right-radius:0;}
+
+.p-datatable .p-datatable-tbody>tr:last-child td{ border-bottom-right-radius: 0;  border-bottom-left-radius: 0;}
+
+.leftStrip{ padding: 0px !important;}
+.leftStrip .expanded-content{ border-left: 4px solid var(--primary-color);}
+
+label > span{ color: #dc3545; font-weight: bold; font-size: 14px;}
+
+.bg-light-blue{ background: #efedff;}
+.p-datatable-wrapper {
+    border-radius: 12px;
+}
+
+.p-datatable-table .p-datatable-tbody > tr:hover {
+    background-color: #f1f1fa; /* Custom hover background color */
+  }
+
+  /* Smooth accordion animation */
+.collapse-smooth {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+  
+  .collapse-smooth.show {
+    max-height: 1000px; /* Set a value that's larger than your content will ever be */
+    transition: max-height 0.5s ease-in;
+  }
+  
+  /* Optional: Add transition to the accordion button arrow rotation */
+  .accordion-button::after {
+    transition: transform 0.3s ease;
+  }
+
+  .p-datatable-row-expansion{ background-color: #f1f1fa;}
+
+  .filterBx{ background: #fff; border-bottom: 1px solid #e8e8e8; padding: 15px; position: sticky; top: 74px; z-index: 99;
+    /* box-shadow: 0 0 0 0 rgba(163, 163, 163, 0.1), 0 4px 8px 0 rgba(163, 163, 163, 0.1), 0 15px 15px 0 rgba(163, 163, 163, 0.09), 0 33px 20px 0 rgba(163, 163, 163, 0.05), 0 58px 23px 0 rgba(163, 163, 163, 0.01), 0 91px 25px 0 rgba(163, 163, 163, 0); */
+}
+
+.filterShadow{ box-shadow: 0 0 0 0 rgba(163, 163, 163, 0.1), 0 4px 8px 0 rgba(163, 163, 163, 0.1), 0 15px 15px 0 rgba(163, 163, 163, 0.09), 0 33px 20px 0 rgba(163, 163, 163, 0.05), 0 58px 23px 0 rgba(163, 163, 163, 0.01), 0 91px 25px 0 rgba(163, 163, 163, 0);}
+
+/* Add these styles to your CSS file */
+.sidebar {
+    transition: width 0.3s ease;
+    /* width: 250px; */
+  }
+  
+  .sidebar.collapsed {
+    width: 0px; /* Collapsed width */
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .middle {
+    /* transition: margin-left 0.3s ease; */
+    /* margin-left: 250px; */
+    transition: all 0.3s ease;
+    
+  }
+  
+  .middle.expanded {
+    margin-left: 0px; /* Expanded margin, should match collapsed sidebar width */
+    width: 100%;
+    transition: all 0.3s ease;
+  }
+  
+  /* Optional: For responsive design */
+  /* @media (max-width: 768px) {
+    .sidebar {
+      width: 200px;
+    }
+    
+    .middle {
+      margin-left: 200px;
+    }
+    
+    .sidebar.collapsed {
+      width: 0;
+    }
+    
+    .middle.expanded {
+      margin-left: 0;
+    }
+  } */
+  
+
+  .offcanvas-backdrop{ backdrop-filter: blur(2px);
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    transition: background-color 0.2s;
+}
+
+.img20{ width: 18px; height: 18px; margin-right: 4px;}
+.text-purple{ color: #4a36ec;}
+
+.pointer{ cursor: pointer;}
+.pointer:hover{ color: #4a36ec;}
+
+.fullAddress{width: 16% !important; font-size: 15px;}
+.p-overlaypanel:after, .p-overlaypanel:before{ margin-left: -18px !important;}
+
+.p-tooltip {
+    font-size: 12px !important; font-weight: bold; 
+}
+
+.p-tooltip .p-tooltip-text {
+    padding: 6px 10px; background: #000 !important;
+}
+/* .bg-fleet-exhausted {
+    background-color: #ee1d3c !important;
+  }
+  
+  .bg-fleet-exhausted:hover {
+    background-color: #e4293c !important;
+  } */

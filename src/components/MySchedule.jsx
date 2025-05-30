@@ -4,7 +4,11 @@ import Header from "./Master/Header";
 import Notifications from "./Master/Notifications";
 import sessionManager from "../utils/SessionManager.js";
 import { apiService } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import { toastService } from "../services/toastService.js";
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate } from 'react-router-dom';
+
 
 const addDay = (dateString, days) => {
   if (!dateString) return "";
@@ -50,6 +54,7 @@ const generateWeekDays = (fromDate) => {
 };
 
 const MySchedule = () => {
+  const navigate = useNavigate();
   const facID = sessionManager.getUserSession().FacilityID;
   const empid = sessionManager.getUserSession().ID;
   const [processes, setProcesses] = useState([]);
@@ -61,6 +66,8 @@ const MySchedule = () => {
   const [mgrscheduledata, setMgrscheduledata] = useState([]);
   const [weekDays, setWeekDays] = useState([]);
   const [loginfacility, setloginfacility] = useState([]);
+  const [loginFacilities, setLoginFacilities] = useState([]); // State to hold login facilities
+  const [logoutFacilities, setLogoutFacilities] = useState([]); // State to hold logout facilities
   const [selectedloginfacility, setSelectedloginfacility] = useState("");
   const [selectedlogoutfacility, setSelectedlogoutfacility] = useState("");
   const [mgrassociate, setMgrassociate] = useState([]);
@@ -69,15 +76,32 @@ const MySchedule = () => {
   const [LoginWeekEndShiftPickup, setLoginWeekEndShiftPickup] = useState([]);
   const [LoginWeekEndShiftDrop, setLoginWeekEndShiftDrop] = useState([]);
   const [isEmployeeShiftOpen, setIsEmployeeShiftOpen] = useState(false); // State for offcanvas visibility
+  const [employeeSchedule, setEmployeeSchedule] = useState([]); // State to hold employee schedule data
+  const [availableShiftTimes, setAvailableShiftTimes] = useState([]);
+  const [routeDetails, setRouteDetails] = useState([]);
+
+  // Add a new state to store the selected time
+  const [selectedShiftTime, setSelectedShiftTime] = useState("");
+  //const [selectedLogoutTime, setSelectedLogoutTime] = useState("");
   //const [selectedEmployee, setSelectedEmployee] = useState(null); // State for selected employee details
+  // Make sure to add this state variable at the top of your component
+  const [availableLogoutShiftTimes, setAvailableLogoutShiftTimes] = useState(
+    []
+  );
+  const [selectedLogoutShiftTime, setSelectedLogoutShiftTime] = useState("");
+  // Add these state variables at the top of your component
+  const [employeeTrips, setEmployeeTrips] = useState([]);
+  const [isTripsModalOpen, setIsTripsModalOpen] = useState(false);
+  const [selectedEmployeeForTrips, setSelectedEmployeeForTrips] =
+    useState(null);
+  const [selectedRouteId, setSelectedRouteId] = useState(null); // State to track the selected route ID
+
+  //const defaultWeekendDays = { sat: false, sun: false }; // Default weekend days
   const [weekendDays, setWeekendDays] = useState({
     sat: true,
     sun: true,
   });
-  const handleEmployeeShiftClick = (employee) => {
-    //setSelectedEmployee(employee); // Set the selected employee details
-    setIsEmployeeShiftOpen(true); // Open the offcanvas
-  };
+
   // Initialize lockDetails with default values
   const [lockDetails, setLockDetailsState] = useState({
     AdhocMaxDay: "",
@@ -106,7 +130,43 @@ const MySchedule = () => {
     setWeekDays(days);
     fetchLockDetails();
     fetchFacilityDetails();
+    const offcanvasElement = document.getElementById("Employee_Shift");
+    if (offcanvasElement) {
+      offcanvasElement.addEventListener('hidden.bs.offcanvas', resetFormValues);
+      return () => {
+        offcanvasElement.removeEventListener('hidden.bs.offcanvas', resetFormValues);
+      };
+    }
   }, []);
+
+  const handleCancelTrip = async (trip) => {
+    try {
+      const params = {
+        routeid: trip.routeid,
+        EmployeeId: trip.empCode,
+        updatedby: sessionManager.getUserSession().ID,
+        shiftdate: trip.shiftdate,
+        triptype: trip.triptype,
+        Reason: "" // You can make this dynamic if needed
+      };
+      console.log("Cancel params", params);
+      const response = await apiService.CancelTrip(params);
+
+      if (response) {
+        toastService.success("Trip cancelled successfully");
+        // Refresh the trips data
+        fetchMgrSchedule();
+        fetchScheduleDetails();
+        if (selectedEmployeeForTrips) {
+          fetchEmployeeTrips(selectedEmployeeForTrips);
+        }
+        //fetchEmployeeTrips(selectedEmployeeForTrips);
+      }
+    } catch (error) {
+      console.error("Error cancelling trip:", error);
+      toastService.error("Failed to cancel trip: " + error.message);
+    }
+  };
 
   const fetchMgrAssociate = async () => {
     try {
@@ -179,6 +239,8 @@ const MySchedule = () => {
 
       console.log("Facility Details", response);
       if (response) {
+        setLoginFacilities(response); // Set login facilities
+        setLogoutFacilities(response); // Set logout facilities
         setloginfacility(response);
         setSelectedloginfacility(response[0]?.Id || ""); // Set default value for login facility
         setSelectedlogoutfacility(response[0]?.Id || ""); // Set default value for logout facility
@@ -339,11 +401,511 @@ const MySchedule = () => {
   const handleLogoutFacilityChange = (e) => {
     setSelectedlogoutfacility(e.target.value);
   };
+  const handleEmployeeShiftClick = async (employee, day) => {
+    try {
+      // Get the selected date from weekDays array using the day index
+      const selectedDate = weekDays[day]?.fullDate;
 
+      // Set the fromDate input value to the selected date
+      const fromDateInput = document.getElementById("fromDate");
+      if (fromDateInput && selectedDate) {
+        fromDateInput.value = selectedDate;
+      }
+      const seTimeData = employee[`SETime${day}`];
+      const [timeInfo] = seTimeData.split("!");
+      const [loginTime, logoutTime] = timeInfo.split("<BR>").map((time) => {
+        const match = time.match(/\d{4}$/);
+        return match ? match[0] : time.trim();
+      });
+      console.log("Parsed times:", { loginTime, logoutTime });
+      // Extract exactly the same values that are displayed in the table cell
+      // const loginTimeDisplay = employee[`SETime${day}`]
+      //   .split("!")[0]
+      //   .split("<BR>")[0].trim();
+      // const logoutTimeDisplay = employee[`SETime${day}`]
+      //   .split("!")[0]
+      //   .split("<BR>")[1].trim();
+
+      // console.log("Using exact displayed values:", {
+      //   loginTimeDisplay,
+      //   logoutTimeDisplay,
+      // });
+      console.log(`SETime for day ${day}:`, employee[`SETime${day}`]);
+      // Check if the employee has facility information
+      let loginFacilityId = null;
+      let logoutFacilityId = null;
+
+      // Try to extract facility information from the employee object
+      if (employee.pickFacilityID) {
+        loginFacilityId = employee.pickFacilityID;
+      }
+
+      if (employee.dropFacilityID) {
+        logoutFacilityId = employee.dropFacilityID;
+      }
+
+      // If we don't have facility IDs directly, try to extract from SETime data
+      if (!loginFacilityId || !logoutFacilityId) {
+        // The SETime data might contain facility information after the "!" character
+        const fullTimeData = employee[`SETime${day}`].split("!");
+        if (fullTimeData.length > 1) {
+          const facilityInfo = fullTimeData[1];
+          console.log("Extracted facility info:", facilityInfo);
+
+          // Parse facility information if available
+          // This depends on the format of your data - you may need to adjust this
+          const facilityParts = facilityInfo.split("|");
+          if (facilityParts.length >= 2) {
+            // Assuming first part is login facility and second is logout facility
+            loginFacilityId = facilityParts[0] || loginFacilityId;
+            logoutFacilityId = facilityParts[1] || logoutFacilityId;
+          }
+        }
+      }
+
+      // Fetch employee schedule data to get facility information if not available
+      if (!loginFacilityId || !logoutFacilityId) {
+        const scheduleData = await fetchEmployeeSchedule(employee.EmployeeID);
+        if (scheduleData && scheduleData.length > 0) {
+          loginFacilityId = scheduleData[0].pickFacilityID || loginFacilityId;
+          logoutFacilityId = scheduleData[0].dropFacilityID || logoutFacilityId;
+        }
+      }
+
+      console.log("Facility IDs:", { loginFacilityId, logoutFacilityId });
+
+      // Set the facility values if we have them
+      if (loginFacilityId) {
+        setSelectedloginfacility(loginFacilityId);
+      }
+
+      if (logoutFacilityId) {
+        setSelectedlogoutfacility(logoutFacilityId);
+      }
+
+      // Open the offcanvas
+      setIsEmployeeShiftOpen(true);
+
+      // Set the login time value
+      setSelectedShiftTime(loginTime);
+      setSelectedLogoutShiftTime(logoutTime);
+
+      if (loginFacilityId) {
+        await fetchPickShiftTimes(employee.EmployeeID, loginFacilityId);
+      }
+
+      if (logoutFacilityId) {
+        await fetchDropShiftTimes(employee.EmployeeID, logoutFacilityId);
+      }
+      // After a short delay to ensure the modal is ready
+      setTimeout(() => {
+        // Handle login time dropdown
+        const loginDropdown = document.getElementById("loginShiftDropdown");
+        if (loginDropdown) {
+          const existingOptions = Array.from(loginDropdown.options);
+          const matchingOption = existingOptions.find(opt => opt.text.includes(loginTime));
+
+          if (matchingOption) {
+            // If time exists in API data, select it
+            loginDropdown.value = matchingOption.value;
+          } else {
+            // If time doesn't exist in API data, just show the time
+            setSelectedShiftTime(loginTime);
+          }
+        }
+
+        // Handle logout time dropdown
+        const logoutDropdown = document.getElementById("logoutShiftDropdown");
+        if (logoutDropdown) {
+          const existingOptions = Array.from(logoutDropdown.options);
+          const matchingOption = existingOptions.find(opt => opt.text.includes(logoutTime));
+
+          if (matchingOption) {
+            // If time exists in API data, select it
+            logoutDropdown.value = matchingOption.value;
+          } else {
+            // If time doesn't exist in API data, just show the time
+            setSelectedLogoutShiftTime(logoutTime);
+          }
+        }
+
+        // Highlight the selected facility options in the dropdowns
+        if (loginFacilityId) {
+          const loginFacilityDropdown = document.querySelector(
+            'select[value="' + selectedloginfacility + '"]'
+          );
+          if (loginFacilityDropdown) {
+            loginFacilityDropdown.value = loginFacilityId;
+          }
+        }
+
+        if (logoutFacilityId) {
+          const logoutFacilityDropdown = document.querySelector(
+            'select[value="' + selectedlogoutfacility + '"]'
+          );
+          if (logoutFacilityDropdown) {
+            logoutFacilityDropdown.value = logoutFacilityId;
+          }
+        }
+      }, 300);
+
+      // Make sure the offcanvas is fully visible
+      const offcanvasElement = document.getElementById("Employee_Shift");
+      if (offcanvasElement && !offcanvasElement.classList.contains("show")) {
+        const offcanvasInstance = new bootstrap.Offcanvas(offcanvasElement);
+        offcanvasInstance.show();
+      }
+    } catch (error) {
+      console.error("Error handling employee shift click:", error);
+    }
+  };
+  const fetchEmployeeSchedule = async (employeeId) => {
+    try {
+      const fromDate = document.getElementById("fromDate").value;
+
+      // Call the API service
+      const response = await apiService.GetOneEmployeeSchedule({
+        empid: employeeId,
+        sdate: fromDate,
+      });
+
+      console.log("Fetched Employee Schedule Response:", response);
+
+      // Check if response exists and parse it if needed
+      let scheduleData = response;
+
+      // If response is a string (JSON), parse it
+      if (typeof response === "string") {
+        try {
+          scheduleData = JSON.parse(response);
+        } catch (e) {
+          console.error("Error parsing response:", e);
+        }
+      }
+
+      // Ensure we have an array to work with
+      if (!Array.isArray(scheduleData)) {
+        scheduleData = scheduleData ? [scheduleData] : [];
+      }
+
+      if (scheduleData.length > 0) {
+        // Map the response data to match the exact API structure
+        const formattedSchedule = scheduleData.map((schedule) => ({
+          employeeID: schedule.employeeID || "",
+          empCode: schedule.empCode || "",
+          empName: schedule.empName || "",
+          startDate: schedule.startDate || "",
+          startTime: schedule.startTime || "",
+          pickFacilityID: schedule.pickFacilityID || 0,
+          endDate: schedule.endDate || "",
+          endTime: schedule.endTime || "",
+          dropFacilityID: schedule.dropFacilityID || 0,
+          dropadflag: schedule.dropadflag || 0,
+          pickadflag: schedule.pickadflag || 0,
+          lastUpdatedBy: schedule.lastUpdatedBy,
+          lastUpdatedAt: schedule.lastUpdatedAt,
+          LastUpdate: schedule.LastUpdate,
+          TPTFor: schedule.TPTFor || 0,
+          Gender: schedule.Gender || "",
+        }));
+
+        setEmployeeSchedule(formattedSchedule);
+
+        // Log the formatted data
+        console.log("Formatted Employee Schedule:", formattedSchedule);
+
+        // Return the formatted data for immediate use if needed
+        return formattedSchedule;
+      } else {
+        setEmployeeSchedule([]);
+        console.log("No schedule data found");
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching employee schedule:", error);
+      setEmployeeSchedule([]);
+      return [];
+    }
+  };
+  // ... existing code ...
+  const handleLoginFacilityChangeInModal = async (e) => {
+    const newFacilityId = e.target.value;
+    setSelectedloginfacility(newFacilityId);
+
+    // If we have an employee schedule, fetch the shift times for the selected employee with the new facility
+    if (employeeSchedule && employeeSchedule.length > 0) {
+      await fetchPickShiftTimes(employeeSchedule[0].employeeID);
+    }
+  };
+  // ... existing code ...
+  const fetchPickShiftTimes = async (employeeId) => {
+    try {
+      const fromDate = document.getElementById("fromDate").value;
+      // Get the pickFacilityID from the employee schedule if available
+      const pickFacilityID =
+        employeeSchedule && employeeSchedule.length > 0
+          ? employeeSchedule[0].pickFacilityID
+          : selectedloginfacility;
+
+      const response = await apiService.GetPickShiftTime({
+        facilityid: pickFacilityID,
+        sdate: fromDate,
+        empid: employeeId,
+        processid: "0", // Using "0" as the default process ID
+      });
+
+      console.log("Available Shift Times`:", response);
+
+      // Parse the JSON string if response is a string
+      let parsedResponse = response;
+      if (typeof response === "string") {
+        try {
+          parsedResponse = JSON.parse(response);
+        } catch (e) {
+          console.error("Error parsing shift times JSON:", e);
+          parsedResponse = [];
+        }
+      }
+
+      // Ensure we have an array to work with
+      const shiftTimesArray = Array.isArray(parsedResponse)
+        ? parsedResponse
+        : [];
+      setAvailableShiftTimes(shiftTimesArray);
+
+      return shiftTimesArray;
+    } catch (error) {
+      console.error("Error fetching shift times:", error);
+      setAvailableShiftTimes([]);
+      return [];
+    }
+  };
+  // Add a new function to fetch logout shift times
+  const fetchDropShiftTimes = async (employeeId, facilityId = null) => {
+    try {
+      const fromDate = document.getElementById("fromDate").value;
+      // Use the provided facilityId or fall back to the selected one
+      const dropFacilityID =
+        facilityId ||
+        (employeeSchedule && employeeSchedule.length > 0
+          ? employeeSchedule[0].dropFacilityID
+          : selectedlogoutfacility);
+
+      // Get the process ID from the employee schedule if available
+      const processId =
+        employeeSchedule &&
+          employeeSchedule.length > 0 &&
+          employeeSchedule[0].processId
+          ? employeeSchedule[0].processId
+          : selectedProcess || "0";
+
+      const response = await apiService.GetDropShiftTime({
+        facilityid: dropFacilityID,
+        sdate: fromDate,
+        callfrom: "A", // or whatever value is appropriate for your API
+        empid: employeeId,
+        processid: processId,
+      });
+
+      console.log("Available Logout Shift Times:", response);
+
+      // Parse the JSON string if response is a string
+      let parsedResponse = response;
+      if (typeof response === "string") {
+        try {
+          parsedResponse = JSON.parse(response);
+        } catch (e) {
+          console.error("Error parsing logout shift times JSON:", e);
+          parsedResponse = [];
+        }
+      }
+
+      // Ensure we have an array to work with
+      const shiftTimesArray = Array.isArray(parsedResponse)
+        ? parsedResponse
+        : [];
+
+      // Store the logout shift times in state
+      setAvailableLogoutShiftTimes(shiftTimesArray);
+      return shiftTimesArray;
+    } catch (error) {
+      console.error("Error fetching logout shift times:", error);
+      setAvailableLogoutShiftTimes([]);
+      return [];
+    }
+  };
+  // Update the handleLogoutFacilityChangeInModal function to fetch logout shift times
+  const handleLogoutFacilityChangeInModal = async (e) => {
+    const newFacilityId = e.target.value;
+    setSelectedlogoutfacility(newFacilityId);
+
+    // If we have an employee schedule, fetch the logout shift times for the selected employee with the new facility
+    if (employeeSchedule && employeeSchedule.length > 0) {
+      await fetchDropShiftTimes(employeeSchedule[0].employeeID, newFacilityId);
+    }
+  };
+  // Add this function to fetch employee trips
+  const fetchEmployeeTrips = async (employeeId, startDate) => {
+    try {
+      // Format the date as needed by the API (YYYY-MM-DD)
+      let formattedDate = startDate;
+      if (
+        startDate &&
+        typeof startDate === "string" &&
+        !startDate.includes("-")
+      ) {
+        // If date is not in YYYY-MM-DD format, convert it
+        const dateParts = startDate.split("/");
+        if (dateParts.length === 3) {
+          formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+        }
+      }
+
+      console.log(
+        "Fetching trips for employee:",
+        employeeId,
+        "date:",
+        formattedDate
+      );
+
+      const response = await apiService.GetMyTrips({
+        empid: employeeId,
+        sDate: formattedDate,
+        eDate: formattedDate, // Using same date for start and end to get trips for a specific day
+      });
+
+      console.log("Employee Trips API Response:", response);
+
+      // Parse the response if it's a string
+      let tripsData = response;
+      if (typeof response === "string") {
+        try {
+          tripsData = JSON.parse(response);
+        } catch (e) {
+          console.error("Error parsing trips data:", e);
+          tripsData = [];
+        }
+      }
+
+      // Ensure we have an array
+      const tripsArray = Array.isArray(tripsData) ? tripsData : [];
+
+      // Update state with the trips data
+      setEmployeeTrips(tripsArray);
+
+      return tripsArray;
+    } catch (error) {
+      console.error("Error fetching employee trips:", error);
+      setEmployeeTrips([]);
+      return [];
+    }
+  };
+  // Add a function to handle trip icon click
+  const handleTripIconClick = async (employee, day) => {
+    try {
+      // Get the date for the selected day from weekDays array
+      const selectedDate = weekDays[day]?.fullDate;
+      console.log("Selected date for trips:", selectedDate);
+
+      // Set the selected employee
+      setSelectedEmployeeForTrips({
+        id: employee.EmployeeID,
+        name: employee.EmpName,
+        code: employee.EmpCode || "",
+        date: selectedDate,
+      });
+
+      // Fetch trips for the selected employee and date
+      await fetchEmployeeTrips(employee.EmployeeID, selectedDate);
+
+      // Open the trips modal
+      setIsTripsModalOpen(true);
+
+      // Ensure the modal is shown
+      const tripsModal = document.getElementById("trips");
+      if (tripsModal && !tripsModal.classList.contains("show")) {
+        const bsModal = new bootstrap.Offcanvas(tripsModal);
+        bsModal.show();
+      }
+    } catch (error) {
+      console.error("Error handling trip icon click:", error);
+    }
+  };
+  const fetchRoutesDetails = async (routeId) => {
+    //setLoading(true);
+    setError(null);
+
+    const params = {
+      empid: 0, // Static empid as per your requirement
+      sDate: document.getElementById("fromDate").value, // Current date in YYYY-MM-DD format
+      triptype: "", // Empty string as per your requirement
+      routeid: routeId, // Dynamic routeid based on user selection
+    };
+    console.log("Fetching route details with params:", params); // Log parameters
+
+    try {
+      let data = await apiService.GetMyRoutesDetails(params);
+      data = JSON.parse(data);
+      console.log("Fetched GetMyRoutesDetails :", data);
+      // Check if the response contains the expected data
+      if (data && Array.isArray(data)) {
+        console.log("this is data", data);
+        setRouteDetails(data); // Set the state with the correct property
+      } else {
+        setRouteDetails([]); // Set to empty array if no details found
+      }
+    } catch (err) {
+      setError(err);
+      console.error("Error fetching route details:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const resetFormValues = () => {
+    // Reset process name to first option
+    const processDropdown = document.getElementById("ddlProcess");
+    if (processDropdown) {
+      processDropdown.value = processes[0]?.ProcessId || "";
+      setSelectedProcess(processes[0]?.ProcessId || "");
+    }
+
+    // Reset dates to default
+    const fromDateInput = document.getElementById("fromDate");
+    const toDateInput = document.getElementById("toDate");
+    if (fromDateInput && toDateInput) {
+      fromDateInput.value = lockDetails.lockSDate || new Date().toISOString().split('T')[0];
+      toDateInput.value = addDay(lockDetails.lockSDate, lockDetails.lockDiffDays - 2) || new Date().toISOString().split('T')[0];
+    }
+
+    // Reset weekly off to default
+    setWeekendDays({
+      sat: true,
+      sun: true
+    });
+
+    // Reset login and logout shifts to first options
+    const loginShiftDropdown = document.getElementById("ddlNewLoginShift");
+    const logoutShiftDropdown = document.getElementById("ddlNewLogoutShift");
+    if (loginShiftDropdown && loginShiftDropdown.options.length > 0) {
+      loginShiftDropdown.value = loginShiftDropdown.options[0].value;
+      setSelectedShiftTime(loginShiftDropdown.options[0].value);
+    }
+    if (logoutShiftDropdown && logoutShiftDropdown.options.length > 0) {
+      logoutShiftDropdown.value = logoutShiftDropdown.options[0].value;
+      setSelectedLogoutShiftTime(logoutShiftDropdown.options[0].value);
+    }
+  };
   const handleSubmit = async () => {
     const selectedEmployees = mgrassociate
       .filter((emp) => emp.isChecked)
       .map((emp) => emp.EmployeeID);
+    // Check if any employees are selected
+    if (selectedEmployees.length === 0) {
+      toastService.error(
+        "Please select at least one employee and fill in all required fields before saving."
+      );
+      return; // Exit the function if no employees are selected
+    }
 
     const params = {
       empID: selectedEmployees, // Assuming you have the employee ID from the session
@@ -353,10 +915,10 @@ const MySchedule = () => {
       facilityOut: selectedlogoutfacility,
       logIn: document.getElementById("ddlNewLoginShift").value,
       logOut: document.getElementById("ddlNewLogoutShift").value,
-      WeeklyOff: weekendDays.sat || weekendDays.sun ? "1" : "0", // Example logic for weekly off
+      WeeklyOff: weekendDays.sat || weekendDays.sun ? "7,1" : "0", // Example logic for weekly off
       userID: sessionManager.getUserSession().ID, // Assuming you have the user ID from the session
-      weekendlogin: weekendDays.sat ? "1" : "0",
-      weekendlogout: weekendDays.sun ? "1" : "0",
+      weekendlogin: weekendDays.sat ? "0" : "0",
+      weekendlogout: weekendDays.sun ? "0" : "0",
       pickadflag: "1", // Replace with actual logic if needed
       dropadflag: "1", // Replace with actual logic if needed
     };
@@ -364,13 +926,26 @@ const MySchedule = () => {
     try {
       const response = await apiService.InsertNewSchedule(params);
       console.log("Schedule saved successfully:", response);
-      // Optionally, you can close the offcanvas or reset the form here
+      //alert("Record saved successfully!"); // Alert for successful save
+      toastService.success("Record Saved successfully!"); // Show success toast
+      const offcanvasElement = document.getElementById("Employee_Shift");
+      offcanvasElement.classList.remove("show"); // Hide the offcanvas
+        // Reset form values after offcanvas is hidden
+        resetFormValues();
+      
+      // Refresh the main table data
+      await fetchMgrSchedule(); // Call the function to refresh the main table data
     } catch (error) {
       console.error("Error saving schedule:", error);
+      //alert("Error saving schedule. Please try again."); // Alert for error
+      toastService.error("Error saving schedule. Please try again."); // Show error toast
     }
   };
+  const handleReplicateClick = () => {
+    navigate('/ReplicateSchedule');
+  };
+  // Function to refresh trip data
 
-  const navigate = useNavigate();
 
   return (
     <div className="container-fluid p-0">
@@ -382,51 +957,54 @@ const MySchedule = () => {
         <div className="row">
           <div className="col-lg-12">
             <div className="row">
-              <div className="col-4">
-                <button type="button" className="btn btn-dark me-3" onClick={() => navigate("/ReplicateSchedule")}>
+              <div className="col-12">
+                <button type="button" className="btn btn-dark me-3" onClick={handleReplicateClick}>
                   Replicate Schedule
                 </button>
-                <button type="button" className="btn btn-light">
+                {/* <button type="button" className="btn btn-light">
                   Roster Bulk Upload
-                </button>
-              </div>
-              <div className="col-1">
-                <label className="form-label">Manager</label>
-              </div>
-              <div className="col-2">
-                <select
-                  className="form-select"
-                  id="ddlManager"
-                  value={selectedManager}
-                  onChange={handleManagerChange}
-                >
-                  {managers.map((manager) => (
-                    <option key={manager.MgrId} value={manager.MgrId}>
-                      {manager.ManagerName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-1">
-                <label className="form-label">From Date</label>
-              </div>
-              <div className="col-2">
-                <input
-                  type="date"
-                  className="form-control"
-                  defaultValue={new Date().toISOString().split("T")[0]}
-                  id="fromDate"
-                  onChange={onchangedFromDate}
-                />
+                </button> */}
               </div>
             </div>
           </div>
         </div>
-
         {/* Schedule Table */}
         <div className="row">
           <div className="col-12">
             <div className="card_tb">
+              <div class="row mb-3">
+                <div class="col-3">
+                  {/* <div className="col-1"> */}
+                  <label className="form-label">Manager</label>
+                  {/* </div>
+                  <div className="col-2"> */}
+                  <select
+                    className="form-select"
+                    id="ddlManager"
+                    value={selectedManager}
+                    onChange={handleManagerChange}
+                  >
+                    {managers.map((manager) => (
+                      <option key={manager.MgrId} value={manager.MgrId}>
+                        {manager.ManagerName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-3">
+                  <label className="form-label">From Date</label>
+                  {/* </div>
+                  <div className="col-2"> */}
+                  <input
+                    type="date"
+                    className="form-control"
+                    defaultValue={new Date().toISOString().split("T")[0]}
+                    id="fromDate"
+                    onChange={onchangedFromDate}
+                  />
+                </div>
+              </div>
+              {/* </div> */}
               <div className="table-responsive">
                 <table className="table" id="mgrschedule">
                   <thead>
@@ -453,38 +1031,110 @@ const MySchedule = () => {
                       </tr>
                     ) : (
                       currentItems.map((employee, index) => (
-                        <tr key={index} className={index > 0 ? "column" : ""}>
+                        <tr
+                          key={index}
+                          className={`${index > 0 ? "column" : ""} ${employee.geoCode !== "Y" || employee.tptReq !== "Y" ? "disabled-row" : ""
+                            }`}
+                        >
                           <td>
                             <span className="text-muted">
                               {employee.EmpName}
                             </span>
                             {employee.geoCode !== "Y" && (
-                              <span className="material-icons md-18 text-danger mx-2">
+                              <span className="material-icons md-18 text-danger mx-2" title="NoGeocode">
                                 location_off
                               </span>
                             )}
                             {employee.tptReq !== "Y" && (
-                              <span className="material-icons md-18 text-danger">
+                              <span className="material-icons md-18 text-danger" title="NoTransport">
                                 no_transfer
                               </span>
                             )}
                           </td>
-                          {/* Time slots */}
                           {[0, 1, 2, 3, 4, 5, 6].map((day) => (
                             <td key={day} id={employee.EmployeeID}>
-                              <a href="#!" onClick={()=>handleEmployeeShiftClick(employee)}>
-                                {
-                                  employee[`SETime${day}`]
-                                    .split("!")[0]
-                                    .split("<BR>")[0]
-                                }
-                                <br />
-                                {
-                                  employee[`SETime${day}`]
-                                    .split("!")[0]
-                                    .split("<BR>")[1]
-                                }
-                              </a>
+                              {employee.geoCode !== "Y" || employee.tptReq !== "Y" ? (
+                                // Read-only view for disabled rows
+                                <>
+                                  <span>
+                                    {employee[`SETime${day}`].split("!")[0].split("<BR>")[0]}
+                                    <br />
+                                    {employee[`SETime${day}`].split("!")[0].split("<BR>")[1]}
+                                  </span>
+                                  {(() => {
+                                    const timeString = employee[`SETime${day}`]?.split("!")[0];
+                                    const [pickupTime, dropTime] = timeString?.split("<BR>") || [];
+                                    const showIcon = employee[`SETime${day}`]?.split("!")[1] === "true";
+
+                                    const extractTime = (str) => {
+                                      if (!str) return null;
+                                      const timeMatch = str.match(/\d{4}/);
+                                      return timeMatch ? timeMatch[0] : null;
+                                    };
+
+                                    const pickupTimeValue = extractTime(pickupTime);
+                                    const dropTimeValue = extractTime(dropTime);
+
+                                    return (pickupTimeValue || dropTimeValue) && showIcon ? (
+                                      <a
+                                        href="#!"
+                                        className="d-block"
+                                        data-bs-toggle="offcanvas"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          handleTripIconClick(employee, day);
+                                        }}
+                                        data-bs-target="#trips"
+                                      >
+                                        <img src="images/icons/car.png" alt="" />
+                                      </a>
+                                    ) : null;
+                                  })()}
+                                </>
+                              ) : (
+                                // Interactive view for enabled rows
+                                <>
+                                  <a
+                                    href="#!"
+                                    data-bs-toggle="offcanvas"
+                                    data-bs-target="#Employee_Shift"
+                                    onClick={() => handleEmployeeShiftClick(employee, day)}
+                                  >
+                                    {employee[`SETime${day}`].split("!")[0].split("<BR>")[0]}
+                                    <br />
+                                    {employee[`SETime${day}`].split("!")[0].split("<BR>")[1]}
+                                  </a>
+                                  {(() => {
+                                    const timeString = employee[`SETime${day}`]?.split("!")[0];
+                                    const [pickupTime, dropTime] = timeString?.split("<BR>") || [];
+                                    const showIcon = employee[`SETime${day}`]?.split("!")[1] === "true";
+
+                                    const extractTime = (str) => {
+                                      if (!str) return null;
+                                      const timeMatch = str.match(/\d{4}/);
+                                      return timeMatch ? timeMatch[0] : null;
+                                    };
+
+                                    const pickupTimeValue = extractTime(pickupTime);
+                                    const dropTimeValue = extractTime(dropTime);
+
+                                    return (pickupTimeValue || dropTimeValue) && showIcon ? (
+                                      <a
+                                        href="#!"
+                                        className="d-block"
+                                        data-bs-toggle="offcanvas"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          handleTripIconClick(employee, day);
+                                        }}
+                                        data-bs-target="#trips"
+                                      >
+                                        <img src="images/icons/car.png" alt="" />
+                                      </a>
+                                    ) : null;
+                                  })()}
+                                </>
+                              )}
                             </td>
                           ))}
                         </tr>
@@ -594,82 +1244,325 @@ const MySchedule = () => {
 
       {/* <!-- Employee Shift Detail --> */}
       <div
-        className={`offcanvas offcanvas-end ${isEmployeeShiftOpen ? 'show' : ''}`}
+        class={`offcanvas offcanvas-end ${isEmployeeShiftOpen ? "show" : ""}`}
         tabindex="-1"
         id="Employee_Shift"
         aria-labelledby="offcanvasRightLabel"
-         data-bs-backdrop="true"
+        data-bs-backdrop="true"
       >
-        <div className="offcanvas-header bg-secondary text-white offcanvas-header-lg">
-          <h5 className="subtitle fw-normal">
-            Employee Shift Detail - TMP Sharat Jain
+        <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
+          <h5 class="subtitle fw-normal">
+            Employee Shift Detail -{" "}
+            {employeeSchedule && employeeSchedule.length > 0
+              ? `${employeeSchedule[0].empCode} ${employeeSchedule[0].empName} `
+              : "Loading..."}
           </h5>
           <button
             type="button"
-            className="btn-close btn-close-white"
+            class="btn-close btn-close-white"
             data-bs-dismiss="offcanvas"
-            aria-label="Close" onClick={() => setIsEmployeeShiftOpen(false)}
+            aria-label="Close"
+            onClick={() => setIsEmployeeShiftOpen(false)}
           ></button>
         </div>
-        <div className="offcanvas-body px-4">
-          <div className="row">
-            <div className="col-12">
+        <div class="offcanvas-body px-4">
+          <div class="row">
+            <div class="col-12">
               <div className="alert  alert-light offcanvas_alert" role="alert">
-                <small>
-                  * Login. Last Updated By - Sharat Jain (TMP123) | At - Jan 3
-                  2025 3:16 PM
-                </small>
-                <small>
-                  * Logout. Last Updated By - Sharat Jain (TMP123) | At - Jan 3
-                  2025 3:16 PM
-                </small>
+                {employeeSchedule && employeeSchedule.length > 0 && (
+                  <>
+                    <small>
+                      * Login. Last Updated By -{" "}
+                      {employeeSchedule[0].lastUpdatedBy || "N/A"}| At -{" "}
+                      {employeeSchedule[0].lastUpdatedAt
+                        ? new Date(
+                          employeeSchedule[0].lastUpdatedAt
+                        ).toLocaleString()
+                        : "N/A"}
+                    </small>
+                    <small>
+                      * Logout. Last Updated By -{" "}
+                      {employeeSchedule[0].lastUpdatedBy || "N/A"} | At -{" "}
+                      {employeeSchedule[0].lastUpdatedAt
+                        ? new Date(
+                          employeeSchedule[0].lastUpdatedAt
+                        ).toLocaleString()
+                        : "N/A"}
+                    </small>
+                  </>
+                )}
               </div>
             </div>
-            <div className="col-12 mb-3">
-              <ul className="offcanvas_list">
-                <li>
-                  <small>Employee ID</small> TMP123
-                </li>
-                <li>
-                  <small>Name</small> Sharat Jain
-                </li>
-                <li>
-                  <small>Shift Date</small> Friday, January 3, 2025
-                </li>
+            <div class="col-12 mb-3">
+              <ul class="offcanvas_list">
+                {employeeSchedule && employeeSchedule.length > 0 && (
+                  <>
+                    <li>
+                      <small>Employee ID</small> {employeeSchedule[0].empCode}
+                    </li>
+                    <li>
+                      <small>Name</small> {employeeSchedule[0].empName}
+                    </li>
+                    <li>
+                      <small>Shift Date</small>{" "}
+                      {employeeSchedule[0].startDate
+                        ? new Date(
+                          employeeSchedule[0].startDate
+                        ).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                        : "N/A"}
+                    </li>
+                    <li>
+                      <small>Gender</small> {employeeSchedule[0].Gender}
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
             <div className="col-6 mb-3">
-              <label className="form-label">Select Log-In</label>
-              <select className="form-select">
-                <option selected>GGN</option>
+              <label className="form-label">Select Log-In Facility</label>
+              <select
+                className="form-select"
+                value={selectedloginfacility}
+                onChange={handleLoginFacilityChangeInModal}
+              >
+                {loginFacilities.map((facility) => (
+                  <option key={facility.Id} value={facility.Id}>
+                    {facility.facilityName || facility.Name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="col-6 mb-3">
-              <label className="form-label">Select Log-Out</label>
-              <select className="form-select">
-                <option selected>GGN</option>
+              <label className="form-label">Select Log-Out Facility</label>
+              <select
+                className="form-select"
+                value={selectedlogoutfacility}
+                onChange={(e) => setSelectedlogoutfacility(e.target.value)}
+              >
+                {logoutFacilities.map((facility) => (
+                  <option key={facility.Id} value={facility.Id}>
+                    {facility.facilityName || facility.Name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="col-6">
-              <select className="form-select">
-                <option>Select</option>
+              {/* <label className="form-label">Login Shift Time</label> */}
+              <select
+                className="form-select"
+                id="loginShiftDropdown"
+                value={selectedShiftTime}
+                onChange={(e) => setSelectedShiftTime(e.target.value)}
+              >
+                <option value="">NA</option>
+                {Array.isArray(availableShiftTimes) &&
+                  availableShiftTimes.length > 0
+                  ? availableShiftTimes.map((shift) => (
+                    <option
+                      key={shift.shiftTime}
+                      value={shift.ShiftValue || shift.shiftTime}
+                    >
+                      {shift.shiftTime}
+                    </option>
+                  ))
+                  : // If no available shift times, but we have a selected time, add it as an option
+                  selectedShiftTime && (
+                    <option value={selectedShiftTime}>
+                      {selectedShiftTime}
+                    </option>
+                  )}
               </select>
             </div>
-            <div className="col-6">
-              <select className="form-select">
-                <option>Select</option>
+            <div class="col-6">
+              <select
+                className="form-select"
+                id="logoutShiftDropdown"
+                value={selectedLogoutShiftTime}
+                onChange={(e) => setSelectedLogoutShiftTime(e.target.value)}
+              >
+                <option value="">NA</option>
+                {Array.isArray(availableLogoutShiftTimes) &&
+                  availableLogoutShiftTimes.length > 0
+                  ? availableLogoutShiftTimes.map((shift) => (
+                    <option
+                      key={shift.shiftTime}
+                      value={shift.ShiftValue || shift.shiftTime}
+                    >
+                      {shift.shiftTime}
+                    </option>
+                  ))
+                  : // If no available shift times, but we have a selected time, add it as an option
+                  selectedLogoutShiftTime && (
+                    <option value={selectedLogoutShiftTime}>
+                      {selectedLogoutShiftTime}
+                    </option>
+                  )}
               </select>
             </div>
           </div>
         </div>
-        <div className="offcanvas-footer">
-          <button className="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => setIsEmployeeShiftOpen(false)}>
+        <div class="offcanvas-footer">
+          <button
+            class="btn btn-outline-secondary"
+            data-bs-dismiss="offcanvas"
+            onClick={() => setIsEmployeeShiftOpen(false)}
+          >
             Cancel
           </button>
-          <button className="btn btn-success mx-3">Submit</button>
+          <button class="btn btn-success mx-3">Submit</button>
         </div>
       </div>
       {/* {<!-- Employee Shift Detail  -->} */}
+      {/* <!-- Trips Detail --> */}
+      <div
+        className={`offcanvas offcanvas-end ${isTripsModalOpen ? "show" : ""}`}
+        tabindex="-1"
+        id="trips"
+        aria-labelledby="offcanvasRightLabel"
+      >
+        <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
+          <h5 class="subtitle fw-normal">Trips of the days</h5>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"
+            onClick={() => {
+              setIsTripsModalOpen(false);
+              setSelectedRouteId(null); // Reset the selected route ID to hide the collapsible section
+
+            }}
+          ></button>
+        </div>
+        <div class="offcanvas-body p-2">
+          <div class="row">
+            <div className="col-12">
+              <table class="table trip_tb">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Trip ID</th>
+                    <th>Trip Date</th>
+                    <th>Trip Type</th>
+                    <th>Shift</th>
+                    <th>Facility</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employeeTrips.length > 0 ? (
+                    employeeTrips.map((trip, index) => (
+                      <React.Fragment key={index}>
+                        <tr>
+                          <td>
+                            {trip.routeid &&
+                              (trip.routeid.includes("Trip Not Generated") ||
+                                trip.routeid.includes("Not Finalized")) ? (
+                              <span>{trip.routeid.replace(/<br>/g, "-")}</span> // Display as read-only
+                            ) : (
+                              <a
+                                href="#"
+                                onClick={() => {
+                                  setSelectedRouteId(trip.routeid);
+                                  fetchRoutesDetails(trip.routeid); // Fetch route details on click
+                                }}
+                                data-bs-toggle="collapse"
+                                data-bs-target={`#collapseExample-${trip.id}`} // Unique target for each trip
+                              >
+                                {trip.routeid && trip.routeid.includes("<br>")
+                                  ? trip.routeid.replace(/<br>/g, "-").split("<br>")[0]
+                                  : trip.routeid}
+                              </a>
+                            )}
+                          </td>
+                          <td>{trip.shiftdate || "N/A"}</td>
+                          <td>
+                            {" "}
+                            <span id="tripType"
+                              className={`badge text-bg-${trip.triptype === "PickUp"
+                                ? "primary"
+                                : "danger"
+                                } rounded-pill text-uppercase`}
+                            >
+                              {trip.triptype || "N/A"}
+                            </span>
+                          </td>
+                          <td>{trip.shifttime || "N/A"}</td>
+                          <td>{trip.facility || "N/A"}</td>
+                          <td>
+                            {" "}
+                            {trip.enableds === "TRUE" && (
+                              <img
+                                src="images/icons/close.png"
+                                alt="Cancel Trip"
+                                onClick={() => handleCancelTrip(trip)}
+                              />
+                            )}
+                          </td>
+                        </tr>
+                        {selectedRouteId === trip.routeid && (
+                          <tr className="collapse show" id={`collapseExample-${trip.id}`}>
+                            <td colSpan="6" className="p-2 bg-secondary">
+                              <table className="table trip_tb mb-0">
+                                <thead className="table-dark">
+                                  <tr>
+                                    <th>Employee Detail</th>
+                                    <th>G</th>
+                                    <th>Location</th>
+                                    <th>S No.</th>
+                                    <th>ETA</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {Array.isArray(routeDetails) && routeDetails.length > 0 ? (
+                                    routeDetails.map((detail, index) => (
+                                      <tr key={index}>
+                                        <td>{detail.empName || 'N/A'}</td>
+                                        <td>
+                                          <span className={`badge ${detail.Gender === 'M' ? 'bg-primary-subtle' : 'bg-danger-subtle'} rounded-pill text-dark`}>
+                                            {detail.Gender || 'N/A'}
+                                          </span>
+                                        </td>
+                                        <td>{detail.address || 'N/A'}</td>
+                                        <td>{detail.stopNo || 'N/A'}</td>
+                                        <td>{detail.ETAhh !== null && detail.ETAmm !== null ? `${detail.ETAhh}:${detail.ETAmm}` : 'N/A'}</td>
+                                      </tr>
+                                    ))
+                                  ) : (
+                                    <tr>
+                                      <td colSpan="5" className="text-center">No route details available.</td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="text-center">
+                        No trips available
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {/* <!-- <div class="offcanvas-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancel</button>
+        <button class="btn btn-success mx-3">Submit</button>
+      </div> --> */}
+      </div>
+      {/* <!-- Trips Detail  --> */}
+
       {/* New Schedule Modal */}
       <div
         className="offcanvas offcanvas-end offcanvas_long"
@@ -962,14 +1855,16 @@ const MySchedule = () => {
                       >
                         <option value="0">Select</option>
                         <option value="N/A">N/A</option>
-                        {LoginWeekEndShiftPickup.map((loginweekendshiftpickup) => (
-                          <option
-                            key={loginweekendshiftpickup.shiftTime}
-                            value={loginweekendshiftpickup.shiftTime}
-                          >
-                            {loginweekendshiftpickup.shiftTime}
-                          </option>
-                        ))}
+                        {LoginWeekEndShiftPickup.map(
+                          (loginweekendshiftpickup) => (
+                            <option
+                              key={loginweekendshiftpickup.shiftTime}
+                              value={loginweekendshiftpickup.shiftTime}
+                            >
+                              {loginweekendshiftpickup.shiftTime}
+                            </option>
+                          )
+                        )}
                       </select>
                     </div>
                     <div className="col-6">
@@ -1080,7 +1975,7 @@ const MySchedule = () => {
           >
             Cancel
           </button>
-          <button className="btn btn-success mx-3" onClick={handleSubmit}>
+          <button className="btn btn-success mx-3" id="SubmitSchedule" onClick={handleSubmit}>
             Submit
           </button>
         </div>

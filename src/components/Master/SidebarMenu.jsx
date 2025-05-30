@@ -1,115 +1,194 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { apiService } from '../../services/api';
-
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const SidebarMenu = () => {
-  const [menuItems, setMenuItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [activeMenu, setActiveMenu] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
+  // Determine which menu should be active based on current path
   useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        const userID = sessionStorage.getItem('ID');
-        const response = await apiService.Spr_GetMenuItem({ userID });
+    const path = location.pathname;
+    // Check if current path matches any menu category
+    if ([
+      "/dashboard",
+      "/AdhocManagement",
+      "/MyAdhocRequest",
+      "/MyFeedback",
+      "/MySchedule",
+      "/ReplicateSchedule",
+      "/ViewMyRoutes",
+    ].includes(path)) {
+      setActiveMenu("etms");
+    } else if ([
+      "/ManageEmployee",
+      "/FacilityMaster",
+      "/DriverMaster",
+      "/VehicleMaster",
+      "/VehicleTypeMaster",
+      "/VendorMaster",
+      "/GuardMaster",
+      "/Location",
+    ].includes(path)) {
+      setActiveMenu("master");
+    } else if ([
+      "/ManageRoute",
+      "/CostMaster",
+      "/CostMasterPackage",
+      "/VendorWiseBilling",
+      "/SummaryPackageReport",
+      "/PenaltyMaster",
+      "/ComplianceCheck",
+      "/DetailedBillingReport",
+      "/EmployeeWiseBillingReport",
+    ].includes(path)) {
+      setActiveMenu("transport");
+    }
+  }, [location.pathname]);
 
-        // console.log('Menu Items:', response); 
-
-        // Organize menu items into hierarchy
-        const organizedMenu = organizeMenuItems(response);
-        setMenuItems(organizedMenu);
-      } catch (err) {
-        console.error('Failed to fetch menu items:', err);
-        setError('Failed to load menu items');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMenuItems();
-  }, []);
-
-  // Function to organize menu items into parent-child hierarchy
-  const organizeMenuItems = (items) => {
-    const mainMenu = items.filter(item => item.ParentId === 0 || !item.ParentId);
-    const subMenus = items.filter(item => item.ParentId !== 0);
-
-    return mainMenu.map(menuItem => ({
-      ...menuItem,
-      subItems: subMenus.filter(subItem => subItem.ParentId === menuItem.MenuId)
-    }));
+  // Check if URL is external
+  const isExternalUrl = (url) => {
+    return url.startsWith("http://") || url.startsWith("https://");
   };
 
-  // Render submenu items
-  const renderSubMenuItems = (subItems) => {
-    if (!subItems || subItems.length === 0) return null;
+  const handleNavigation = (path) => {
+    // Check if it's an external URL
+    if (isExternalUrl(path)) {
+      // Open external URL in new window
+      window.open(path, "_blank", "noopener,noreferrer");
+      return;
+    }
 
-    return (
-      <ul className="submenu">
-        {subItems.map(subItem => (
-          <li key={subItem.MenuId}>
-            <Link
-              to={subItem.MenuURL || '#'}
-              className={location.pathname === subItem.MenuURL ? 'active' : ''}
-            >
-              {subItem.IconClass && (
-                <span className="material-icons"></span>//{subItem.IconClass}
-              )}
-              {subItem.MenuName}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    );
+    // Store the current active menu before navigation
+    const currentActiveMenu = activeMenu;
+
+    // Navigate to the new path
+    navigate(path);
+
+    // Ensure the menu stays open after navigation by restoring the active menu state
+    setTimeout(() => {
+      setActiveMenu(currentActiveMenu);
+    }, 50);
   };
 
-  // Render main menu items with their submenus
-  const renderMenuItems = (items) => {
-    return items.map((item) => (
-      <div key={item.MenuId} className="menu-item">
-        <div className="accordion-item border-0">
-          <a
-            href="#!"
-            className={`accordion-button ${item.subItems?.length ? '' : 'no-submenu'} overline_textB collapsed`}
-            data-bs-toggle={item.subItems?.length ? 'collapse' : ''}
-            data-bs-target={`#collapse${item.MenuId}`}
-            aria-expanded="false"
-            aria-controls={`collapse${item.MenuId}`}
-          >
-            {item.IconClass && (
-              <span className="material-icons">{item.IconClass}</span>
-            )}
-            {item.MenuName}
-          </a>
-          {item.subItems?.length > 0 && (
-            <div
-              id={`collapse${item.MenuId}`}
-              className="accordion-collapse collapse"
-              data-bs-parent="#accordionExample"
-            >
-              {renderSubMenuItems(item.subItems)}
-            </div>
-          )}
-        </div>
+  // Toggle menu function
+  const toggleMenu = (menuId) => {
+    setActiveMenu(activeMenu === menuId ? null : menuId);
+  };
+
+  // ETMS menu items
+  const etmsMenuItems = [
+    { path: "/dashboard", name: "Dashboard" },
+    { path: "/AdhocManagement", name: "Adhoc Management" },
+    { path: "/MyAdhocRequest", name: "My Adhoc Request" },
+    { path: "/MyFeedback", name: "My Feedback" },
+    { path: "/MySchedule", name: "My Schedule" },
+    { path: "/ReplicateSchedule", name: "Replicate Schedule" },
+    { path: "/ViewMyRoutes", name: "View My Routes" },
+  ];
+
+  // Master menu items
+  const masterMenuItems = [
+    { path: "/ManageEmployee", name: "Employee Master" },
+    { path: "/FacilityMaster", name: "Facility Master" },
+    { path: "/DriverMaster", name: "Driver Master" },
+    { path: "/VehicleMaster", name: "Vehicle Master" },
+    { path: "/VehicleTypeMaster", name: "Vehicle Type Master" },
+    { path: "/VendorMaster", name: "Vendor Master" },
+    { path: "/GuardMaster", name: "Guard Master" },
+    { path: "/Location", name: "Location" },
+  ];
+
+  // Transport menu items
+  const transpMenuItems = [
+    { path: "/ManageRoute", name: "Manage Route" },
+    { path: "/CostMaster", name: "Trip Rate Master" },
+    { path: "/CostMasterPackage", name: "Cost Master Package" },
+    { path: "/VendorWiseBilling", name: "Vendor Wise Billing" },
+    { path: "/SummaryPackageReport", name: "Summary Package Report" },
+    { path: "/PenaltyMaster", name: "Penalty Master" },
+    { path: "/ComplianceCheck", name: "Compliance Check" },
+    { path: "/DetailedBillingReport", name: "Detailed Billing Report" },
+    {
+      path: "/EmployeeWiseBillingReport",
+      name: "Employee Wise Billing Report",
+    },
+    {
+      path: "https://etmsonline.in/etmsaccen/RouteUploadExl.aspx",
+      name: "Route Excel Upload",
+    },
+  ];
+
+  // Render menu section
+  const renderMenuSection = (menuId, title, icon, menuItems) => (
+    <div className="accordion-item border-0">
+      <a
+        href="#!"
+        className={`accordion-button overline_textB ${
+          activeMenu === menuId ? "" : "collapsed"
+        }`}
+        onClick={(e) => {
+          e.preventDefault();
+          toggleMenu(menuId);
+        }}
+      >
+        <span className="material-icons">{icon}</span> {title}
+      </a>
+      <div
+        className={`accordion-collapse collapse-smooth ${
+          activeMenu === menuId ? "show" : ""
+        }`}
+      >
+        <ul className="submenu">
+          {menuItems.map((item, index) => (
+            <li key={index}>
+              <a
+                href="#!"
+                className={
+                  !isExternalUrl(item.path) && location.pathname === item.path
+                    ? "active"
+                    : ""
+                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation(); // Stop event from bubbling up
+                  handleNavigation(item.path);
+                }}
+              >
+                {item.name}
+                {isExternalUrl(item.path) && (
+                  <span className="material-icons ms-1" style={{ fontSize: "16px" }}>
+                    open_in_new
+                  </span>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
-    ));
-  };
-
-  if (loading) return <div>Loading menu...</div>;
-  if (error) return <div>Error: {error}</div>;
+    </div>
+  );
 
   return (
     <div className="sidebar">
       <div className="accordion mb-5" id="accordionExample">
-        {renderMenuItems(menuItems)}
+        {renderMenuSection("etms", "My ETMS", "switch_account", etmsMenuItems)}
+        {renderMenuSection("master", "Master", "settings", masterMenuItems)}
+        {renderMenuSection(
+          "transport",
+          "Transport",
+          "directions_car",
+          transpMenuItems
+        )}
       </div>
 
+      {/* Help Card */}
       <div className="cardx help p-3">
         <span className="material-icons mb-3">help</span>
         <p className="overline_text_sm">Need help?</p>
-        <p className="small mt-2 mb-3">Please connect with our support team.</p>
+        <p className="small mt-2 mb-3">
+          Please connect with our support team.
+        </p>
         <div className="d-grid">
           <button className="btn btn-sm btn-outline-secondary fw-bold">
             <small>GET IN TOUCH</small>

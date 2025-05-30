@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Master/SidebarMenu";
 import Notifications from "./Master/Notifications";
-import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
+import "bootstrap/dist/js/bootstrap.bundle.min.js"; // Import Bootstrap JS
+import * as bootstrap from 'bootstrap'; // Add this line to import Bootstrap as a namespace
 import "../components/css/style.css";
 import Header from "./Master/Header";
 import { apiService } from "../services/api";
-import sessionManager from '../utils/SessionManager.js';
-
-import { DataTable } from 'primereact/datatable';
+import sessionManager from "../utils/SessionManager.js";
+import { toastService } from "../services/toastService";
+import { DataTable } from "primereact/datatable";
 import { Column } from 'primereact/column';
-import { Badge } from 'primereact/badge';
-import { Paginator } from 'primereact/paginator';
+import 'primereact/resources/themes/lara-light-blue/theme.css';  // Theme
+import 'primereact/resources/primereact.min.css';                // Core CSS
+import 'primeicons/primeicons.css';                              // Icons
+import { Sidebar as PrimeSidebar } from "primereact/sidebar"; // Renamed to avoid conflict with your Sidebar component
+import { Button } from 'primereact/button'; // Import Button component from PrimeReact
+import { InputText } from 'primereact/inputtext'; // Import InputText component from PrimeReact
+import { InputTextarea } from 'primereact/inputtextarea'; // Import InputTextarea component from PrimeReact
 
 const MyFeedback = () => {
   const [feedbackData, setFeedbackData] = useState([]);
@@ -21,8 +28,10 @@ const MyFeedback = () => {
   const [complaintTypeDropDown, setComplaintTypeDropDown] = useState([]);
   const [isOffcanvasOpen, setIsOffcanvasOpen] = useState(false);
   const [isRaiseFeedbackOpen, setIsRaiseFeedbackOpen] = useState(false); // State for Raise Feedback offcanvas
-  const [feedbackText, setFeedbackText] = useState(''); // State for feedback text
-  const [reopenRemark, setReopenRemark] = useState(''); // State for the remark entered in the offcanvas
+  const [feedbackText, setFeedbackText] = useState(""); // State for feedback text
+  const [reopenRemark, setReopenRemark] = useState(""); // State for the remark entered in the offcanvas
+
+  const [addRaiseFeedback, setAddRaiseFeedback] = useState(false);
 
   const handleReopen = (ticketNo) => {
     setSelectedTicket(ticketNo); // Set the selected ticket number
@@ -31,8 +40,44 @@ const MyFeedback = () => {
   useEffect(() => {
     fetchFeedbackData();
     fetchCategories();
-    refreshData();
-    //fetchComplaintType();
+    
+    // Add event listeners for Bootstrap offcanvas events
+    const reopenOffcanvas = document.getElementById('raise_Reopen');
+    if (reopenOffcanvas) {
+      reopenOffcanvas.addEventListener('hidden.bs.offcanvas', () => {
+        setIsOffcanvasOpen(false);
+        refreshData();
+      });
+    }
+    
+    const feedbackOffcanvas = document.getElementById('raise_Feedback');
+    if (feedbackOffcanvas) {
+      feedbackOffcanvas.addEventListener('hidden.bs.offcanvas', () => {
+        setIsRaiseFeedbackOpen(false);
+        refreshData();
+      });
+    }
+    
+    const ticketOffcanvas = document.getElementById('ticketNumber');
+    if (ticketOffcanvas) {
+      ticketOffcanvas.addEventListener('hidden.bs.offcanvas', () => {
+        // Reset ticket replies when the offcanvas is closed
+        setTicketReplies([]);
+      });
+    }
+    
+    // Cleanup event listeners on component unmount
+    return () => {
+      if (reopenOffcanvas) {
+        reopenOffcanvas.removeEventListener('hidden.bs.offcanvas', () => {});
+      }
+      if (feedbackOffcanvas) {
+        feedbackOffcanvas.removeEventListener('hidden.bs.offcanvas', () => {});
+      }
+      if (ticketOffcanvas) {
+        ticketOffcanvas.removeEventListener('hidden.bs.offcanvas', () => {});
+      }
+    };
   }, []);
 
   const fetchFeedbackData = async () => {
@@ -82,7 +127,9 @@ const MyFeedback = () => {
 
       // Check if ComplaintCategoryID is valid
       if (!ComplaintCategoryID) {
-        throw new Error('ComplaintCategoryID is not available. Please select a category first.');
+        throw new Error(
+          "ComplaintCategoryID is not available. Please select a category first."
+        );
       }
 
       const result = await apiService.Spr_GetComplaintType({
@@ -105,19 +152,30 @@ const MyFeedback = () => {
   const refreshData = () => {
     fetchFeedbackData(); // Refresh feedback data
     fetchCategories(); // Refresh categories
-
   };
   const handleSubmitFeedback = async () => {
-
+    // Get the specific complaint type select element instead of using generic selector
+    const FeedTypeId = document.getElementById("complaintTypeSelect").value;
+    
+    // Check if required fields are filled
+    if (!FeedTypeId) {
+      toastService.error("Please select a complaint type");
+      return;
+    }
+    
+    if (!feedbackText) {
+      toastService.error("Please enter feedback text");
+      return;
+    }
+    
     const ticketNo = selectedTicket; // Assuming you have the selected ticket number
     const desc = feedbackText; // Use the feedbackText state for the description
     const actionid = 0; // Set the appropriate action ID if needed
     const statusid = 0; // Set the appropriate status ID if needed
-    const FeedTypeId = document.querySelector('.form-select').value; // Get selected complaint type ID
     const RaisedDate = new Date().toISOString(); // Current date as raised date
     const RaisedById = sessionManager.getUserSession()?.ID; // Assuming you have the user ID from the session
     const RouteId = ""; // Set the appropriate route ID if needed
-
+    
     const params = {
       ticketNo,
       desc,
@@ -128,16 +186,33 @@ const MyFeedback = () => {
       RaisedById,
       RouteId,
     };
-
+  
     try {
       const response = await apiService.sprInsertFeedBackDetails(params);
       console.log("Feedback submitted successfully:", response);
-      // Optionally, you can show a success message or close the offcanvas
-      setIsRaiseFeedbackOpen(false);
+      toastService.success("Feedback submitted successfully!");
+      
+      // Clear the fields after submission
+      document.getElementById("categorySelect").value = "";
+      document.getElementById("complaintTypeSelect").value = "";
+      document.getElementById("travelDate").value = "";
+      document.getElementById("tripIdSelect").value = "";
+      setFeedbackText(""); // Clear feedback text
+      setIsRaiseFeedbackOpen(false); // Close the offcanvas
+      
+      const offcanvasElement = document.getElementById("raise_Feedback");
+      const closeButton = offcanvasElement.querySelector(
+        '[data-bs-dismiss="offcanvas"]'
+      );
+      if (closeButton) {
+        closeButton.click();
+      }
+      
       refreshData(); // Refresh data if needed
     } catch (error) {
       console.error("Error submitting feedback:", error);
       // Optionally, show an error message to the user
+      toastService.error("Error submitting feedback. Please try again.");
     }
   };
   const handleReopenSave = async () => {
@@ -152,8 +227,11 @@ const MyFeedback = () => {
       const response = await apiService.Spr_sprInsertReopen(params);
       console.log("Reopen Remark submitted successfully:", response);
       // Reset the remark state
-      setReopenRemark('');
+      setReopenRemark("");
       setIsOffcanvasOpen(false); // Close the offcanvas
+      document.getElementById("reopenRemark").value = ""; // Clear the textarea
+      refreshData(); // Refresh data if needed
+
       // Optionally, refresh data or show a success message
     } catch (error) {
       console.error("Error submitting reopen remark:", error);
@@ -161,42 +239,20 @@ const MyFeedback = () => {
     }
   };
 
-
-  const RaisedDateBodyTemplate = (feedback) => {
-    return <>
-      {new Date(feedback.RaisedDate).toLocaleDateString()}
-    </>
+  // Add this function to handle opening the Raise Feedback offcanvas
+  const handleOpenRaiseFeedback = () => {
+    setIsRaiseFeedbackOpen(true);
   };
-
-  // const StatusData = ({ Status }) => {
-  //   const statusClass = Status.toLowerCase() === "open" ? "badge_warning" : "badge_muted";
   
-  //   return (
-  //     <span className={`badgee ${statusClass}`}>
-  //       {Status}
-  //     </span>
-  //   );
-  // };
-  
-
-  const StatusData = ({ Status }) => {
-    return <Badge value={Status} severity={Status.toLowerCase() === "open "? "warning" : "secondary"} />;
-  };
-
-  const ActionData = ({Action}) => {
-    return <Badge value={Action} severity={Action.toLowerCase() === "re-open" ? "danger" : "info"} />;
-  }
-
-  // const ActionData = ({ Action }) => (
-  //   <Badge value={Action} severity={Action.toLowerCase() === "re-open" ? "danger" : "info"} />
-  // );
-  
-
-
   return (
     <div className="container-fluid p-0">
       {/* Header */}
-      <Header pageTitle={"My Feedback"} showNewButton={true} />
+      <Header 
+        pageTitle={"My Feedback"} 
+        showNewButton={true} 
+        //onNewClick={handleOpenRaiseFeedback} // This now has a defined function
+        onNewButtonClick={setAddRaiseFeedback}
+      />
 
       {/* Sidebar */}
       <Sidebar />
@@ -209,9 +265,9 @@ const MyFeedback = () => {
               <div className="col">
                 <div className="cardx p-3 bg-secondary text-white">
                   <h3>
-                    <strong>16</strong>
+                    <strong className="text-white">16</strong>
                   </h3>
-                  <span className="subtitle_sm">Total Feedbacks</span>
+                  <span className="subtitle_sm text-white">Total Feedbacks</span>
                 </div>
               </div>
               <div className="col">
@@ -237,169 +293,237 @@ const MyFeedback = () => {
         {/* Feedback Table */}
         <div className="row">
           <div className="col-12">
-            <div className="card_tb">
-
-              {/* <DataTable value={feedbackData} paginator rows={10} rowsPerPageOptions={[5, 10, 25, 50]} filterDisplay="row" loading={loading} emptyMessage="No customers found." showGridlines stripedRows>
-                <Column sortable filter filterPlaceholder="Search by Ticket No" field="TicketNo" header="Ticket No"></Column>
-                <Column sortable body={RaisedDateBodyTemplate} header="Shift Date"></Column> 
-                <Column sortable field="TypeName" header="Type"></Column>
-                <Column sortable field="Desrp" header="Description"></Column>
-                <Column sortable field="RouteId" header="Route ID"></Column>
-                <Column sortable field="ActionBy" header="Last Action By"></Column>
-                <Column sortable header="Status" body={StatusData}></Column>
-                <Column sortable header="Action"></Column>
-              </DataTable> */}
-
-
-              <table className="table mt-5" id="example">
-                <thead>
-                  <tr>
-                    {/* <th width="4%"></th> */}
-                    <th>Ticket No.</th>
-                    <th>Shift Date</th>
-                    <th>Type</th>
-                    <th>Description</th>
-                    <th>Route ID</th>
-                    <th>Last Action By</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="9" className="text-center">
-                        <div
-                          className="spinner-border text-primary"
-                          role="status"
-                        >
-                          <span className="visually-hidden">Loading...</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : feedbackData.length > 0 ? (
-                    feedbackData.map((feedback, index) => (
-                      <tr
-                        key={index}
-                        className={
-                          feedback.Status.toLowerCase() === "closed"
-                            ? "column"
-                            : ""
-                        }
-                      >
-                        <td>
-                          <a
-                            href="#!"
-                            className="btn-text"
-                            data-bs-toggle="offcanvas"
-                            data-bs-target="#ticketNumber"
-                            aria-controls="offcanvasRight"
-                            onClick={() =>
-                              fetchTicketReplies(feedback.TicketNo)
-                            }
-                          >
-                            <span className="ms-3">{feedback.TicketNo}</span>
-                          </a>
-                        </td>
-                        <td>
-                          {new Date(feedback.RaisedDate).toLocaleDateString()}
-                        </td>
-                        <td>{feedback.TypeName}</td>
-                        <td title={feedback.Desrp} style={{ maxWidth: '200px', overflow: 'hidden', cursor: 'pointer', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {feedback.Desrp}
-                        </td>
-                        <td>{feedback.RouteId}</td>
-                        <td>{`${feedback.ActionBy}`}</td>
-                        <td>
-                          <span
-                            className={`badgee ${feedback.Status.toLowerCase() === "open"
-                              ? "badge_warning"
-                              : "badge_muted"
-                              }`}
-                          >
-                            {feedback.Status}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            data-bs-toggle="offcanvas"
-                            data-bs-target="#raise_Reopen"
-                            aria-controls="offcanvasRightReope"
-                            className={`btn btn-sm ${feedback.Status.toLowerCase() === "closed"
-                              ? "btn-outline-success"
-                              : "btn-outline-danger"}`}
-                            onClick={() => feedback.ReOpenStatus && handleReopen(feedback.TicketNo)}
-                            disabled={!feedback.ReOpenStatus}
-                          >
-                            <span style={{ whiteSpace: 'nowrap' }}>{feedback.StatusText}</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="9" className="text-center">
-                        No feedback data available
-                      </td>
-                    </tr>
+            <div className="card_tb">            
+              <DataTable
+                value={feedbackData}
+                paginator
+                rows={10}
+                loading={loading}
+                emptyMessage="No feedback data available"
+                className="p-datatable-sm"
+                rowClassName={(data) =>
+                  data && data.Status && data.Status.toLowerCase() === "closed" ? 'column' : ''
+                }
+              >
+                <Column
+                  header="Ticket No."
+                  body={(rowData) => (
+                    <a
+                      href="#!"
+                      className="btn-text"
+                      data-bs-toggle="offcanvas"
+                      data-bs-target="#ticketNumber"
+                      aria-controls="offcanvasRight"
+                      onClick={() => fetchTicketReplies(rowData.TicketNo)}
+                    >
+                      <span className="ms-3">{rowData.TicketNo}</span>
+                    </a>
                   )}
-                </tbody>
-              </table>
+                />
+                <Column
+                  field="RaisedDate"
+                  header="Shift Date"
+                  body={(rowData) =>
+                    new Date(rowData.RaisedDate).toLocaleDateString()
+                  }
+                />
+                <Column field="TypeName" header="Type" />
+                <Column
+                  field="Desrp"
+                  header="Description"
+                  body={(rowData) => (
+                    <div
+                      className="position-relative"
+                      title={rowData.Desrp} // Using native HTML title for tooltip
+                      style={{
+                        maxWidth: "200px",
+                        overflow: "hidden",
+                        cursor: "pointer",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      // Remove the ref and onMouseLeave handlers that use bootstrap
+                    >
+                      {rowData.Desrp}
+                    </div>
+                  )}
+                />
+                <Column field="RouteId" header="Route ID" />
+                <Column field="ActionBy" header="Last Action By" />
+                <Column
+                  field="Status"
+                  header="Status"
+                  body={(rowData) => (
+                    <span
+                      className={`badgee ${
+                        rowData && rowData.Status && rowData.Status.toLowerCase() === "open"
+                          ? "badge_warning"
+                          : "badge_muted"
+                      }`}
+                    >
+                      {rowData && rowData.Status ? rowData.Status : "N/A"}
+                    </span>
+                  )}
+                />
+                <Column
+                  header="Action"
+                  body={(rowData) => (
+                    <button
+                      data-bs-toggle="offcanvas"
+                      data-bs-target="#raise_Reopen"
+                      aria-controls="offcanvasRightReope"
+                      className={`btn btn-sm ${
+                        rowData && rowData.Status && rowData.Status.toLowerCase() === "closed"
+                          ? "btn-outline-success"
+                          : "btn-outline-danger"
+                      }`}
+                      onClick={() =>
+                        rowData && rowData.ReOpenStatus && handleReopen(rowData.TicketNo)
+                      }
+                      disabled={!rowData.ReOpenStatus}
+                    >
+                      <span style={{ whiteSpace: "nowrap" }}>
+                        {rowData.StatusText}
+                      </span>
+                    </button>
+                  )}
+                />
+              </DataTable>
             </div>
+
+            
           </div>
         </div>
       </div>
       {/* // Offcanvas component reopen*/}
-      <div className={`offcanvas offcanvas-end ${isOffcanvasOpen ? 'show' : ''}`} tabindex="-1" id="raise_Reopen" aria-labelledby="offcanvasRightReope"
-        onHide={() => { setIsOffcanvasOpen(false); refreshData(); }}>
-        <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
-          <h5 class="subtitle fw-normal">Re-open Remark</h5>
-          <button type="button" class="btn-close btn-close-white" onClick={() => setIsOffcanvasOpen(false)} data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      <div
+        className={`offcanvas offcanvas-end ${isOffcanvasOpen ? "show" : ""}`}
+        tabIndex="-1"
+        id="raise_Reopen"
+        aria-labelledby="offcanvasRightReope"
+      >
+        <div className="offcanvas-header bg-secondary text-white offcanvas-header-lg">
+          <h5 className="subtitle fw-normal">Re-open Remark</h5>
+          <button
+            type="button"
+            className="btn-close btn-close-white"
+            onClick={() => setIsOffcanvasOpen(false)}
+            data-bs-dismiss="offcanvas"
+            aria-label="Close"
+          ></button>
         </div>
-        <div class="offcanvas-body px-4">
-          <div class="row">
+        <div className="offcanvas-body px-4">
+          <div className="row">
             <div className="col-12 mb-3">
               <label className="form-label">Ticket No:</label>
-              <input type="text" className="form-control" value={selectedTicket || ''} readOnly /> {/* Display the selected ticket number */}
+              <input
+                type="text"
+                className="form-control"
+                value={selectedTicket || ""}
+                readOnly
+              />{" "}
+              {/* Display the selected ticket number */}
             </div>
-            <div class="col-12 mb-3">
-              <label class="form-label">Please Enter Reason for Reopening this Ticket:</label>
-              <textarea class="form-control" rows="3" placeholder="Please Select"
+            <div className="col-12 mb-3">
+              <label className="form-label">
+                Please Enter Reason for Reopening this Ticket:
+              </label>
+              <textarea
+                id="reopenRemark"
+                className="form-control"
+                rows="3"
+                placeholder="Please Select"
                 value={reopenRemark} // Bind the textarea value to the state
                 onChange={(e) => setReopenRemark(e.target.value)} // Update state on change
               ></textarea>
             </div>
           </div>
         </div>
-        <div class="offcanvas-footer">
-          <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => setIsOffcanvasOpen(false)}>Cancel</button>
-          <button class="btn btn-success mx-3" onClick={handleReopenSave}>Save</button>
+        <div className="offcanvas-footer">
+          <button
+            className="btn btn-outline-secondary"
+            data-bs-dismiss="offcanvas"
+            onClick={() => setIsOffcanvasOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="btn btn-success mx-3"
+            onClick={() => {
+              handleReopenSave();
+              setIsOffcanvasOpen(false);
+            }}
+          >
+            Save
+          </button>
         </div>
       </div>
 
       {/* // Offcanvas component reopen */}
+
+{/* New My Feedback Prime Sidebar */}
+<PrimeSidebar visible={addRaiseFeedback} position="right" 
+    showCloseIcon={false} 
+    dismissable={false} 
+    style={{width:'25%'}}
+>
+<div className="sidebarHeader d-flex justify-content-between align-items-center sidebarTitle p-0">
+        <h6 className="sidebarTitle">Dummy Prime Sidebar</h6>
+        <Button 
+            icon="pi pi-times" 
+            className="p-button-rounded p-button-text" 
+            onClick={() => {setAddRaiseFeedback(false)}} 
+        />
+    </div>
+    <div className="sidebarBody">
+      Dummy
+    </div>
+    <div className="sidebar-fixed-bottom position-absolute pe-3">
+        <div className="d-flex gap-3 justify-content-end">
+            <Button label="Cancel" className="btn btn-outline-secondary"/>
+            <Button label="Save" className="btn btn-success"/>
+        </div>
+    </div>
+</PrimeSidebar>
+{/* New My Feedback Prime Sidebar */}
+
       {/* <!-- Raise Feedback Rightbar --> */}
       <div
-        class={`offcanvas offcanvas-end ${isRaiseFeedbackOpen ? 'show' : ''}`}
-        tabindex="-1"
+        className={`offcanvas offcanvas-end ${isRaiseFeedbackOpen ? "show" : ""}`}
+        tabIndex="-1"
         id="raise_Feedback"
         aria-labelledby="offcanvasRightLabel"
-        onHide={() => { setIsRaiseFeedbackOpen(false); refreshData(); }}
       >
-        <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
-          <h5 class="subtitle fw-normal">Raise Feedback</h5>
+        <div className="offcanvas-header bg-secondary text-white offcanvas-header-lg">
+          <h5 className="subtitle fw-normal">Raise Feedback</h5>
           <button
             type="button"
-            class="btn-close btn-close-white"
-            data-bs-dismiss="offcanvas" onClick={() => { setIsRaiseFeedbackOpen(false); refreshData(); }}
+            className="btn-close btn-close-white"
+            data-bs-dismiss="offcanvas"
+            onClick={() => {
+              // Clear the fields when the offcanvas is closed
+              document.querySelector("#categorySelect").value = "";
+              document.querySelector("#complaintTypeSelect").value = "";
+              document.querySelector("#travelDate").value = "";
+              document.querySelector("#tripIdSelect").value = "";
+              setFeedbackText(""); // Clear feedback text
+              setIsRaiseFeedbackOpen(false);
+              refreshData();
+            }}
             aria-label="Close"
           ></button>
         </div>
-        <div class="offcanvas-body px-4">
-          <div class="row">
-            <div class="col-12 mb-3">
-              <label class="form-label">Category</label>
-              <select class="form-select" onChange={(e) => handleCategorySelect(e.target.value)}>
+        <div className="offcanvas-body px-4">
+          <div className="row">
+            <div className="col-12 mb-3">
+              <label className="form-label" htmlFor="categorySelect">
+                Category
+              </label>
+              <select
+                id="categorySelect"
+                className="form-select"
+                onChange={(e) => handleCategorySelect(e.target.value)}
+              >
                 <option value="">Please Select</option>
                 {categoryDropDown.map((category, index) => (
                   //<option key={category.id} value={category.id}>
@@ -409,9 +533,11 @@ const MyFeedback = () => {
                 ))}
               </select>
             </div>
-            <div class="col-12 mb-3">
-              <label class="form-label">Complaint Type</label>
-              <select class="form-select">
+            <div className="col-12 mb-3">
+              <label className="form-label" htmlFor="complaintTypeSelect">
+                Complaint Type
+              </label>
+              <select id="complaintTypeSelect" className="form-select">
                 <option value="">Please Select</option>
                 {complaintTypeDropDown.map((type, index) => (
                   //<option key={type.id} value={type.id}>
@@ -421,20 +547,27 @@ const MyFeedback = () => {
                 ))}
               </select>
             </div>
-            <div class="col-12 mb-3">
-              <label class="form-label">Travel Date</label>
-              <input type="date" className="form-control" />
+            <div className="col-12 mb-3">
+              <label className="form-label" htmlFor="travelDate">
+                Travel Date
+              </label>
+              <input type="date" id="travelDate" className="form-control" />
             </div>
-            <div class="col-12 mb-3">
-              <label class="form-label">Trip Id (Optional)</label>
-              <select class="form-select">
-                <option selected>Please Select</option>
+            <div className="col-12 mb-3">
+              <label className="form-label" htmlFor="tripIdSelect">
+                Trip Id (Optional)
+              </label>
+              <select id="tripIdSelect" className="form-select" defaultValue="">
+                <option value="">Please Select</option>
               </select>
             </div>
-            <div class="col-12 mb-3">
-              <label class="form-label">Feedback</label>
+            <div className="col-12 mb-3">
+              <label className="form-label" htmlFor="feedbackTextArea">
+                Feedback
+              </label>
               <textarea
-                class="form-control"
+                id="feedbackTextArea"
+                className="form-control"
                 rows="3"
                 placeholder="Please Select"
                 value={feedbackText} // Bind the textarea value to the state
@@ -443,11 +576,20 @@ const MyFeedback = () => {
             </div>
           </div>
         </div>
-        <div class="offcanvas-footer">
-          <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas" onClick={() => { setIsRaiseFeedbackOpen(false); refreshData(); }}>
+        <div className="offcanvas-footer">
+          <button
+            className="btn btn-outline-secondary"
+            data-bs-dismiss="offcanvas"
+            onClick={() => {
+              setIsRaiseFeedbackOpen(false);
+              refreshData();
+            }}
+          >
             Cancel
           </button>
-          <button class="btn btn-success mx-3" onClick={handleSubmitFeedback}>Submit</button>
+          <button className="btn btn-success mx-3" onClick={handleSubmitFeedback}>
+            Submit
+          </button>
         </div>
       </div>
       {/* <!-- Raise Feedback Rightbar  --> */}
