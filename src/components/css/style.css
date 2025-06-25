@@ -2210,3 +2210,16 @@ label > span{ color: #dc3545; font-weight: bold; font-size: 14px;}
   .bg-fleet-exhausted:hover {
     background-color: #e4293c !important;
   } */
+
+  /* Add this to your CSS file or inside a <style> tag */
+.p-tooltip .p-tooltip-text {
+    max-width: 250px;      /* Fix the tooltip width */
+    white-space: pre-line; /* Allow wrapping */
+    word-break: break-word;
+    font-size: 12px;
+  }
+
+  .btn-outline-secondary:hover {
+    color: #fff !important;
+  }
+   

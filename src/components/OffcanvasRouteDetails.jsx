@@ -322,15 +322,6 @@ export default function OffcanvasRouteDetails({ show, onClose, routeId }) {
           border-bottom: 1px solid #cbd5e1; /* Subtle separator */
         }
 
-         .employee-details strong::before {
-           content: '';
-           display: inline-block;
-           width: 4px; /* Slightly smaller colored dot size */
-           height: 4px; /* Slightly smaller colored dot size */
-           background: var(--route-color, #2563eb); /* Colored dot */
-           border-radius: 50%; /* Round dot */
-         }
-
         .employee-details li > span {
           color: #1e293b; /* Dark color for value */
           font-size: 11px; /* Smaller value font size */
@@ -466,6 +457,10 @@ export default function OffcanvasRouteDetails({ show, onClose, routeId }) {
                         Stop <span>{emp.stopNo}</span>
                       </div>
                       <ul className="employee-details">
+                      <li>
+                          <strong>EMP NAME</strong>
+                          <span>{emp.empName || "N/A"}</span>
+                        </li>
                         <li>
                           <strong>Employee Code</strong>
                           <span>{emp.empCode || "N/A"}</span>
@@ -477,6 +472,10 @@ export default function OffcanvasRouteDetails({ show, onClose, routeId }) {
                         <li>
                           <strong>ETA</strong>
                           <span>{emp.ETA || "N/A"}</span>
+                        </li>
+                        <li>
+                          <strong>Gender</strong>
+                          <span>{emp.Gender || "N/A"}</span>
                         </li>
                       </ul>
                     </div>

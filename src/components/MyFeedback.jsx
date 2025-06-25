@@ -40,7 +40,7 @@ const MyFeedback = () => {
   useEffect(() => {
     fetchFeedbackData();
     fetchCategories();
-    
+
     // Add event listeners for Bootstrap offcanvas events
     const reopenOffcanvas = document.getElementById('raise_Reopen');
     if (reopenOffcanvas) {
@@ -49,7 +49,7 @@ const MyFeedback = () => {
         refreshData();
       });
     }
-    
+
     const feedbackOffcanvas = document.getElementById('raise_Feedback');
     if (feedbackOffcanvas) {
       feedbackOffcanvas.addEventListener('hidden.bs.offcanvas', () => {
@@ -57,7 +57,7 @@ const MyFeedback = () => {
         refreshData();
       });
     }
-    
+
     const ticketOffcanvas = document.getElementById('ticketNumber');
     if (ticketOffcanvas) {
       ticketOffcanvas.addEventListener('hidden.bs.offcanvas', () => {
@@ -65,17 +65,17 @@ const MyFeedback = () => {
         setTicketReplies([]);
       });
     }
-    
+
     // Cleanup event listeners on component unmount
     return () => {
       if (reopenOffcanvas) {
-        reopenOffcanvas.removeEventListener('hidden.bs.offcanvas', () => {});
+        reopenOffcanvas.removeEventListener('hidden.bs.offcanvas', () => { });
       }
       if (feedbackOffcanvas) {
-        feedbackOffcanvas.removeEventListener('hidden.bs.offcanvas', () => {});
+        feedbackOffcanvas.removeEventListener('hidden.bs.offcanvas', () => { });
       }
       if (ticketOffcanvas) {
-        ticketOffcanvas.removeEventListener('hidden.bs.offcanvas', () => {});
+        ticketOffcanvas.removeEventListener('hidden.bs.offcanvas', () => { });
       }
     };
   }, []);
@@ -155,27 +155,42 @@ const MyFeedback = () => {
   };
   const handleSubmitFeedback = async () => {
     // Get the specific complaint type select element instead of using generic selector
-    const FeedTypeId = document.getElementById("complaintTypeSelect").value;
-    
+    //const FeedTypeId = document.getElementById("complaintTypeSelect").value;
+
     // Check if required fields are filled
-    if (!FeedTypeId) {
-      toastService.error("Please select a complaint type");
+    const selectedCategory = document.getElementById('categorySelect').value;
+    if (!selectedCategory) {
+      toastService.warn("Please select a category type");
       return;
     }
-    
+
     if (!feedbackText) {
-      toastService.error("Please enter feedback text");
+      toastService.warn("Please enter feedback text");
       return;
     }
-    
+
     const ticketNo = selectedTicket; // Assuming you have the selected ticket number
     const desc = feedbackText; // Use the feedbackText state for the description
     const actionid = 0; // Set the appropriate action ID if needed
     const statusid = 0; // Set the appropriate status ID if needed
+    const FeedTypeId = document.querySelector(".form-select").value; // Get selected complaint type ID
     const RaisedDate = new Date().toISOString(); // Current date as raised date
     const RaisedById = sessionManager.getUserSession()?.ID; // Assuming you have the user ID from the session
     const RouteId = ""; // Set the appropriate route ID if needed
-    
+    // Clear the fields after submission
+    document.getElementById("categorySelect").value = "";
+    document.getElementById("complaintTypeSelect").value = "";
+    document.getElementById("travelDate").value = "";
+    document.getElementById("tripIdSelect").value = "";
+    setFeedbackText(""); // Clear feedback text
+    setIsRaiseFeedbackOpen(false); // Close the offcanvas
+    const offcanvasElement = document.getElementById("raise_Feedback");
+    const closeButton = offcanvasElement.querySelector(
+      '[data-bs-dismiss="offcanvas"]'
+    );
+    if (closeButton) {
+      closeButton.click();
+    }
     const params = {
       ticketNo,
       desc,
@@ -186,28 +201,18 @@ const MyFeedback = () => {
       RaisedById,
       RouteId,
     };
-  
+
     try {
       const response = await apiService.sprInsertFeedBackDetails(params);
       console.log("Feedback submitted successfully:", response);
       toastService.success("Feedback submitted successfully!");
-      
-      // Clear the fields after submission
-      document.getElementById("categorySelect").value = "";
-      document.getElementById("complaintTypeSelect").value = "";
-      document.getElementById("travelDate").value = "";
-      document.getElementById("tripIdSelect").value = "";
-      setFeedbackText(""); // Clear feedback text
-      setIsRaiseFeedbackOpen(false); // Close the offcanvas
-      
-      const offcanvasElement = document.getElementById("raise_Feedback");
+      const offcanvasElement = document.getElementById("raise_Reopen");
       const closeButton = offcanvasElement.querySelector(
         '[data-bs-dismiss="offcanvas"]'
       );
       if (closeButton) {
         closeButton.click();
       }
-      
       refreshData(); // Refresh data if needed
     } catch (error) {
       console.error("Error submitting feedback:", error);
@@ -243,13 +248,13 @@ const MyFeedback = () => {
   const handleOpenRaiseFeedback = () => {
     setIsRaiseFeedbackOpen(true);
   };
-  
+
   return (
     <div className="container-fluid p-0">
       {/* Header */}
-      <Header 
-        pageTitle={"My Feedback"} 
-        showNewButton={true} 
+      <Header
+        pageTitle={"My Feedback"}
+        showNewButton={true}
         //onNewClick={handleOpenRaiseFeedback} // This now has a defined function
         onNewButtonClick={setAddRaiseFeedback}
       />
@@ -293,7 +298,7 @@ const MyFeedback = () => {
         {/* Feedback Table */}
         <div className="row">
           <div className="col-12">
-            <div className="card_tb">            
+            <div className="card_tb">
               <DataTable
                 value={feedbackData}
                 paginator
@@ -342,7 +347,7 @@ const MyFeedback = () => {
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
                       }}
-                      // Remove the ref and onMouseLeave handlers that use bootstrap
+                    // Remove the ref and onMouseLeave handlers that use bootstrap
                     >
                       {rowData.Desrp}
                     </div>
@@ -355,11 +360,10 @@ const MyFeedback = () => {
                   header="Status"
                   body={(rowData) => (
                     <span
-                      className={`badgee ${
-                        rowData && rowData.Status && rowData.Status.toLowerCase() === "open"
-                          ? "badge_warning"
-                          : "badge_muted"
-                      }`}
+                      className={`badgee ${rowData && rowData.Status && rowData.Status.toLowerCase() === "open"
+                        ? "badge_warning"
+                        : "badge_muted"
+                        }`}
                     >
                       {rowData && rowData.Status ? rowData.Status : "N/A"}
                     </span>
@@ -372,11 +376,10 @@ const MyFeedback = () => {
                       data-bs-toggle="offcanvas"
                       data-bs-target="#raise_Reopen"
                       aria-controls="offcanvasRightReope"
-                      className={`btn btn-sm ${
-                        rowData && rowData.Status && rowData.Status.toLowerCase() === "closed"
-                          ? "btn-outline-success"
-                          : "btn-outline-danger"
-                      }`}
+                      className={`btn btn-sm ${rowData && rowData.Status && rowData.Status.toLowerCase() === "closed"
+                        ? "btn-outline-success"
+                        : "btn-outline-danger"
+                        }`}
                       onClick={() =>
                         rowData && rowData.ReOpenStatus && handleReopen(rowData.TicketNo)
                       }
@@ -391,7 +394,7 @@ const MyFeedback = () => {
               </DataTable>
             </div>
 
-            
+
           </div>
         </div>
       </div>
@@ -461,8 +464,8 @@ const MyFeedback = () => {
 
       {/* // Offcanvas component reopen */}
 
-{/* New My Feedback Prime Sidebar */}
-<PrimeSidebar visible={addRaiseFeedback} position="right" 
+      {/* New My Feedback Prime Sidebar */}
+      {/* <PrimeSidebar visible={addRaiseFeedback} position="right" 
     showCloseIcon={false} 
     dismissable={false} 
     style={{width:'25%'}}
@@ -484,8 +487,8 @@ const MyFeedback = () => {
             <Button label="Save" className="btn btn-success"/>
         </div>
     </div>
-</PrimeSidebar>
-{/* New My Feedback Prime Sidebar */}
+</PrimeSidebar> */}
+      {/* New My Feedback Prime Sidebar */}
 
       {/* <!-- Raise Feedback Rightbar --> */}
       <div

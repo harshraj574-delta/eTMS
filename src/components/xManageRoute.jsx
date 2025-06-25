@@ -15,7 +15,6 @@ import { Sidebar as PrimeSidebar } from "primereact/sidebar";
 import { ProgressBar } from "primereact/progressbar";
 import { Dialog } from "primereact/dialog";
 import { point, Point } from "leaflet";
-import axios from "axios"; // Import axios here
 
 import { OverlayPanel } from "primereact/overlaypanel";
 
@@ -24,89 +23,35 @@ import { Tooltip } from "primereact/tooltip";
 import * as XLSX from "xlsx";
 
 const AddressColumnTemplate = (rowData) => {
-  const maxLength = 40;
-  const fullText = rowData.Address || "";
+  const maxLength = 20;
+  const fullText = rowData.Address; // Make sure the key matches the field name
+  const op = useRef(null);
   const trimmedText =
     fullText.length > maxLength
       ? fullText.slice(0, maxLength) + "..."
       : fullText;
 
   return (
-    <span
-      data-pr-tooltip={fullText}
-      data-pr-position="top"
-      style={{
-        cursor: "pointer",
-        display: "inline-block",
-        maxWidth: 200,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-        verticalAlign: "middle",
-      }}
-    >
-      {trimmedText}
-    </span>
+    <>
+      <div className="d-flex justify-content-between">
+        <span>{trimmedText}</span>
+        {fullText.length > maxLength && (
+          <>
+            <span
+              onClick={(e) => op.current.toggle(e)}
+              className="pointer pe-3"
+            >
+              <i className="pi pi-eye" style={{ fontSize: "20px" }}></i>
+            </span>
+            <OverlayPanel ref={op} className="fullAddress" closeOnEscape>
+              {fullText}
+            </OverlayPanel>
+          </>
+        )}
+      </div>
+    </>
   );
 };
-
-const addressColumnTemplate = (rowData) => {
-  const maxLength = 40;
-  const fullText = rowData.address || "";
-  const trimmedText =
-    fullText.length > maxLength
-      ? fullText.slice(0, maxLength) + "..."
-      : fullText;
-
-  return (
-    <span
-      data-pr-tooltip={fullText}
-      data-pr-position="top"
-      style={{
-        cursor: "pointer",
-        display: "inline-block",
-        maxWidth: 200,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-        verticalAlign: "middle",
-      }}
-    >
-      {trimmedText}
-    </span>
-  );
-};
-
-// const AddressColumnTemplate = (rowData) => {
-//   const maxLength = 20;
-//   const fullText = rowData.Address; // Make sure the key matches the field name
-//   const op = useRef(null);
-//   const trimmedText =
-//     fullText.length > maxLength
-//       ? fullText.slice(0, maxLength) + "..."
-//       : fullText;
-
-//   return (
-//     <>
-//       <div className="d-flex justify-content-between">
-//         <span>{trimmedText}</span>
-//         {fullText.length > maxLength && (
-//           <>
-//             <span
-//               onClick={(e) => op.current.toggle(e)}
-//               className="pointer pe-3"
-//             >
-//               <i className="pi pi-eye" style={{ fontSize: "20px" }}></i>
-//             </span>
-//             <OverlayPanel ref={op} className="fullAddress" closeOnEscape>
-//               {fullText}
-//             </OverlayPanel>
-//           </>
-//         )}
-//       </div>
-//     </>
-//   );
-// };
 
 const ManageRoute = () => {
   // First, add a state for sorting
@@ -129,12 +74,6 @@ const ManageRoute = () => {
   const [viewMap, setViewMap] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showGenerateRouteDialog, setShowGenerateRouteDialog] = useState(false);
-  const [showButtons, setShowButtons] = useState(false);
-  const [showAutoVendorAllocationDialog, setShowAutoVendorAllocationDialog] =
-    useState(false);
-  const [vendorAllocated, setVendorAllocated] = useState(false);
-  const [vendorSummary, setVendorSummary] = useState([]);
-  const [isFinalizing, setIsFinalizing] = useState(false);
   const tripTypeOptions = [
     { label: "Pick", value: "P" },
     { label: "Drop", value: "D" },
@@ -220,99 +159,7 @@ const ManageRoute = () => {
       setSelectedFile(null);
     }
   };
-  // button
-  const handleFinalizeRoute = async () => {
-    setIsFinalizing(true);
-    try {
-      // Step 1: Call WBS_GetBulkRouteData API
-      const params = {
-        sDate: shiftDate,
-        eDate: shiftDate,
-        facilityid: selectedFacility,
-        triptype: selectedTripType,
-        shifttimes: selectedShifts,
-      };
 
-      const bulkRouteData = await ManageRouteService.WBS_GetBulkRouteData(
-        params
-      );
-
-      // Step 2: Push data to the UpdateTripsheetDetail API
-      if (bulkRouteData && bulkRouteData.length > 0) {
-        // Assuming bulkRouteData is already in the format expected by UpdateTripsheetDetail
-        await pushDataToUpdateTripsheetDetail(bulkRouteData);
-        console.log("Bulk route data pushed successfully:", bulkRouteData);
-        toastService.success("Routes finalized and data pushed successfully!");
-      } else {
-        toastService.warn("No route data to finalize.");
-      }
-    } catch (error) {
-      console.error("Error finalizing routes:", error);
-      toastService.error("Failed to finalize routes and push data.");
-    } finally {
-      setIsFinalizing(false);
-    }
-  };
-
-  // filepath: c:\Users\Admin\Downloads\New eTMS\etms (1)\src\components\ManageRoute.jsx
-  const pushDataToUpdateTripsheetDetail = async (data) => {
-    try {
-      const pushUrl = "/etmsApi/UpdateTripsheetDetail"; // Corrected URL
-      const response = await axios.post(pushUrl, data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.status === 201) {
-        console.log("Data pushed successfully:", response.data);
-        //toastService.success("Data pushed successfully!");
-      } else {
-        console.error(
-          "Failed to push data:",
-          response.status,
-          response.statusText
-        );
-        toastService.error(
-          `Failed to push data: ${response.status} ${response.statusText}`
-        );
-      }
-    } catch (error) {
-      console.error("Error pushing data to UpdateTripsheetDetail:", error);
-      toastService.error("Failed to push data.");
-    }
-  };
-
-  const handleAutoVendorAllocation = async () => {
-    setShowAutoVendorAllocationDialog(true);
-  };
-
-  const confirmAutoVendorAllocation = async () => {
-    try {
-      setShowAutoVendorAllocationDialog(false);
-      setIsLoading(true);
-
-      const params = {
-        facid: selectedFacility,
-        sDate: shiftDate,
-        uname: userID,
-        triptype: selectedTripType,
-        shifttime: selectedShifts,
-      };
-
-      const response = await ManageRouteService.AutoVendorAllocationNew(params);
-      toastService.success("Vendor Allocation completed successfully");
-      setVendorAllocated(true);
-      await handleSubmit(); // Refresh the routes after allocation
-      console.log("Vendor allocation response:", response);
-    } catch (error) {
-      console.error("Error during auto vendor allocation:", error);
-      toastService.error("Failed to complete Vendor Allocation");
-      setVendorAllocated(false); // Ensure it's false in case of error
-    } finally {
-      setIsLoading(false);
-    }
-  };
   const handleSaveFile = async () => {
     try {
       if (!selectedFile) {
@@ -354,9 +201,9 @@ const ManageRoute = () => {
       // Ensure we have an array and map it correctly
       const formattedData = Array.isArray(parsedResponse)
         ? parsedResponse.map((item) => ({
-            label: item.facility || item.facilityName, // Using facility or facilityName from your API response
-            value: item.Id, // Using Id from your API response
-          }))
+          label: item.facility || item.facilityName, // Using facility or facilityName from your API response
+          value: item.Id, // Using Id from your API response
+        }))
         : [];
 
       // console.log("Formatted Data:", formattedData);
@@ -388,9 +235,9 @@ const ManageRoute = () => {
         // Format the shift data according to the API structure
         const formattedShifts = Array.isArray(parsedResponse)
           ? parsedResponse.map((shift) => ({
-              label: shift.shiftTime || shift.ShiftTime, // Handle both cases
-              value: shift.shiftTime || shift.ShiftTime, // Using shiftTime as value too
-            }))
+            label: shift.shiftTime || shift.ShiftTime, // Handle both cases
+            value: shift.shiftTime || shift.ShiftTime, // Using shiftTime as value too
+          }))
           : [];
 
         //console.log("Formatted Shifts:", formattedShifts);
@@ -609,6 +456,7 @@ const ManageRoute = () => {
         isError: false,
         errorMessage: "",
       });
+
       // Step 1: Get Route Input JSON
       const routeInputResponse = await ManageRouteService.GetRouteInputJson({
         facilityid: selectedFacility,
@@ -618,6 +466,7 @@ const ManageRoute = () => {
         locationID: "",
         updatedBy: userID,
       });
+
       // Parse the response if it's a string
       let routeInputData;
       try {
@@ -630,12 +479,14 @@ const ManageRoute = () => {
         console.error("Error parsing route input JSON:", parseError);
         throw new Error("Invalid route input data format");
       }
+
       setProgressStatus((prev) => ({
         ...prev,
         step: 2,
         message: "Route generation in Progress",
         progress: 50,
       }));
+
       // Step 2: Call local OSRM server for route generation
       const osrmResponse = await fetch(
         "http://localhost:5001/api/route-generation/generate",
@@ -651,18 +502,22 @@ const ManageRoute = () => {
           body: JSON.stringify(routeInputData),
         }
       );
+
       if (!osrmResponse.ok) {
         throw new Error(
           `Failed to generate route from OSRM server: ${osrmResponse.status} ${osrmResponse.statusText}`
         );
       }
+
       const generatedRouteJson = await osrmResponse.json();
+
       setProgressStatus((prev) => ({
         ...prev,
         step: 3,
         message: "Saving generated route...",
         progress: 75,
       }));
+
       // Step 3: Save the generated route
       const saveResponse = await ManageRouteService.save_routesMapBasedNew({
         facilityid: selectedFacility,
@@ -672,12 +527,14 @@ const ManageRoute = () => {
         jsonstring: JSON.stringify(generatedRouteJson),
         updatedBy: 0,
       });
+
       setProgressStatus((prev) => ({
         ...prev,
         step: 4,
         message: "Finalizing route generation...",
         progress: 100,
       }));
+
       // Step 4: Fetch and display the newly generated routes
       const response = await ManageRouteService.GetRoutesByOrder({
         sDate: shiftDate,
@@ -694,28 +551,7 @@ const ManageRoute = () => {
       const parsedResponse =
         typeof response === "string" ? JSON.parse(response) : response;
       setTableData(parsedResponse || []);
-      // --- VENDOR SUMMARY API CALL (always ensure array) ---
-      const params = {
-        sdate: shiftDate,
-        edate: shiftDate,
-        triptype: selectedTripType,
-        facilityid: selectedFacility,
-        shifttime: selectedShifts,
-      };
-      let vendorData = await ManageRouteService.getvehtypeCountVendorwise(
-        params
-      );
-      if (typeof vendorData === "string") {
-        try {
-          vendorData = JSON.parse(vendorData);
-        } catch {
-          vendorData = [];
-        }
-      }
-      if (!Array.isArray(vendorData)) {
-        vendorData = [];
-      }
-      setVendorSummary(vendorData);
+
       // Fetch updated stats
       const statsResponse = await ManageRouteService.GetRoutesStatistics({
         sdate: shiftDate,
@@ -739,20 +575,20 @@ const ManageRoute = () => {
       } else {
         setRouteStats({ TotalEmps: 0, TotalRoutes: 0, AvgOccupancy: 0 });
       }
+
       // Show success message and close progress dialog after a delay
       setProgressStatus((prev) => ({
         ...prev,
         message: "Routes generated successfully!",
         progress: 100,
       }));
-      setShowButtons(true);
+
       setTimeout(() => {
         setShowProgressDialog(false);
         toastService.success("Routes generated and saved successfully");
       }, 2000);
     } catch (error) {
       console.error("Error in route generation:", error);
-      setVendorSummary([]);
       setProgressStatus((prev) => ({
         ...prev,
         isError: true,
@@ -766,15 +602,6 @@ const ManageRoute = () => {
 
   const handleSubmit = async () => {
     try {
-      setVendorSummary([]); // Clear previous vendor summary
-      setTableData([]); // Clear previous table data
-      setStatsDetails([]); // Clear previous stats
-      setRouteStats({
-        TotalEmps: 0,
-        TotalRoutes: 0,
-        AvgOccupancy: 0,
-      });
-      setShowButtons(false);
       if (!selectedFacility) {
         toastService.warn("Please select Facility");
         return;
@@ -783,12 +610,14 @@ const ManageRoute = () => {
         toastService.warn("Please select at least one shift.");
         return;
       }
+
       const validateResponse = await ManageRouteService.sp_validateEmpRoster({
         facilityid: selectedFacility,
         sDate: shiftDate,
         triptype: selectedTripType,
         shifttime: selectedShifts,
       });
+
       let parsedValidateResponse;
       if (typeof validateResponse === "string") {
         if (validateResponse.includes("[") && validateResponse.includes("]")) {
@@ -820,27 +649,7 @@ const ManageRoute = () => {
           typeof response === "string" ? JSON.parse(response) : response;
         setTableData(parsedResponse || []);
         toastService.success("Routes loaded successfully");
-        // Call the vendor summary API
-        const params = {
-          sdate: shiftDate,
-          edate: shiftDate,
-          triptype: selectedTripType,
-          facilityid: selectedFacility,
-          shifttime: selectedShifts,
-        };
-        let vendorData = await ManageRouteService.getvehtypeCountVendorwise(
-          params
-        );
-        if (typeof vendorData === "string") {
-          try {
-            vendorData = JSON.parse(vendorData);
-          } catch {
-            vendorData = [];
-          }
-        }
-        console.log("Vendor Summary Data:", vendorData);
-        setVendorSummary(vendorData);
-        // Fetch route statistics
+
         const statsResponse = await ManageRouteService.GetRoutesStatistics({
           sdate: shiftDate,
           edate: shiftDate,
@@ -867,7 +676,6 @@ const ManageRoute = () => {
             AvgOccupancy: 0,
           });
         }
-        setShowButtons(true);
       } else if (parsedValidateResponse === 2) {
         setTableData([]);
         setRouteStats({
@@ -876,10 +684,8 @@ const ManageRoute = () => {
           AvgOccupancy: 0,
         });
         toastService.error("The Roster is not available.");
-        setShowButtons(false);
       } else if (parsedValidateResponse === 0) {
         setShowGenerateRouteDialog(true);
-        setShowButtons(false);
       } else {
         console.error(
           "Unexpected validation response:",
@@ -889,8 +695,6 @@ const ManageRoute = () => {
       }
     } catch (error) {
       console.error("Failed to process request:", error);
-      setIsLoading(false);
-      setVendorSummary([]);
       setTableData([]);
       setRouteStats({
         TotalEmps: 0,
@@ -898,7 +702,6 @@ const ManageRoute = () => {
         AvgOccupancy: 0,
       });
       toastService.error("Failed to process request");
-      setShowButtons(false);
     }
   };
   // const stopEditor = (options) => {
@@ -1035,17 +838,9 @@ const ManageRoute = () => {
                 }
               }}
             />
-            <Column
-              field="address"
-              header="Address"
-              body={addressColumnTemplate}
-            />
+            <Column field="address" header="Address" />
             {/* <Column field="Colony" header="Colony" /> */}
-            <Column
-              field="Location"
-              header="Location"
-              body={addressColumnTemplate}
-            />
+            <Column field="Location" header="Location" />
             {/* <Column field="landmark" header="Nodal Point" /> */}
             <Column field="Shift" header="Shift" />
             <Column field="tripType" header="" />
@@ -1072,14 +867,13 @@ const ManageRoute = () => {
               header="ETA"
               body={(rowData) => (
                 <InputText
-                  value={`${rowData.ETAhh || "00"}:${rowData.ETAmm || "00"}`}
+                  value={`${rowData.ETAhh || '00'}:${rowData.ETAmm || '00'}`}
                   style={{ width: "85px" }}
                 />
               )}
               style={{ width: "180px" }}
             />
           </DataTable>
-          <Tooltip target="[data-pr-tooltip]" />
         </div>
       </div>
     );
@@ -1150,7 +944,6 @@ const ManageRoute = () => {
 
   return (
     <>
-      
       {/* <style>{overlayStyles}</style> */}
       {/* Add the loading overlay */}
       {/* {isLoading && (
@@ -1170,7 +963,6 @@ const ManageRoute = () => {
                         <h6 className="pageTitle">Route Editing Window</h6>
                     </div> */}
         </div>
-
         <div className="row">
           <div className="col-8">
             <div className="card_tb p-3">
@@ -1351,73 +1143,6 @@ const ManageRoute = () => {
             </div>
           </div>
         </div>
-        {showButtons && (
-          <div className="row mt-3">
-            <div className="col-12">
-              <button
-                type="button"
-                className="btn btn-outline-secondary me-3"
-                id="VendorAllocation"
-                onClick={handleAutoVendorAllocation}
-                disabled={isLoading || vendorAllocated}
-              >
-                {isLoading ? "Allocating..." : "Auto Vendor Allocation"}
-              </button>
-              {vendorAllocated && (
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  id="FinalizeRoute"
-                  onClick={handleFinalizeRoute}
-                  disabled={isFinalizing}
-                >
-                  {isFinalizing ? "Finalizing..." : "Finalize Route"}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-        {/* {showButtons && (
-          <div className="row mt-3">
-            <div className="col-12">
-              <img
-                src={
-                  isLoading
-                    ? "/images/icons/map.png"
-                    : "/images/icons/allocation.png"
-                } // Replace with your image paths
-                alt={isLoading ? "Allocating..." : "Auto Vendor Allocation"}
-                style={{
-                  width: "30px", // Adjust size as needed
-                  height: "auto",
-                  cursor: "pointer",
-                  marginRight: "10px",
-                  opacity: isLoading ? 0.5 : 1, // Optional: reduce opacity when loading
-                }}
-                onClick={handleAutoVendorAllocation}
-                disabled={isLoading}
-                title="Auto Vendor Allocation"
-              />
-              <img
-                src={
-                  isFinalizing
-                    ? "/images/icons/allocation.png"
-                    : "/images/icons/map.png"
-                } // Replace with your image paths
-                alt={isFinalizing ? "Finalizing..." : "Finalize Route"}
-                style={{
-                  width: "30px", // Adjust size as needed
-                  height: "auto",
-                  cursor: "pointer",
-                  opacity: isFinalizing ? 0.5 : 1, // Optional: reduce opacity when finalizing
-                }}
-                onClick={handleFinalizeRoute}
-                disabled={isFinalizing}
-                title="Finalize Route"
-              />
-            </div>
-          </div>
-        )} */}
 
         {/* Table */}
         <div className="row">
@@ -1455,7 +1180,7 @@ const ManageRoute = () => {
                 emptyMessage="No Record Found."
                 paginator
                 rows={50}
-                rowsPerPageOptions={[5, 10, 25, 50]}
+                rowsPerPageOptions={[50,100,150,200]}
                 sortField={sortField}
                 sortOrder={sortOrder}
                 onSort={(e) => {
@@ -1463,9 +1188,9 @@ const ManageRoute = () => {
                   setSortOrder(e.sortOrder);
                   handleSubmit(); // Trigger API call with new sorting
                 }}
-                // rowClassName={(data) => ({
-                //   'bg-fleet-exhausted': data.afterFleetExhaustion === true
-                // })}
+              // rowClassName={(data) => ({
+              //   'bg-fleet-exhausted': data.afterFleetExhaustion === true
+              // })}
               >
                 <Column expander style={{ width: "3rem" }} />
                 <column
@@ -1573,16 +1298,11 @@ const ManageRoute = () => {
                   body={AddressColumnTemplate}
                   sortable
                 />
-                <Column
-                  field="Location"
-                  header="Location"
-                  sortable
-                  body={AddressColumnTemplate}
-                />
+                <Column field="Location" header="Location" sortable />
                 <Column field="totaldist" header="Total Dist.(Km)" sortable />
                 <Column
                   field="farthestEmployeeDistance"
-                  header="Farthest Employee Dist.(Km)"
+                  header="Farthest Dist.(Km)"
                   sortable
                 />
                 <Column
@@ -1642,7 +1362,6 @@ const ManageRoute = () => {
                 {/* <Column field="stickerno2" header="Parking" />
                                 <Column field="routeno" header="RouteNo" /> */}
               </DataTable>
-              <Tooltip target="[data-pr-tooltip]" />
             </div>
           </div>
         </div>
@@ -1654,7 +1373,7 @@ const ManageRoute = () => {
       />
       <Dialog
         visible={showProgressDialog}
-        onHide={() => {}}
+        onHide={() => { }}
         closable={false}
         draggable={false}
         resizable={false}
@@ -1694,9 +1413,8 @@ const ManageRoute = () => {
             <div className="flex justify-content-center gap-2">
               {progressStatus.step > 0 && (
                 <div
-                  className={`step-indicator ${
-                    progressStatus.step >= 1 ? "active" : ""
-                  }`}
+                  className={`step-indicator ${progressStatus.step >= 1 ? "active" : ""
+                    }`}
                 >
                   {/* <i className="pi pi-database"></i>
                   <span></span> */}
@@ -1704,9 +1422,8 @@ const ManageRoute = () => {
               )}
               {progressStatus.step > 1 && (
                 <div
-                  className={`step-indicator ${
-                    progressStatus.step >= 2 ? "active" : ""
-                  }`}
+                  className={`step-indicator ${progressStatus.step >= 2 ? "active" : ""
+                    }`}
                 >
                   {/* <i className="pi pi-map"></i>
                   <span></span> */}
@@ -1714,9 +1431,8 @@ const ManageRoute = () => {
               )}
               {progressStatus.step > 2 && (
                 <div
-                  className={`step-indicator ${
-                    progressStatus.step >= 3 ? "active" : ""
-                  }`}
+                  className={`step-indicator ${progressStatus.step >= 3 ? "active" : ""
+                    }`}
                 >
                   {/* <i className="pi pi-save"></i>
                   <span>Save</span> */}
@@ -1724,9 +1440,8 @@ const ManageRoute = () => {
               )}
               {progressStatus.step > 3 && (
                 <div
-                  className={`step-indicator ${
-                    progressStatus.step >= 4 ? "active" : ""
-                  }`}
+                  className={`step-indicator ${progressStatus.step >= 4 ? "active" : ""
+                    }`}
                 >
                   {/* <i className="pi pi-check"></i> */}
                   {/* <span>Complete</span> */}
@@ -1771,10 +1486,12 @@ const ManageRoute = () => {
       >
         <p className="lead mb-3">
           This will generate Routes for
-          <strong className="text-purple fw-bold"> &nbsp;{shiftDate}</strong>
+          <strong className="text-purple fw-bold">  &nbsp;{shiftDate}</strong>
         </p>
         {/* <p className="lead">Are you sure you want to proceed?</p> */}
       </Dialog>
+      {/* ... existing code ... */}
+
       {/* Add this PrimeSidebar component */}
       <PrimeSidebar
         visible={showDetailsSidebar}
@@ -1833,8 +1550,7 @@ const ManageRoute = () => {
                       </div>{" "}
                     </div>
                     <span className="fw-bold">
-                      {(statsDetails?.[0]?.mediumVehicleCount || 0) -
-                        (statsDetails?.[0]?.FleetExhaustionCount || 0)}
+                    {(statsDetails?.[0]?.mediumVehicleCount || 0) - (statsDetails?.[0]?.FleetExhaustionCount || 0)}
                     </span>
                   </li>
                   <li className="list-group-item d-flex justify-content-between align-items-center">
@@ -1976,70 +1692,12 @@ const ManageRoute = () => {
                   </li>
                 </ol>
               </div>
-              <div class="cobl-12">
-                <table class="table table-bordered mt-4 shadow">
-                  <thead>
-                    <tr>
-                      <th colSpan="4" class="text-center">
-                        Vendor Summary
-                      </th>
-                    </tr>
-                    <tr>
-                      <th>Name</th>
-                      <th>S</th>
-                      <th>M</th>
-                      <th>L</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vendorSummary.length === 0 ? (
-                      <tr>
-                        <td colSpan="4" className="text-center">
-                          0
-                        </td>
-                      </tr>
-                    ) : (
-                      vendorSummary.map((vendor, index) => (
-                        <tr key={index}>
-                          <td>{vendor.vendorname}</td>
-                          <td>{vendor.smallvehiclecount}</td>
-                          <td>{vendor.mediumvehiclecount}</td>
-                          <td>{vendor.largevehiclecount}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
             </div>
           </div>
         </div>
       </PrimeSidebar>
 
       {/* ... existing code ... */}
-      <Dialog
-        visible={showAutoVendorAllocationDialog}
-        onHide={() => setShowAutoVendorAllocationDialog(false)}
-        header="Confirmation"
-        modal
-        footer={
-          <>
-            <Button
-              label="Cancel"
-              onClick={() => setShowAutoVendorAllocationDialog(false)}
-              className="btn btn-outline-dark"
-            />
-            <Button
-              label="OK"
-              onClick={confirmAutoVendorAllocation}
-              disabled={isLoading}
-              className="btn btn-primary ms-3"
-            />
-          </>
-        }
-      >
-        <p>Are you sure you want to automatically allocate the vendor?</p>
-      </Dialog>
     </>
   );
 };

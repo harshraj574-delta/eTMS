@@ -141,12 +141,60 @@ class ManageRouteService {
         facilityid: params.facilityid,
         triptype: params.triptype,
         shifttimes: params.shifttimes,
-      })
+      });
       console.log("GetRoutesExportExcel response:", response.data);
       return response.data; // Return the actual data from the response
     } catch (err) {
       console.log("this is error in Get_RouteGeometry", err);
       throw err;
+    }
+  }
+  async AutoVendorAllocationNew(params) {
+    try {
+      const response = await api.post("/AutoVendorAllocationNew", {
+        facid: params.facid,
+        sDate: params.sDate,
+        uname: params.uname,
+        triptype: params.triptype,
+        shifttime: params.shifttime,
+      });
+      console.log("AutoVendorAllocationNew response:", response.data);
+      return response.data;
+    } catch (err) {
+      console.log("Error in AutoVendorAllocationNew", err);
+      throw err;
+    }
+  }
+  async WBS_GetBulkRouteData(params) {
+    try {
+      const response = await api.post("/WBS_GetBulkRouteData", {
+        sDate: params.sDate,
+        eDate: params.eDate,
+        facilityid: params.facilityid,
+        triptype: params.triptype,
+        shifttimes: params.shifttimes,
+      });
+      console.log("WBS_GetBulkRouteData response:", response.data);
+      return response.data; // Return the actual data from the response
+    } catch (error) {
+      console.error("Error in WBS_GetBulkRouteData:", error);
+      throw error;
+    }
+  }
+  async getvehtypeCountVendorwise(params) {
+    try {
+      const response = await api.post("/getvehtypeCountVendorwise", {
+        sdate: params.sdate,
+        edate: params.edate,
+        triptype: params.triptype,
+        facilityid: params.facilityid,
+        shifttime: params.shifttime,
+      });
+      console.log("getvehtypeCountVendorwise response:", response.data);
+      return response.data; // Return the actual data from the response
+    } catch (error) {
+      console.error("Error in getvehtypeCountVendorwise:", error);
+      throw error;
     }
   }
 }

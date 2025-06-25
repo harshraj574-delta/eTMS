@@ -8,106 +8,341 @@ import { Calendar } from "primereact/calendar";
 import { InputText } from "primereact/inputtext";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
+import sessionManager from "../utils/SessionManager";
+import CostMasterService from "../services/compliance/CostMasterService";
+import { toastService } from "../services/toastService";
 
 const CostMaster = () => {
   // Separate states for different dropdowns
   const [facilities, setFacilities] = useState([]);
   const [vendors, setVendors] = useState([]);
-  const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [acCost, setAcCost] = useState("");
+  const [acCostError, setAcCostError] = useState("");
+  const [nonAcCost, setNonAcCost] = useState("");
+  const [nonAcCostError, setNonAcCostError] = useState("");
+  const [fuelRate, setFuelRate] = useState("");
+  const [fuelRateError, setFuelRateError] = useState("");
+  const [guardRate, setGuardRate] = useState("");
+  const [guardRateError, setGuardRateError] = useState("");
+
+  const validateAcCost = (value) => {
+    if (!value) {
+      setAcCostError("Enter New Ac Cost");
+      return false;
+    }
+    if (!/^[1-9]\d*(\.\d{1,2})?$/.test(value)) {
+      setAcCostError("Enter Valid Cost");
+      return false;
+    }
+    const numericValue = parseFloat(value);
+    if (numericValue < 0 || numericValue > 99999) {
+      setAcCostError("Please Enter the Numeric Value between 0 and 99999");
+      return false;
+    }
+    setAcCostError("");
+    return true;
+  };
+
+  const validateNonAcCost = (value) => {
+    if (!value) {
+      setNonAcCostError("Enter New Non Ac Cost");
+      return false;
+    }
+    if (!/^[1-9]\d*(\.\d{1,2})?$/.test(value)) {
+      setNonAcCostError("Enter Valid Cost");
+      return false;
+    }
+    const numericValue = parseFloat(value);
+    if (numericValue < 0 || numericValue > 99999) {
+      setNonAcCostError("Please Enter the Numeric Value between 0 and 99999");
+      return false;
+    }
+    setNonAcCostError("");
+    return true;
+  };
+
+  const validateFuelRate = (value) => {
+    if (!value) {
+      setFuelRateError("Enter Fuel Rate");
+      return false;
+    }
+    if (!/^[0-9]\d*(\.\d{1,2})?$/.test(value)) {
+      setFuelRateError("Enter Valid Fuel Rate");
+      return false;
+    }
+    const numericValue = parseFloat(value);
+    if (numericValue < 0 || numericValue > 999999) {
+      setFuelRateError("Please Enter the Numeric Value between 0 and 999999");
+      return false;
+    }
+    setFuelRateError("");
+    return true;
+  };
+  const validateGuardRate = (value) => {
+    if (!value) {
+      setGuardRateError("Enter Guard Rate.");
+      return false;
+    }
+    if (!/^[1-9]\d*(\.\d{1,2})?$/.test(value)) {
+      setGuardRateError("Enter Valid Guard Rate.");
+      return false;
+    }
+    const numericValue = parseFloat(value);
+    if (numericValue < 0 || numericValue > 999999) {
+      setGuardRateError("Please Enter the Numeric Value in Guard Rate.");
+      return false;
+    }
+    setGuardRateError("");
+    return true;
+  };
+
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [vehicleTypes] = useState([
+    { label: "-All-", value: 0 },
+    { label: "4 Seater", value: 1 },
+    { label: "6 Seater", value: 2 },
+  ]);
+  const [vehicleTypesNew] = useState([
+    { label: "-All-", value: 0 },
+    { label: "4 Seater", value: 1 },
+    { label: "6 Seater", value: 2 },
+  ]);
+  const [routestypes] = useState([
+    { label: "-All-", value: 0 },
+    { label: "Front", value: "N" },
+    { label: "Back-to-Back", value: "B" },
+  ]);
+  const [routestypesNew] = useState([
+    { label: "-All-", value: 0 },
+    { label: "Front", value: "N" },
+    { label: "Back-to-Back", value: "B" },
+  ]);
   const [zones, setZones] = useState([]);
-  const [routeTypes, setRouteTypes] = useState([]);
+  // Initialize costData as an empty array instead of undefined
+  const [costData, setCostData] = useState([]);
+  const [vendorsNew, setVendorsNew] = useState([]);
+  const [zonesNew, setZonesNew] = useState([]);
 
   // Selected values
-  const [selectedFacility, setSelectedFacility] = useState(null);
+  const [selectedFacility, setSelectedFacility] = useState(1);
+  const [selectedFacilityNew, setSelectedFacilityNew] = useState(1);
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [selectedVendorNew, setSelectedVendorNew] = useState(null);
   const [selectedVehicleType, setSelectedVehicleType] = useState(null);
+  const [selectedVehicleTypeNew, setSelectedVehicleTypeNew] = useState(null);
   const [selectedZone, setSelectedZone] = useState(null);
+  const [selectedZoneNew, setSelectedZoneNew] = useState(null);
   const [selectedRouteType, setSelectedRouteType] = useState(null);
-
+  const [selectedRouteTypeNew, setSelectedRouteTypeNew] = useState(null);
+  // State for loading and error handling for datatable and add new cos
   const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState(null);
   const [AddNewCost, setAddNewCost] = useState(false);
   const [EditNewCost, setEditNewCost] = useState(false);
+  const UserID = sessionStorage.getItem("ID");
 
   const dt = useRef(null);
-
-  // Define cost data with useMemo to prevent recreation on each render
-  const baseData = useMemo(() => [
-    {
-      vendor: 'Sea Hawk',
-      vehicleType: '4 Seater',
-      routeType: 'One-Way',
-      zoneName: 'Central Delhi',
-      acCost: 1500,
-      nonAcCost: 1200,
-      fuelRate: 5.5,
-      guardCost: 2,
-      fromDate: '01 May 2025',
-      toDate: '05 May 2025'
-    },
-    {
-      vendor: 'Sea Hawk',
-      vehicleType: '4 Seater',
-      routeType: 'One-Way',
-      zoneName: 'Central Delhi',
-      acCost: 1000,
-      nonAcCost: 800,
-      fuelRate: 6.0,
-      guardCost: 2,
-      fromDate: '01 May 2025',
-      toDate: '05 May 2025'
-    }
-  ], []);
-
-  // Create the repeated data with useMemo
-  const costData = useMemo(() =>
-    Array.from({ length: 10 }, () => baseData).flat(),
-    [baseData]);
-
   useEffect(() => {
-    // Component mount effect
-    fetchData();
-
-    // Mock data for dropdowns
-    setFacilities([
-      { label: 'Facility 1', value: 'facility1' },
-      { label: 'Facility 2', value: 'facility2' }
-    ]);
-
-    setVendors([
-      { label: 'Vendor 1', value: 'vendor1' },
-      { label: 'Vendor 2', value: 'vendor2' }
-    ]);
-
-    setVehicleTypes([
-      { label: 'Bus', value: 'bus' },
-      { label: 'Van', value: 'van' }
-    ]);
-
-    setZones([
-      { label: 'Zone 1', value: 'zone1' },
-      { label: 'Zone 2', value: 'zone2' }
-    ]);
-
-    setRouteTypes([
-      { label: 'Intercity', value: 'intercity' },
-      { label: 'Intracity', value: 'intracity' }
-    ]);
-  }, []);
-
-  const fetchData = async () => {
+    fetchFacilities();
+    fetchZones();
+    if (selectedFacility) {
+      fetchVendors();
+    }
+    setSelectedVendor(null);
+  }, [selectedFacility]);
+  useEffect(() => {
+    fetchZonesForNewCost(selectedFacilityNew);
+    if (selectedFacilityNew) {
+      fetchVendorsForNewCost(selectedFacilityNew); // For Add New Cost sidebar
+    }
+  }, [selectedFacilityNew]);
+  // Separate fetch function for Add New Cost sidebar
+  const fetchVendorsForNewCost = async (facilityId) => {
     try {
-      setLoading(true);
-      // Simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Add your actual API call here
+      const response = await CostMasterService.GetVendorByFac({
+        facilityid: facilityId,
+      });
+      const parsedResponse =
+        typeof response === "string" ? JSON.parse(response) : response;
+      const formattedData = Array.isArray(parsedResponse)
+        ? parsedResponse.map((item) => ({
+            label: item.vendor || item.vendorName,
+            value: item.Id,
+          }))
+        : [];
+      setVendorsNew(formattedData); // New state for Add New Cost vendors
       setLoading(false);
-    } catch (err) {
-      setError(err?.message || "An error occurred");
-      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
     }
   };
+  const fetchZonesForNewCost = async (facilityId) => {
+    try {
+      const response = await CostMasterService.SelectZoneByFac({
+        facilityid: facilityId,
+      });
+      const parsedResponse =
+        typeof response === "string" ? JSON.parse(response) : response;
+      const formattedData = Array.isArray(parsedResponse)
+        ? parsedResponse.map((item) => ({
+            label: item.zone || item.zoneName, // Using facility or facilityName from your API response
+            value: item.id, // Using Id from your API response
+          }))
+        : [];
+      setZonesNew(formattedData); // New state for Add New Cost zones
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching zones:", error);
+    }
+  };
+  //Fetch Facilities
+  const fetchFacilities = async () => {
+    try {
+      const response = await CostMasterService.SelectFacility({
+        Userid: UserID,
+      });
+      const parsedResponse =
+        typeof response === "string" ? JSON.parse(response) : response;
+      const formattedData = Array.isArray(parsedResponse)
+        ? parsedResponse.map((item) => ({
+            label: item.facility || item.facilityName, // Using facility or facilityName from your API response
+            value: item.Id, // Using Id from your API response
+          }))
+        : [];
+      setFacilities(formattedData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching facilities:", error);
+    }
+  };
+  //Fetch Vendors
+  const fetchVendors = async () => {
+    try {
+      const response = await CostMasterService.GetVendorByFac({
+        facilityid: selectedFacility,
+      });
+      const parsedResponse =
+        typeof response === "string" ? JSON.parse(response) : response;
+      const formattedData = Array.isArray(parsedResponse)
+        ? parsedResponse.map((item) => ({
+            label: item.vendor || item.vendorName, // Using facility or facilityName from your API response
+            value: item.Id, // Using Id from your API response
+          }))
+        : [];
+      setVendors(formattedData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
+    }
+  };
+  //Fetch Zones
+  const fetchZones = async () => {
+    try {
+      const response = await CostMasterService.SelectZoneByFac({
+        facilityid: selectedFacility,
+      });
+      const parsedResponse =
+        typeof response === "string" ? JSON.parse(response) : response;
+      const formattedData = Array.isArray(parsedResponse)
+        ? parsedResponse.map((item) => ({
+            label: item.zone || item.zoneName, // Using facility or facilityName from your API response
+            value: item.id, // Using Id from your API response
+          }))
+        : [];
+      setZones(formattedData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching zones:", error);
+    }
+  };
+  // Function to handle adding new cost
+  const AddNewCostHandler = () => {
+    // Validate all fields before allowing to add new cost
+    const isAcCostValid = validateAcCost(acCost);
+    const isNonAcCostValid = validateNonAcCost(nonAcCost);
+    const isFuelRateValid = validateFuelRate(fuelRate);
+    const isGuardRateValid = validateGuardRate(guardRate);
+    if (
+      !isAcCostValid ||
+      !isNonAcCostValid ||
+      !isFuelRateValid ||
+      !isGuardRateValid
+    ) {
+      toastService.error("Please fill all required fields correctly.");
+      return;
+    }
+    // Proceed with adding new cost
+    const params = {
+      effectiveDate: selectedDate,
+      newrate: acCost,
+      vehicleTypeID: selectedVehicleTypeNew,
+      facilityid: selectedFacilityNew,
+      userid: UserID,
+      routetype: selectedRouteTypeNew,
+      NonAcCost: parseFloat(nonAcCost),
+      vehicleStatus: 0,
+      fuelrate: parseFloat(fuelRate),
+      guardCost: parseFloat(guardRate),
+      zone: selectedZoneNew,
+      vendorid: selectedVendorNew,
+      fueltype: "0",
+    };
+    CostMasterService.AddNewCost(params)
+      .then((response) => {
+        console.log("AddNewCost response:", response);
+        if (response) {
+          toastService.success("Cost added successfully");
+          setAddNewCost(false);
+          //handleasearch(); // Refresh the data after adding new cost
+        } else {
+          toastService.error("Failed to add cost");
+        }
+      })
+      .catch((error) => {
+        console.error("Error adding new cost:", error);
+        toastService.error("Error adding new cost");
+      });
+  };
 
+  const handleasearch = async () => {
+    setLoading(true);
+    const params = {
+      vendorid: selectedVendor,
+      vehicletype: selectedVehicleType,
+      facilityid: selectedFacility,
+      routetype: selectedRouteType,
+      vehicleStatus: 0,
+      zone: selectedZone,
+      fueltype: "0",
+    };
+    try {
+      const response = await CostMasterService.GetCost(params);
+      console.log("GetCost", response);
+      let parsedData = [];
+      if (typeof response === "string") {
+        parsedData = JSON.parse(response);
+      } else {
+        parsedData = response;
+      }
+      // Ensure the data is an array and validate/transform if needed
+      const validatedData = Array.isArray(parsedData)
+        ? parsedData
+        : [parsedData];
+      setCostData(validatedData);
+      setLoading(false);
+
+      if (validatedData.length > 0) {
+        toastService.success("Cost data fetched successfully");
+      } else {
+        toastService.error("No records found");
+      }
+    } catch (error) {
+      console.error("Error fetching cost data:", error);
+      setCostData([]); // Set empty array on error
+      setLoading(false);
+      toastService.error("Error fetching cost data");
+    }
+  };
   // Add this function for Excel export
   const exportExcel = () => {
     if (dt.current) {
@@ -116,8 +351,17 @@ const CostMaster = () => {
     }
   };
 
-  const paginatorLeft = <Button type="button" icon="pi pi-refresh" text onClick={() => getEmployeeData()} />;
-  const paginatorRight = <Button type="button" icon="pi pi-download" text onClick={exportExcel} />;
+  const paginatorLeft = (
+    <Button
+      type="button"
+      icon="pi pi-refresh"
+      text
+      onClick={() => handleasearch()}
+    />
+  );
+  const paginatorRight = (
+    <Button type="button" icon="pi pi-download" text onClick={exportExcel} />
+  );
 
   return (
     <>
@@ -141,11 +385,15 @@ const CostMaster = () => {
                   <label htmlFor="facility">Facility</label>
                   <Dropdown
                     id="facility"
+                    placeholder="Select Facility"
                     value={selectedFacility}
                     options={facilities}
-                    placeholder="Select Facility"
-                    onChange={(e) => setSelectedFacility(e.value)}
+                    onChange={(e) => {
+                      setSelectedFacility(e.value);
+                      setSelectedVendor(null);
+                    }}
                     className="w-100"
+                    defaultValue={1}
                   />
                 </div>
                 <div className="col-2">
@@ -186,14 +434,18 @@ const CostMaster = () => {
                   <Dropdown
                     id="routeType"
                     value={selectedRouteType}
-                    options={routeTypes}
+                    options={routestypes}
                     placeholder="Select Route Type"
                     onChange={(e) => setSelectedRouteType(e.value)}
                     className="w-100"
                   />
                 </div>
                 <div className="col-2">
-                  <Button label="Search" className="btn btn-primary no-label" onClick={fetchData} />
+                  <Button
+                    label="Search"
+                    className="btn btn-primary no-label"
+                    onClick={handleasearch}
+                  />
                 </div>
               </div>
             </div>
@@ -204,32 +456,40 @@ const CostMaster = () => {
           <div className="col-12">
             <div className="card_tb">
               <DataTable
-                ref={dt}
                 value={costData}
+                ref={dt}
                 paginator
-                rows={10}
-                tableStyle={{ minWidth: '50rem' }}
+                rows={50}
+                tableStyle={{ minWidth: "50rem" }}
                 size="small"
                 loading={loading}
                 emptyMessage={error ? `Error: ${error}` : "No records found"}
                 stripedRows
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} employees"
-                paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                // currentPageReportTemplate="Showing {first} to {last} of {totalRecords} employees"
+                // paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                 paginatorLeft={paginatorLeft}
                 paginatorRight={paginatorRight}
+                rowsPerPageOptions={[50, 100, 200, 300]}
               >
-                <Column field="vendor" header="Vendor" sortable body={(rowData) => (
-                  <a href="#" onClick={setEditNewCost}>{rowData.vendor}</a>
-                )}></Column>
-                <Column field="vehicleType" header="Vehicle Type" sortable />
-                <Column field="routeType" header="Route Type" sortable />
-                <Column field="zoneName" header="Zone Name" sortable />
-                <Column field="acCost" header="AC Cost" sortable />
-                <Column field="nonAcCost" header="Non-AC Cost" sortable />
-                <Column field="fuelRate" header="Fuel Rate" sortable />
-                <Column field="guardCost" header="Guard Cost" sortable />
-                <Column field="fromDate" header="From Date" sortable />
-                <Column field="toDate" header="To Date" sortable />
+                <Column
+                  field="vendorname"
+                  header="Vendor"
+                  sortable
+                  body={(rowData) => (
+                    <a href="#" onClick={() => setEditNewCost(true)}>
+                      {rowData.vendorname}
+                    </a>
+                  )}
+                />
+                <Column field="VehicleType" header="Vehicle Type" sortable />
+                <Column field="routetype" header="Route Type" sortable />
+                <Column field="ZoneName" header="Zone Name" sortable />
+                <Column field="Cost" header="AC Cost" sortable />
+                <Column field="NonAcCost" header="Non-AC Cost" sortable />
+                <Column field="fuelrate" header="Fuel Rate" sortable />
+                <Column field="guardcost" header="Guard Cost" sortable />
+                <Column field="DATE" header="From Date" sortable />
+                <Column field="Enddate" header="To Date" sortable />
               </DataTable>
             </div>
           </div>
@@ -258,46 +518,153 @@ const CostMaster = () => {
         <div className="sidebarBody">
           <div className="row">
             <div className="col-6 mb-3">
-              <label>Facility <span>*</span></label>
-              <Dropdown optionLabel="name" placeholder="Select Facility" className="w-100" filter />
+              <label>
+                Facility <span>*</span>
+              </label>
+              <Dropdown
+                placeholder="Select Facility"
+                value={selectedFacilityNew}
+                options={facilities}
+                onChange={(e) => {
+                  setSelectedFacilityNew(e.value);
+                  setSelectedVendorNew(null);
+                }}
+                className="w-100"
+                defaultValue={1}
+                id="facility"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Vendor <span>*</span></label>
-              <Dropdown optionLabel="name" placeholder="Select Facility" className="w-100" filter />
+              <label>
+                Vendor <span>*</span>
+              </label>
+              <Dropdown
+                id="vendor"
+                value={selectedVendorNew}
+                options={vendorsNew}
+                placeholder="Select Vendor"
+                onChange={(e) => setSelectedVendorNew(e.value)}
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
               <label>Vehicle Type</label>
-              <Dropdown optionLabel="name" placeholder="Select Facility" className="w-100" filter />
+              <Dropdown
+                id="vehicleType"
+                value={selectedVehicleTypeNew}
+                options={vehicleTypesNew}
+                placeholder="Select Vehicle Type"
+                onChange={(e) => setSelectedVehicleTypeNew(e.value)}
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
               <label>Effective Date</label>
-              <Calendar className="w-100"></Calendar>
+              <Calendar
+                className="w-100"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.value)}
+              ></Calendar>
             </div>
             <div className="col-6 mb-3">
-              <label>Route Zone <span>*</span></label>
-              <Dropdown optionLabel="name" placeholder="Select Route Zone" className="w-100" filter />
+              <label>
+                Route Zone <span>*</span>
+              </label>
+              <Dropdown
+                id="zone"
+                value={selectedZoneNew}
+                options={zonesNew}
+                onChange={(e) => setSelectedZoneNew(e.value)}
+                placeholder="Select Route Zone"
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Route Type <span>*</span></label>
-              <Dropdown optionLabel="name" placeholder="Select Route Type" className="w-100" filter />
+              <label>
+                Route Type <span>*</span>
+              </label>
+              <Dropdown
+                id="routeType"
+                value={selectedRouteTypeNew}
+                options={routestypesNew}
+                onChange={(e) => setSelectedRouteTypeNew(e.value)}
+                placeholder="Select Route Type"
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Ac Cost <span>*</span></label>
-              <InputText className="form-control" name="" placeholder="Enter Ac Cost" />
+              <label>
+                Ac Cost <span>*</span>
+              </label>
+              <InputText
+                className={`form-control ${acCostError ? "is-invalid" : ""}`}
+                value={acCost}
+                onChange={(e) => {
+                  setAcCost(e.target.value);
+                  validateAcCost(e.target.value);
+                }}
+                placeholder="Enter Ac Cost"
+              />
+              {acCostError && (
+                <div className="invalid-feedback">{acCostError}</div>
+              )}
             </div>
             <div className="col-6 mb-3">
-              <label>Non-Ac Cost <span>*</span></label>
-              <InputText className="form-control" name="" placeholder="Enter Non-Ac Cost" />
+              <label>
+                Non-Ac Cost <span>*</span>
+              </label>
+              <InputText
+                className={`form-control ${nonAcCostError ? "is-invalid" : ""}`}
+                value={nonAcCost}
+                onChange={(e) => {
+                  setNonAcCost(e.target.value);
+                  validateNonAcCost(e.target.value);
+                }}
+                placeholder="Enter Non-Ac Cost"
+              />
+              {nonAcCostError && (
+                <div className="invalid-feedback">{nonAcCostError}</div>
+              )}
             </div>
             <div className="col-6 mb-3">
-              <label>Fuel Rate <span>*</span></label>
-              <InputText className="form-control" name="" placeholder="Enter Fuel Rate" />
+              <label>
+                Fuel Rate <span>*</span>
+              </label>
+              <InputText
+                className={`form-control ${fuelRateError ? "is-invalid" : ""}`}
+                value={fuelRate}
+                onChange={(e) => {
+                  setFuelRate(e.target.value);
+                  validateFuelRate(e.target.value);
+                }}
+                placeholder="Enter Fuel Rate"
+              />
+              {fuelRateError && (
+                <div className="invalid-feedback">{fuelRateError}</div>
+              )}
             </div>
             <div className="col-6 mb-3">
-              <label>Guard Rate <span>*</span></label>
-              <InputText className="form-control" name="" placeholder="Enter Guard Rate" />
+              <label>
+                Guard Rate <span>*</span>
+              </label>
+              <InputText
+                className={`form-control ${guardRateError ? "is-invalid" : ""}`}
+                value={guardRate}
+                onChange={(e) => {
+                  setGuardRate(e.target.value);
+                  validateGuardRate(e.target.value);
+                }}
+                placeholder="Enter Guard Rate"
+              />
+              {guardRateError && (
+                <div className="invalid-feedback">{guardRateError}</div>
+              )}
             </div>
-
           </div>
         </div>
         <div className="sidebar-fixed-bottom position-absolute pe-3">
@@ -307,9 +674,36 @@ const CostMaster = () => {
               className="btn btn-outline-secondary"
               onClick={() => {
                 setAddNewCost(false);
+                // Reset all fields when closing the sidebar
+                setAcCost("");
+                setNonAcCost("");
+                setFuelRate("");
+                setGuardRate("");
+                setSelectedDate(new Date());
+                setSelectedVendorNew(null);
+                setSelectedVehicleTypeNew(null);
+                setSelectedZoneNew(null);
+                setSelectedRouteTypeNew(null);
               }}
             />
-            <Button label="Save" className="btn btn-success" />
+            <Button
+              label="Save"
+              className="btn btn-success"
+              onClick={() => {
+                //setAddNewCost(false);
+                // Reset all fields when closing the sidebar
+                setAcCost("");
+                setNonAcCost("");
+                setFuelRate("");
+                setGuardRate("");
+                setSelectedDate(new Date());
+                setSelectedVendorNew(null);
+                setSelectedVehicleTypeNew(null);
+                setSelectedZoneNew(null);
+                setSelectedRouteTypeNew(null);
+                AddNewCostHandler();
+              }}
+            />
           </div>
         </div>
       </PrimeSidebar>
@@ -336,46 +730,102 @@ const CostMaster = () => {
         <div className="sidebarBody">
           <div className="row">
             <div className="col-6 mb-3">
-              <label>Facility <span>*</span></label>
-              <Dropdown optionLabel="name" placeholder="Select Facility" className="w-100" filter />
+              <label>
+                Facility <span>*</span>
+              </label>
+              <Dropdown
+                optionLabel="name"
+                placeholder="Select Facility"
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Vendor <span>*</span></label>
-              <Dropdown optionLabel="name" placeholder="Select Facility" className="w-100" filter />
+              <label>
+                Vendor <span>*</span>
+              </label>
+              <Dropdown
+                optionLabel="name"
+                placeholder="Select Facility"
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
               <label>Vehicle Type</label>
-              <Dropdown optionLabel="name" placeholder="Select Facility" className="w-100" filter />
+              <Dropdown
+                optionLabel="name"
+                placeholder="Select Facility"
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
               <label>Effective Date</label>
               <Calendar className="w-100"></Calendar>
             </div>
             <div className="col-6 mb-3">
-              <label>Route Zone <span>*</span></label>
-              <Dropdown optionLabel="name" placeholder="Select Route Zone" className="w-100" filter />
+              <label>
+                Route Zone <span>*</span>
+              </label>
+              <Dropdown
+                optionLabel="name"
+                placeholder="Select Route Zone"
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Route Type <span>*</span></label>
-              <Dropdown optionLabel="name" placeholder="Select Route Type" className="w-100" filter />
+              <label>
+                Route Type <span>*</span>
+              </label>
+              <Dropdown
+                optionLabel="name"
+                placeholder="Select Route Type"
+                className="w-100"
+                filter
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Ac Cost <span>*</span></label>
-              <InputText className="form-control" name="" placeholder="Enter Ac Cost" />
+              <label>
+                Ac Cost <span>*</span>
+              </label>
+              <InputText
+                className="form-control"
+                name=""
+                placeholder="Enter Ac Cost"
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Non-Ac Cost <span>*</span></label>
-              <InputText className="form-control" name="" placeholder="Enter Non-Ac Cost" />
+              <label>
+                Non-Ac Cost <span>*</span>
+              </label>
+              <InputText
+                className="form-control"
+                name=""
+                placeholder="Enter Non-Ac Cost"
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Fuel Rate <span>*</span></label>
-              <InputText className="form-control" name="" placeholder="Enter Fuel Rate" />
+              <label>
+                Fuel Rate <span>*</span>
+              </label>
+              <InputText
+                className="form-control"
+                name=""
+                placeholder="Enter Fuel Rate"
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>Guard Rate <span>*</span></label>
-              <InputText className="form-control" name="" placeholder="Enter Guard Rate" />
+              <label>
+                Guard Rate <span>*</span>
+              </label>
+              <InputText
+                className="form-control"
+                name=""
+                placeholder="Enter Guard Rate"
+              />
             </div>
-
           </div>
         </div>
         <div className="sidebar-fixed-bottom position-absolute pe-3">

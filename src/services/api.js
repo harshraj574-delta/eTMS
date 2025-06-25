@@ -183,6 +183,27 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
+  UpdateEmpSchedule: async (params) => {
+    try {
+      const response = await api.post("/UpdateEmpSchedule", {
+        empID: params.empID,
+        StartDate: params.StartDate,
+        StartTime: params.StartTime,
+        EndTime: params.EndTime,
+        pickFacilityID: params.pickFacilityID,
+        dropFacilityID: params.dropFacilityID,
+        userName: params.userName,
+        pickadflag:params.pickadflag,
+        dropadflag: params.dropadflag,
+        remark: params.remark,
+      });
+      console.log("UpdateEmpSchedule:", response.data);
+      return JSON.parse(response.data);
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
   GetOneEmployeeSchedule: async (params) => {
     try {
       const response = await api.post("/GetOneEmployeeSchedule", {
@@ -232,7 +253,7 @@ export const apiService = {
       const response = await api.post("/GetMyTrips", {
         empid: params.empid,
         sDate: params.sDate,
-        eDate: params.eDate
+        eDate: params.eDate,
       });
       console.log("GetMyTrips Data:", response.data);
       return response.data;
@@ -244,10 +265,10 @@ export const apiService = {
   GetMyRoutesDetails: async (params) => {
     try {
       const response = await api.post("/GetMyRoutesDetails", {
-        empid:params.empid,
-        sDate:params.sDate,
-        triptype:params.triptype,
-        routeid:params.routeid,
+        empid: params.empid,
+        sDate: params.sDate,
+        triptype: params.triptype,
+        routeid: params.routeid,
       });
       console.log("GetMyRoutesDetaails List:", response.data);
       return response.data;
@@ -256,7 +277,7 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
- async CancelTrip(params) {
+  async CancelTrip(params) {
     try {
       const response = await api.post("/CancelTrip", {
         routeid: params.routeid,
@@ -267,44 +288,51 @@ export const apiService = {
         Reason: params.Reason,
       });
       console.log("CancelTrip Response:", response.data);
-      return response.data; 
+      return response.data;
     } catch (error) {
       console.error("API Error:", error);
       throw error.response?.data || error.message;
     }
-  } ,
-   ReplicateSchedule:async(params)=> {
-      try {
-          // Validate required parameters
-          if (!params.EmpIds || !params.FromSDate || !params.FromEDate || !params.ToSDate || !params.ToEDate ||!params.updatedBy) {
-              throw new Error('Missing required parameters');
-          }
-  
-          // Format the request body according to the API requirements
-          const requestBody = {
-              EmpIds: params.EmpIds,
-              FromSDate: params.FromSDate,
-              FromEDate: params.FromEDate,
-              ToSDate: params.ToSDate,
-              ToEDate: params.ToEDate,
-              updatedBy: params.updatedBy
-          };
-  
-          console.log("ReplicateSchedule request params:", requestBody);
-          
-          const response = await api.post("/ReplicateSchedule", requestBody);
-          console.log("ReplicateSchedule raw response:", response);
-          
-          if (!response.data) {
-              throw new Error('No data received from server');
-          }
-          
-          console.log("ReplicateSchedule data:", response.data);
-          return response.data;
-      } catch (error) {
-          console.error("Error in ReplicateSchedule:", error);
-          throw error;
+  },
+  ReplicateSchedule: async (params) => {
+    try {
+      // Validate required parameters
+      if (
+        !params.EmpIds ||
+        !params.FromSDate ||
+        !params.FromEDate ||
+        !params.ToSDate ||
+        !params.ToEDate ||
+        !params.updatedBy
+      ) {
+        throw new Error("Missing required parameters");
       }
+
+      // Format the request body according to the API requirements
+      const requestBody = {
+        EmpIds: params.EmpIds,
+        FromSDate: params.FromSDate,
+        FromEDate: params.FromEDate,
+        ToSDate: params.ToSDate,
+        ToEDate: params.ToEDate,
+        updatedBy: params.updatedBy,
+      };
+
+      console.log("ReplicateSchedule request params:", requestBody);
+
+      const response = await api.post("/ReplicateSchedule", requestBody);
+      console.log("ReplicateSchedule raw response:", response);
+
+      if (!response.data) {
+        throw new Error("No data received from server");
+      }
+
+      console.log("ReplicateSchedule data:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error in ReplicateSchedule:", error);
+      throw error;
+    }
   },
   ///Feedback pages
 
@@ -369,14 +397,14 @@ export const apiService = {
       // Format the response data
       const formattedData = Array.isArray(response.data)
         ? response.data.map((item) => ({
-          TicketNo: item.TicketNo || "",
-          empCode: item.empCode || "",
-          empName: item.empName || "",
-          Descp: item.Descp || "",
-          UpdatedAt: item.UpdatedAt || new Date().toISOString(),
-          Status: item.Status || "",
-          StatusId: item.StatusId || 0,
-        }))
+            TicketNo: item.TicketNo || "",
+            empCode: item.empCode || "",
+            empName: item.empName || "",
+            Descp: item.Descp || "",
+            UpdatedAt: item.UpdatedAt || new Date().toISOString(),
+            Status: item.Status || "",
+            StatusId: item.StatusId || 0,
+          }))
         : [];
 
       console.log("Reply Data:", formattedData);
@@ -394,9 +422,9 @@ export const apiService = {
       });
       const DropDown = Array.isArray(response.data)
         ? response.data.map((item) => ({
-          id: item.id || 0,
-          Category: item.Category || "",
-        }))
+            id: item.id || 0,
+            Category: item.Category || "",
+          }))
         : [];
       console.log("Category DropDown Data:", DropDown);
       return DropDown;
@@ -413,12 +441,12 @@ export const apiService = {
       });
       const DropDown = Array.isArray(response.data)
         ? response.data.map((item) => ({
-          id: item.id || 0,
-          Category: item.Category || "",
-          CompName: item.CompName || "",
-          C_Type: item.C_Type || "",
-          severity: item.severity || 0,
-        }))
+            id: item.id || 0,
+            Category: item.Category || "",
+            CompName: item.CompName || "",
+            C_Type: item.C_Type || "",
+            severity: item.severity || 0,
+          }))
         : [];
       console.log("Type DropDown Data:", DropDown);
       return DropDown;

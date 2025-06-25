@@ -5,10 +5,9 @@ import Notifications from "./Master/Notifications";
 import sessionManager from "../utils/SessionManager.js";
 import { apiService } from "../services/api";
 import { toastService } from "../services/toastService.js";
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { useNavigate } from 'react-router-dom';
-
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { useNavigate } from "react-router-dom";
 
 const addDay = (dateString, days) => {
   if (!dateString) return "";
@@ -57,6 +56,21 @@ const MySchedule = () => {
   const navigate = useNavigate();
   const facID = sessionManager.getUserSession().FacilityID;
   const empid = sessionManager.getUserSession().ID;
+  const [selectedShiftDate, setSelectedShiftDate] = useState("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [shiftLockStatus, setShiftLockStatus] = useState({
+    loginFacilityDisabled: false,
+    loginTimeDisabled: false,
+    loginTimeVisible: false,
+    loginTimeLabel: "",
+    logoutFacilityDisabled: false,
+    logoutTimeDisabled: false,
+    logoutTimeVisible: false,
+    logoutTimeLabel: "",
+    saveButtonVisible: true,
+    tptForMessage: "",
+    tptForType: 0,
+  });
   const [processes, setProcesses] = useState([]);
   const [selectedProcess, setSelectedProcess] = useState("");
   const [loading, setLoading] = useState(true);
@@ -120,7 +134,13 @@ const MySchedule = () => {
     lockweekenddrophrs: "",
     pickLockDateTime: "",
   });
+  const [fromDate, setFromDate] = useState(lockDetails?.lockSDate || "");
+  const [toDate, setToDate] = useState(
+    addDay(lockDetails?.lockSDate, lockDetails?.lockDiffDays - 2) || ""
+  );
+  // useEffect(() => {
 
+  // }, []);
   // Fetch data on component mount
   useEffect(() => {
     fetchMgrSchedule();
@@ -130,14 +150,20 @@ const MySchedule = () => {
     setWeekDays(days);
     fetchLockDetails();
     fetchFacilityDetails();
-    const offcanvasElement = document.getElementById("Employee_Shift");
-    if (offcanvasElement) {
-      offcanvasElement.addEventListener('hidden.bs.offcanvas', resetFormValues);
-      return () => {
-        offcanvasElement.removeEventListener('hidden.bs.offcanvas', resetFormValues);
-      };
-    }
-  }, []);
+    setFromDate(lockDetails?.lockSDate || "");
+    setToDate(
+      addDay(lockDetails?.lockSDate, lockDetails?.lockDiffDays - 2) || ""
+    );
+    // const offcanvasElement = document.getElementById("Employee_Shift");
+    // if (offcanvasElement) {
+    //   offcanvasElement.addEventListener("hidden.bs.offcanvas", resetFormValues);
+    //   return () => {
+    //     offcanvasElement.removeEventListener(
+    //       "hidden.bs.offcanvas",
+    //       resetFormValues
+    //    );
+    // };
+  }, [lockDetails?.lockSDate, lockDetails?.lockDiffDays]);
 
   const handleCancelTrip = async (trip) => {
     try {
@@ -147,13 +173,13 @@ const MySchedule = () => {
         updatedby: sessionManager.getUserSession().ID,
         shiftdate: trip.shiftdate,
         triptype: trip.triptype,
-        Reason: "" // You can make this dynamic if needed
+        Reason: "", // You can make this dynamic if needed
       };
       console.log("Cancel params", params);
       const response = await apiService.CancelTrip(params);
 
       if (response) {
-        toastService.success("Trip cancelled successfully");
+        toastService.success("Trip cancelled successfully.");
         // Refresh the trips data
         fetchMgrSchedule();
         fetchScheduleDetails();
@@ -164,7 +190,7 @@ const MySchedule = () => {
       }
     } catch (error) {
       console.error("Error cancelling trip:", error);
-      toastService.error("Failed to cancel trip: " + error.message);
+      toastService.error("Failed to cancel the trip: " + error.message);
     }
   };
 
@@ -374,7 +400,7 @@ const MySchedule = () => {
 
   // Add this function to handle date changes
   const handleFromDateChange = (e) => {
-    const newDate = e.target.value;
+    setFromDate(e.target.value);
 
     // You can add validation or additional logic here if needed
   };
@@ -389,7 +415,7 @@ const MySchedule = () => {
   // Add these handler functions
   const handleToDateChange = (e) => {
     // Add any validation logic here if needed
-    const newDate = e.target.value;
+    setToDate(e.target.value);
 
     console.log("To date changed:", e.target.value);
   };
@@ -401,164 +427,506 @@ const MySchedule = () => {
   const handleLogoutFacilityChange = (e) => {
     setSelectedlogoutfacility(e.target.value);
   };
+  const handleUpdateEmpSchedule = async () => {
+    try {
+      // Employee schedule se values le lo
+      const empSchedule = employeeSchedule && employeeSchedule[0];
+      if (!empSchedule) {
+        alert("No employee schedule found!");
+        return;
+      }
+
+      // Ensure time is in "HHmm" format (only digits, 4 chars)
+      const formatTime = (time) => {
+        if (!time) return "";
+        // If already 4 digits, return as is
+        if (/^\d{4}$/.test(time)) return time;
+        // If in "HH:mm" format, remove colon
+        if (/^\d{2}:\d{2}$/.test(time)) return time.replace(":", "");
+        // If in "YYYY-MM-DD HH:mm" or "MM/DD/YYYY HH:mm", extract only HH:mm
+        const match = time.match(/(\d{2}):(\d{2})$/);
+        if (match) return match[1] + match[2];
+        // If in "HHmm" somewhere in string, extract it
+        const digits = time.match(/\d{4}/);
+        if (digits) return digits[0];
+        return "";
+      };
+
+      const params = {
+        empID: selectedEmployeeId,
+        StartDate: selectedShiftDate,
+        StartTime: formatTime(selectedShiftTime), // Fix here
+        EndTime: formatTime(selectedLogoutShiftTime), // Fix here
+        pickFacilityID: selectedloginfacility,
+        dropFacilityID: selectedlogoutfacility,
+        userName: sessionManager.getUserSession().ID,
+        pickadflag: "1",
+        dropadflag: "1",
+        remark: "",
+      };
+
+      let response = await apiService.UpdateEmpSchedule(params);
+      console.log("Update response:", response);
+
+      if (typeof response === "string") {
+        try {
+          response = JSON.parse(response);
+        } catch (e) {
+          toastService.error("Invalid response from server.");
+          return;
+        }
+      }
+      if (response && !Array.isArray(response)) {
+        response = [response];
+      }
+
+      if (response) {
+        toastService.success("Schedule updated successfully!");
+        setIsEmployeeShiftOpen(false);
+        // ---- Force table to reload from today's date ----
+        const today = new Date().toISOString().split("T")[0];
+        const fromDateInput = document.getElementById("fromDate");
+        if (fromDateInput) {
+          fromDateInput.value = today;
+        }
+        setFromDate(today); // update state if needed
+        const days = generateWeekDays(today);
+        setWeekDays(days);
+
+        await fetchMgrSchedule();
+      } else {
+        toastService.error(response[0]?.res2 || "Update failed!");
+      }
+    } catch (error) {
+      toastService.error("Error updating schedule: " + error);
+    }
+  };
   const handleEmployeeShiftClick = async (employee, day) => {
     try {
-      // Get the selected date from weekDays array using the day index
+      // 1. Get sel
+      setSelectedEmployeeId(employee.empCode);
       const selectedDate = weekDays[day]?.fullDate;
-
-      // Set the fromDate input value to the selected date
+      setSelectedShiftDate(selectedDate); // <-- Add this
       const fromDateInput = document.getElementById("fromDate");
       if (fromDateInput && selectedDate) {
         fromDateInput.value = selectedDate;
       }
+
+      // 2. Get shift times
       const seTimeData = employee[`SETime${day}`];
       const [timeInfo] = seTimeData.split("!");
       const [loginTime, logoutTime] = timeInfo.split("<BR>").map((time) => {
         const match = time.match(/\d{4}$/);
         return match ? match[0] : time.trim();
       });
-      console.log("Parsed times:", { loginTime, logoutTime });
-      // Extract exactly the same values that are displayed in the table cell
-      // const loginTimeDisplay = employee[`SETime${day}`]
-      //   .split("!")[0]
-      //   .split("<BR>")[0].trim();
-      // const logoutTimeDisplay = employee[`SETime${day}`]
-      //   .split("!")[0]
-      //   .split("<BR>")[1].trim();
 
-      // console.log("Using exact displayed values:", {
-      //   loginTimeDisplay,
-      //   logoutTimeDisplay,
-      // });
-      console.log(`SETime for day ${day}:`, employee[`SETime${day}`]);
-      // Check if the employee has facility information
-      let loginFacilityId = null;
-      let logoutFacilityId = null;
+      // 3. Get schedule and lock details
+      let scheduleData = await fetchEmployeeSchedule(employee.EmployeeID);
+      let schedule = (scheduleData && scheduleData[0]) || {};
+      const lockPickTime = new Date(lockDetails.pickLockDateTime);
+      const lockDropTime = new Date(lockDetails.dropLockDateTime);
 
-      // Try to extract facility information from the employee object
-      if (employee.pickFacilityID) {
-        loginFacilityId = employee.pickFacilityID;
+      // 4. Compose DateTime for comparison
+      const loginDateTime = new Date(
+        `${schedule.startDate}T${(loginTime || "00:00").replace(
+          /(\d{2})(\d{2})/,
+          "$1:$2"
+        )}`
+      );
+      const logoutDateTime = new Date(
+        `${schedule.endDate}T${(logoutTime || "00:00").replace(
+          /(\d{2})(\d{2})/,
+          "$1:$2"
+        )}`
+      );
+
+      // 5. Lock logic (C# mapping)
+      let loginFacilityDisabled = true;
+      let logoutFacilityDisabled = true;
+      let loginTimeVisible = true;
+      let loginTimeLabel = "";
+      let loginTimeDisabled = false;
+      let logoutTimeVisible = true;
+      let logoutTimeLabel = "";
+      let logoutTimeDisabled = false;
+      let saveButtonVisible = true;
+      let tptForMessage = "";
+      let tptForType = 0;
+
+      if (loginDateTime <= lockPickTime && loginTime) {
+        loginTimeVisible = false;
+        loginTimeLabel = loginTime === "" ? "Locked" : loginTime;
+        loginTimeDisabled = true;
+      } else {
+        loginTimeVisible = true;
+        loginTimeDisabled = false;
       }
 
-      if (employee.dropFacilityID) {
-        logoutFacilityId = employee.dropFacilityID;
+      if (logoutDateTime <= lockDropTime && logoutTime) {
+        logoutTimeVisible = false;
+        logoutTimeLabel = logoutTime === "" ? "Locked" : logoutTime;
+        logoutTimeDisabled = true;
+        saveButtonVisible = false;
+      } else {
+        logoutTimeVisible = true;
+        logoutTimeDisabled = false;
+        saveButtonVisible = true;
       }
 
-      // If we don't have facility IDs directly, try to extract from SETime data
-      if (!loginFacilityId || !logoutFacilityId) {
-        // The SETime data might contain facility information after the "!" character
-        const fullTimeData = employee[`SETime${day}`].split("!");
-        if (fullTimeData.length > 1) {
-          const facilityInfo = fullTimeData[1];
-          console.log("Extracted facility info:", facilityInfo);
+      if (schedule.TPTFor === 1) {
+        tptForType = 1;
+        tptForMessage = "You are not allowed to update drop shift.";
+        logoutTimeVisible = false;
+        logoutTimeDisabled = true;
+        loginFacilityDisabled = false;
+        loginTimeDisabled = false;
+      } else if (schedule.TPTFor === 2) {
+        tptForType = 2;
+        tptForMessage = "You are not allowed to update pickup shift.";
+        loginTimeVisible = false;
+        loginTimeDisabled = true;
+        logoutFacilityDisabled = false;
+        logoutTimeDisabled = false;
+      } else {
+        tptForType = 0;
+        tptForMessage = "";
+        loginFacilityDisabled = false;
+        loginTimeDisabled = false;
+        logoutFacilityDisabled = false;
+        logoutTimeDisabled = false;
+      }
 
-          // Parse facility information if available
-          // This depends on the format of your data - you may need to adjust this
+      setShiftLockStatus({
+        loginFacilityDisabled,
+        loginTimeVisible,
+        loginTimeLabel,
+        loginTimeDisabled,
+        logoutFacilityDisabled,
+        logoutTimeVisible,
+        logoutTimeLabel,
+        logoutTimeDisabled,
+        saveButtonVisible,
+        tptForMessage,
+        tptForType,
+      });
+
+      // 8. Set facility dropdowns (matches: ddlInFacility.SelectedIndex, ddlOutFacility.SelectedIndex)
+      let loginFacilityId =
+        schedule.pickFacilityID || employee.pickFacilityID || "";
+      let logoutFacilityId =
+        schedule.dropFacilityID || employee.dropFacilityID || "";
+
+      // If not found, try to extract from SETime data
+      if ((!loginFacilityId || !logoutFacilityId) && seTimeData.includes("!")) {
+        const facilityInfo = seTimeData.split("!")[1];
+        if (facilityInfo) {
           const facilityParts = facilityInfo.split("|");
           if (facilityParts.length >= 2) {
-            // Assuming first part is login facility and second is logout facility
             loginFacilityId = facilityParts[0] || loginFacilityId;
             logoutFacilityId = facilityParts[1] || logoutFacilityId;
           }
         }
       }
 
-      // Fetch employee schedule data to get facility information if not available
-      if (!loginFacilityId || !logoutFacilityId) {
-        const scheduleData = await fetchEmployeeSchedule(employee.EmployeeID);
-        if (scheduleData && scheduleData.length > 0) {
-          loginFacilityId = scheduleData[0].pickFacilityID || loginFacilityId;
-          logoutFacilityId = scheduleData[0].dropFacilityID || logoutFacilityId;
-        }
-      }
+      setSelectedloginfacility(loginFacilityId);
+      setSelectedlogoutfacility(logoutFacilityId);
 
-      console.log("Facility IDs:", { loginFacilityId, logoutFacilityId });
-
-      // Set the facility values if we have them
-      if (loginFacilityId) {
-        setSelectedloginfacility(loginFacilityId);
-      }
-
-      if (logoutFacilityId) {
-        setSelectedlogoutfacility(logoutFacilityId);
-      }
-
-      // Open the offcanvas
+      // 9. Open the offcanvas/modal
       setIsEmployeeShiftOpen(true);
 
-      // Set the login time value
+      // 10. Set the login/logout time values
       setSelectedShiftTime(loginTime);
       setSelectedLogoutShiftTime(logoutTime);
 
+      // 11. Fetch available shift times for dropdowns
       if (loginFacilityId) {
         await fetchPickShiftTimes(employee.EmployeeID, loginFacilityId);
       }
-
       if (logoutFacilityId) {
         await fetchDropShiftTimes(employee.EmployeeID, logoutFacilityId);
       }
-      // After a short delay to ensure the modal is ready
+
+      // 12. Set dropdown values after a short delay (to ensure options are loaded)
       setTimeout(() => {
-        // Handle login time dropdown
         const loginDropdown = document.getElementById("loginShiftDropdown");
         if (loginDropdown) {
           const existingOptions = Array.from(loginDropdown.options);
-          const matchingOption = existingOptions.find(opt => opt.text.includes(loginTime));
-
+          const matchingOption = existingOptions.find((opt) =>
+            opt.text.includes(loginTime)
+          );
           if (matchingOption) {
-            // If time exists in API data, select it
             loginDropdown.value = matchingOption.value;
           } else {
-            // If time doesn't exist in API data, just show the time
             setSelectedShiftTime(loginTime);
           }
         }
-
-        // Handle logout time dropdown
         const logoutDropdown = document.getElementById("logoutShiftDropdown");
         if (logoutDropdown) {
           const existingOptions = Array.from(logoutDropdown.options);
-          const matchingOption = existingOptions.find(opt => opt.text.includes(logoutTime));
-
+          const matchingOption = existingOptions.find((opt) =>
+            opt.text.includes(logoutTime)
+          );
           if (matchingOption) {
-            // If time exists in API data, select it
             logoutDropdown.value = matchingOption.value;
           } else {
-            // If time doesn't exist in API data, just show the time
             setSelectedLogoutShiftTime(logoutTime);
-          }
-        }
-
-        // Highlight the selected facility options in the dropdowns
-        if (loginFacilityId) {
-          const loginFacilityDropdown = document.querySelector(
-            'select[value="' + selectedloginfacility + '"]'
-          );
-          if (loginFacilityDropdown) {
-            loginFacilityDropdown.value = loginFacilityId;
-          }
-        }
-
-        if (logoutFacilityId) {
-          const logoutFacilityDropdown = document.querySelector(
-            'select[value="' + selectedlogoutfacility + '"]'
-          );
-          if (logoutFacilityDropdown) {
-            logoutFacilityDropdown.value = logoutFacilityId;
           }
         }
       }, 300);
 
-      // Make sure the offcanvas is fully visible
+      // 13. Show the offcanvas if not already visible
       const offcanvasElement = document.getElementById("Employee_Shift");
       if (offcanvasElement && !offcanvasElement.classList.contains("show")) {
-        const offcanvasInstance = new bootstrap.Offcanvas(offcanvasElement);
+        const offcanvasInstance = new window.bootstrap.Offcanvas(
+          offcanvasElement
+        );
         offcanvasInstance.show();
       }
     } catch (error) {
       console.error("Error handling employee shift click:", error);
     }
   };
+  // const handleEmployeeShiftClick = async (employee, day) => {
+  //   try {
+  //     // Get the selected date from weekDays array using the day index
+  //     const selectedDate = weekDays[day]?.fullDate;
+
+  //     // Set the fromDate input value to the selected date
+  //     const fromDateInput = document.getElementById("fromDate");
+  //     if (fromDateInput && selectedDate) {
+  //       fromDateInput.value = selectedDate;
+  //     }
+  //     const seTimeData = employee[`SETime${day}`];
+  //     const [timeInfo] = seTimeData.split("!");
+  //     const [loginTime, logoutTime] = timeInfo.split("<BR>").map((time) => {
+  //       const match = time.match(/\d{4}$/);
+  //       return match ? match[0] : time.trim();
+  //     });
+  //     console.log("Parsed times:", { loginTime, logoutTime });
+  //     // Extract exactly the same values that are displayed in the table cell
+  //     // const loginTimeDisplay = employee[`SETime${day}`]
+  //     //   .split("!")[0]
+  //     //   .split("<BR>")[0].trim();
+  //     // const logoutTimeDisplay = employee[`SETime${day}`]
+  //     //   .split("!")[0]
+  //     //   .split("<BR>")[1].trim();
+
+  //     // console.log("Using exact displayed values:", {
+  //     //   loginTimeDisplay,
+  //     //   logoutTimeDisplay,
+  //     // });
+  //     console.log(`SETime for day ${day}:`, employee[`SETime${day}`]);
+  //     const schedule = (employeeSchedule && employeeSchedule[0]) || {};
+  //     const lockPickTime = new Date(lockDetails.pickLockDateTime);
+  //     const lockDropTime = new Date(lockDetails.dropLockDateTime);
+
+  //     const loginDateTime = new Date(
+  //       `${schedule.startDate}T${(loginTime || "00:00").replace(
+  //         /(\d{2})(\d{2})/,
+  //         "$1:$2"
+  //       )}`
+  //     );
+  //     const logoutDateTime = new Date(
+  //       `${schedule.endDate}T${(logoutTime || "00:00").replace(
+  //         /(\d{2})(\d{2})/,
+  //         "$1:$2"
+  //       )}`
+  //     );
+
+  //     // --- LOCK LOGIC START ---
+  //     // Always disable facility dropdowns as per C# logic
+  //     let loginFacilityDisabled = true;
+  //     let logoutFacilityDisabled = true;
+
+  //     // Default: show and enable both time dropdowns
+  //     let loginTimeVisible = true;
+  //     let loginTimeLabel = "";
+  //     let loginTimeDisabled = false;
+  //     let logoutTimeVisible = true;
+  //     let logoutTimeLabel = "";
+  //     let logoutTimeDisabled = false;
+  //     let saveButtonVisible = true;
+  //     let tptForMessage = "";
+  //     let tptForType = 0;
+
+  //     // Lock logic for login
+  //     if (loginDateTime <= lockPickTime && loginTime) {
+  //       loginTimeVisible = false;
+  //       loginTimeLabel = loginTime === "" ? "Locked" : loginTime;
+  //       loginTimeDisabled = true;
+  //     } else {
+  //       loginTimeVisible = true;
+  //       loginTimeDisabled = false;
+  //     }
+
+  //     // Lock logic for logout
+  //     if (logoutDateTime <= lockDropTime && logoutTime) {
+  //       logoutTimeVisible = false;
+  //       logoutTimeLabel = logoutTime === "" ? "Locked" : logoutTime;
+  //       logoutTimeDisabled = true;
+  //       saveButtonVisible = false;
+  //     } else {
+  //       logoutTimeVisible = true;
+  //       logoutTimeDisabled = false;
+  //       saveButtonVisible = true;
+  //     }
+
+  //     // TPTFor logic (overrides above)
+  //     if (schedule.TPTFor === 1) {
+  //       tptForType = 1;
+  //       tptForMessage = "You are not allowed to update drop shift.";
+  //       logoutTimeVisible = false;
+  //       logoutTimeDisabled = true;
+  //     } else if (schedule.TPTFor === 2) {
+  //       tptForType = 2;
+  //       tptForMessage = "You are not allowed to update pickup shift.";
+  //       loginTimeVisible = false;
+  //       loginTimeDisabled = true;
+  //     } else {
+  //       tptForType = 0;
+  //       tptForMessage = "";
+  //     }
+
+  //     setShiftLockStatus({
+  //       loginFacilityDisabled,
+  //       loginTimeVisible,
+  //       loginTimeLabel,
+  //       loginTimeDisabled,
+  //       logoutFacilityDisabled,
+  //       logoutTimeVisible,
+  //       logoutTimeLabel,
+  //       logoutTimeDisabled,
+  //       saveButtonVisible,
+  //       tptForMessage,
+  //       tptForType,
+  //     });
+  //     // --- LOCK LOGIC END ---
+
+  //     // Check if the employee has facility information
+  //     let loginFacilityId = null;
+  //     let logoutFacilityId = null;
+
+  //     // Try to extract facility information from the employee object
+  //     if (employee.pickFacilityID) {
+  //       loginFacilityId = employee.pickFacilityID;
+  //     }
+  //     if (employee.dropFacilityID) {
+  //       logoutFacilityId = employee.dropFacilityID;
+  //     }
+
+  //     // If we don't have facility IDs directly, try to extract from SETime data
+  //     if (!loginFacilityId || !logoutFacilityId) {
+  //       const fullTimeData = employee[`SETime${day}`].split("!");
+  //       if (fullTimeData.length > 1) {
+  //         const facilityInfo = fullTimeData[1];
+  //         console.log("Extracted facility info:", facilityInfo);
+  //         const facilityParts = facilityInfo.split("|");
+  //         if (facilityParts.length >= 2) {
+  //           loginFacilityId = facilityParts[0] || loginFacilityId;
+  //           logoutFacilityId = facilityParts[1] || logoutFacilityId;
+  //         }
+  //       }
+  //     }
+
+  //     // Fetch employee schedule data to get facility information if not available
+  //     if (!loginFacilityId || !logoutFacilityId) {
+  //       const scheduleData = await fetchEmployeeSchedule(employee.EmployeeID);
+  //       if (scheduleData && scheduleData.length > 0) {
+  //         loginFacilityId = scheduleData[0].pickFacilityID || loginFacilityId;
+  //         logoutFacilityId = scheduleData[0].dropFacilityID || logoutFacilityId;
+  //       }
+  //     }
+
+  //     console.log("Facility IDs:", { loginFacilityId, logoutFacilityId });
+
+  //     // Set the facility values if we have them
+  //     if (loginFacilityId) {
+  //       setSelectedloginfacility(loginFacilityId);
+  //     }
+  //     if (logoutFacilityId) {
+  //       setSelectedlogoutfacility(logoutFacilityId);
+  //     }
+
+  //     // Open the offcanvas
+  //     setIsEmployeeShiftOpen(true);
+
+  //     // Set the login time value
+  //     setSelectedShiftTime(loginTime);
+  //     setSelectedLogoutShiftTime(logoutTime);
+
+  //     if (loginFacilityId) {
+  //       await fetchPickShiftTimes(employee.EmployeeID, loginFacilityId);
+  //     }
+
+  //     if (logoutFacilityId) {
+  //       await fetchDropShiftTimes(employee.EmployeeID, logoutFacilityId);
+  //     }
+  //     // After a short delay to ensure the modal is ready
+  //     setTimeout(() => {
+  //       // Handle login time dropdown
+  //       const loginDropdown = document.getElementById("loginShiftDropdown");
+  //       if (loginDropdown) {
+  //         const existingOptions = Array.from(loginDropdown.options);
+  //         const matchingOption = existingOptions.find((opt) =>
+  //           opt.text.includes(loginTime)
+  //         );
+
+  //         if (matchingOption) {
+  //           // If time exists in API data, select it
+  //           loginDropdown.value = matchingOption.value;
+  //         } else {
+  //           // If time doesn't exist in API data, just show the time
+  //           setSelectedShiftTime(loginTime);
+  //         }
+  //       }
+
+  //       // Handle logout time dropdown
+  //       const logoutDropdown = document.getElementById("logoutShiftDropdown");
+  //       if (logoutDropdown) {
+  //         const existingOptions = Array.from(logoutDropdown.options);
+  //         const matchingOption = existingOptions.find((opt) =>
+  //           opt.text.includes(logoutTime)
+  //         );
+
+  //         if (matchingOption) {
+  //           // If time exists in API data, select it
+  //           logoutDropdown.value = matchingOption.value;
+  //         } else {
+  //           // If time doesn't exist in API data, just show the time
+  //           setSelectedLogoutShiftTime(logoutTime);
+  //         }
+  //       }
+
+  //       // Highlight the selected facility options in the dropdowns
+  //       if (loginFacilityId) {
+  //         const loginFacilityDropdown = document.querySelector(
+  //           'select[value="' + selectedloginfacility + '"]'
+  //         );
+  //         if (loginFacilityDropdown) {
+  //           loginFacilityDropdown.value = loginFacilityId;
+  //         }
+  //       }
+
+  //       if (logoutFacilityId) {
+  //         const logoutFacilityDropdown = document.querySelector(
+  //           'select[value="' + selectedlogoutfacility + '"]'
+  //         );
+  //         if (logoutFacilityDropdown) {
+  //           logoutFacilityDropdown.value = logoutFacilityId;
+  //         }
+  //       }
+  //     }, 300);
+
+  //     // Make sure the offcanvas is fully visible
+  //     const offcanvasElement = document.getElementById("Employee_Shift");
+  //     if (offcanvasElement && !offcanvasElement.classList.contains("show")) {
+  //       const offcanvasInstance = new bootstrap.Offcanvas(offcanvasElement);
+  //       offcanvasInstance.show();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error handling employee shift click:", error);
+  //   }
+  // };
   const fetchEmployeeSchedule = async (employeeId) => {
     try {
       const fromDate = document.getElementById("fromDate").value;
@@ -610,6 +978,7 @@ const MySchedule = () => {
         }));
 
         setEmployeeSchedule(formattedSchedule);
+        setSelectedEmployeeId(formattedSchedule[0].empCode);
 
         // Log the formatted data
         console.log("Formatted Employee Schedule:", formattedSchedule);
@@ -694,8 +1063,8 @@ const MySchedule = () => {
       // Get the process ID from the employee schedule if available
       const processId =
         employeeSchedule &&
-          employeeSchedule.length > 0 &&
-          employeeSchedule[0].processId
+        employeeSchedule.length > 0 &&
+        employeeSchedule[0].processId
           ? employeeSchedule[0].processId
           : selectedProcess || "0";
 
@@ -861,39 +1230,95 @@ const MySchedule = () => {
       setLoading(false);
     }
   };
+  // const resetFormValues = () => {
+  //   // Reset process name to first option
+  //   const processDropdown = document.getElementById("ddlProcess");
+  //   if (processDropdown) {
+  //     processDropdown.value = processes[0]?.ProcessId || "";
+  //     setSelectedProcess(processes[0]?.ProcessId || "");
+  //   }
+
+  //   // Reset dates to default
+  //   const fromDateInput = document.getElementById("fromDate");
+  //   const toDateInput = document.getElementById("toDate");
+  //   if (fromDateInput && toDateInput) {
+  //     fromDateInput.value =
+  //       lockDetails.lockSDate || new Date().toISOString().split("T")[0];
+  //     toDateInput.value =
+  //       addDay(lockDetails.lockSDate, lockDetails.lockDiffDays - 2) ||
+  //       new Date().toISOString().split("T")[0];
+  //   }
+
+  //   // Reset weekly off to default
+  //   setWeekendDays({
+  //     sat: true,
+  //     sun: true,
+  //   });
+
+  //   // Reset login and logout shifts to first options
+  //   const loginShiftDropdown = document.getElementById("ddlNewLoginShift");
+  //   const logoutShiftDropdown = document.getElementById("ddlNewLogoutShift");
+  //   if (loginShiftDropdown && loginShiftDropdown.options.length > 0) {
+  //     loginShiftDropdown.value = loginShiftDropdown.options[0].value;
+  //     setSelectedShiftTime(loginShiftDropdown.options[0].value);
+  //   }
+  //   if (logoutShiftDropdown && logoutShiftDropdown.options.length > 0) {
+  //     logoutShiftDropdown.value = logoutShiftDropdown.options[0].value;
+  //     setSelectedLogoutShiftTime(logoutShiftDropdown.options[0].value);
+  //   }
+  // };
   const resetFormValues = () => {
-    // Reset process name to first option
+    // Reset process dropdown and state
     const processDropdown = document.getElementById("ddlProcess");
     if (processDropdown) {
       processDropdown.value = processes[0]?.ProcessId || "";
       setSelectedProcess(processes[0]?.ProcessId || "");
     }
 
-    // Reset dates to default
-    const fromDateInput = document.getElementById("fromDate");
-    const toDateInput = document.getElementById("toDate");
-    if (fromDateInput && toDateInput) {
-      fromDateInput.value = lockDetails.lockSDate || new Date().toISOString().split('T')[0];
-      toDateInput.value = addDay(lockDetails.lockSDate, lockDetails.lockDiffDays - 2) || new Date().toISOString().split('T')[0];
-    }
+    // Reset date states and inputs
+    const defaultFromDate =
+      lockDetails.lockSDate || new Date().toISOString().split("T")[0];
+    const defaultToDate =
+      addDay(lockDetails.lockSDate, lockDetails.lockDiffDays - 2) ||
+      new Date().toISOString().split("T")[0];
+    setFromDate(defaultFromDate);
+    setToDate(defaultToDate);
 
-    // Reset weekly off to default
-    setWeekendDays({
-      sat: true,
-      sun: true
-    });
+    const fromDateInput = document.getElementById("txtNewfromDate");
+    const toDateInput = document.getElementById("txtNewtoDate");
+    if (fromDateInput) fromDateInput.value = defaultFromDate;
+    if (toDateInput) toDateInput.value = defaultToDate;
 
-    // Reset login and logout shifts to first options
+    // Reset weekend days
+    setWeekendDays({ sat: true, sun: true });
+
+    // Reset login/logout facility
+    setSelectedloginfacility(loginfacility[0]?.Id || "");
+    setSelectedlogoutfacility(loginfacility[0]?.Id || "");
+
+    // Reset login/logout shift dropdowns and state
     const loginShiftDropdown = document.getElementById("ddlNewLoginShift");
     const logoutShiftDropdown = document.getElementById("ddlNewLogoutShift");
     if (loginShiftDropdown && loginShiftDropdown.options.length > 0) {
       loginShiftDropdown.value = loginShiftDropdown.options[0].value;
       setSelectedShiftTime(loginShiftDropdown.options[0].value);
+    } else {
+      setSelectedShiftTime("");
     }
     if (logoutShiftDropdown && logoutShiftDropdown.options.length > 0) {
       logoutShiftDropdown.value = logoutShiftDropdown.options[0].value;
       setSelectedLogoutShiftTime(logoutShiftDropdown.options[0].value);
+    } else {
+      setSelectedLogoutShiftTime("");
     }
+
+    // Reset all checkboxes in mgrassociate
+    setMgrassociate((prev) =>
+      prev.map((item) => ({
+        ...item,
+        isChecked: false,
+      }))
+    );
   };
   const handleSubmit = async () => {
     const selectedEmployees = mgrassociate
@@ -902,7 +1327,7 @@ const MySchedule = () => {
     // Check if any employees are selected
     if (selectedEmployees.length === 0) {
       toastService.error(
-        "Please select at least one employee and fill in all required fields before saving."
+        "Please select at least one employee and complete all required fields before saving."
       );
       return; // Exit the function if no employees are selected
     }
@@ -926,26 +1351,60 @@ const MySchedule = () => {
     try {
       const response = await apiService.InsertNewSchedule(params);
       console.log("Schedule saved successfully:", response);
-      //alert("Record saved successfully!"); // Alert for successful save
-      toastService.success("Record Saved successfully!"); // Show success toast
-      const offcanvasElement = document.getElementById("Employee_Shift");
-      offcanvasElement.classList.remove("show"); // Hide the offcanvas
-        // Reset form values after offcanvas is hidden
+      // //alert("Record saved successfully!"); // Alert for successful save
+      // toastService.success("Record Saved successfully!"); // Show success toast
+      // const offcanvasElement = document.getElementById("Employee_Shift");
+      // offcanvasElement.classList.remove("show"); // Hide the offcanvas
+      //   // Reset form values after offcanvas is hidden
+      //   resetFormValues();
+
+      // // Refresh the main table data
+      // await fetchMgrSchedule(); // Call the function to refresh the main table data
+      if (
+        response &&
+        Array.isArray(response) &&
+        response.length > 0 &&
+        response[0].res2.includes(
+          "Roster insert failed, due to difference between login and logout time is less than 9 hours."
+        )
+      ) {
+        console.log(
+          "Roster insert failed: Login and logout time ",
+          response[0].res2
+        );
+
+        toastService.error(
+          "Roster insertion failed: login and logout time must differ by at least 9 hours."
+        );
+      } else {
+        toastService.success("Record saved!");
         resetFormValues();
-      
-      // Refresh the main table data
-      await fetchMgrSchedule(); // Call the function to refresh the main table data
+        const offcanvasElement = document.getElementById("raise_Feedback");
+        offcanvasElement.classList.remove("show");
+        // --- Close the offcanvas modal ---
+        // const offcanvasElement = document.getElementById("Employee_Shift");
+        // if (offcanvasElement) {
+        //   offcanvasElement.addEventListener("hidden.bs.offcanvas", resetFormValues);
+        //   return () => {
+        //     offcanvasElement.removeEventListener(
+        //       "hidden.bs.offcanvas",
+        //       resetFormValues
+        //     );
+        //   }
+        await fetchMgrSchedule();
+      }
     } catch (error) {
       console.error("Error saving schedule:", error);
       //alert("Error saving schedule. Please try again."); // Alert for error
-      toastService.error("Error saving schedule. Please try again."); // Show error toast
+      toastService.error(
+        "Failed to save the schedule. Please try again later."
+      ); // Show error toast
     }
   };
   const handleReplicateClick = () => {
-    navigate('/ReplicateSchedule');
+    navigate("/ReplicateSchedule");
   };
   // Function to refresh trip data
-
 
   return (
     <div className="container-fluid p-0">
@@ -958,7 +1417,11 @@ const MySchedule = () => {
           <div className="col-lg-12">
             <div className="row">
               <div className="col-12">
-                <button type="button" className="btn btn-dark me-3" onClick={handleReplicateClick}>
+                <button
+                  type="button"
+                  className="btn btn-dark me-3"
+                  onClick={handleReplicateClick}
+                >
                   Replicate Schedule
                 </button>
                 {/* <button type="button" className="btn btn-light">
@@ -1033,38 +1496,61 @@ const MySchedule = () => {
                       currentItems.map((employee, index) => (
                         <tr
                           key={index}
-                          className={`${index > 0 ? "column" : ""} ${employee.geoCode !== "Y" || employee.tptReq !== "Y" ? "disabled-row" : ""
-                            }`}
+                          className={`${index > 0 ? "column" : ""} ${
+                            employee.geoCode !== "Y" || employee.tptReq !== "Y"
+                              ? "disabled-row"
+                              : ""
+                          }`}
                         >
                           <td>
                             <span className="text-muted">
                               {employee.EmpName}
                             </span>
                             {employee.geoCode !== "Y" && (
-                              <span className="material-icons md-18 text-danger mx-2" title="NoGeocode">
+                              <span
+                                className="material-icons md-18 text-danger mx-2"
+                                title="NoGeocode"
+                              >
                                 location_off
                               </span>
                             )}
                             {employee.tptReq !== "Y" && (
-                              <span className="material-icons md-18 text-danger" title="NoTransport">
+                              <span
+                                className="material-icons md-18 text-danger"
+                                title="NoTransport"
+                              >
                                 no_transfer
                               </span>
                             )}
                           </td>
                           {[0, 1, 2, 3, 4, 5, 6].map((day) => (
                             <td key={day} id={employee.EmployeeID}>
-                              {employee.geoCode !== "Y" || employee.tptReq !== "Y" ? (
+                              {employee.geoCode !== "Y" ||
+                              employee.tptReq !== "Y" ? (
                                 // Read-only view for disabled rows
                                 <>
                                   <span>
-                                    {employee[`SETime${day}`].split("!")[0].split("<BR>")[0]}
+                                    {
+                                      employee[`SETime${day}`]
+                                        .split("!")[0]
+                                        .split("<BR>")[0]
+                                    }
                                     <br />
-                                    {employee[`SETime${day}`].split("!")[0].split("<BR>")[1]}
+                                    {
+                                      employee[`SETime${day}`]
+                                        .split("!")[0]
+                                        .split("<BR>")[1]
+                                    }
                                   </span>
                                   {(() => {
-                                    const timeString = employee[`SETime${day}`]?.split("!")[0];
-                                    const [pickupTime, dropTime] = timeString?.split("<BR>") || [];
-                                    const showIcon = employee[`SETime${day}`]?.split("!")[1] === "true";
+                                    const timeString =
+                                      employee[`SETime${day}`]?.split("!")[0];
+                                    const [pickupTime, dropTime] =
+                                      timeString?.split("<BR>") || [];
+                                    const showIcon =
+                                      employee[`SETime${day}`]?.split(
+                                        "!"
+                                      )[1] === "true";
 
                                     const extractTime = (str) => {
                                       if (!str) return null;
@@ -1072,10 +1558,12 @@ const MySchedule = () => {
                                       return timeMatch ? timeMatch[0] : null;
                                     };
 
-                                    const pickupTimeValue = extractTime(pickupTime);
+                                    const pickupTimeValue =
+                                      extractTime(pickupTime);
                                     const dropTimeValue = extractTime(dropTime);
 
-                                    return (pickupTimeValue || dropTimeValue) && showIcon ? (
+                                    return (pickupTimeValue || dropTimeValue) &&
+                                      showIcon ? (
                                       <a
                                         href="#!"
                                         className="d-block"
@@ -1086,7 +1574,10 @@ const MySchedule = () => {
                                         }}
                                         data-bs-target="#trips"
                                       >
-                                        <img src="images/icons/car.png" alt="" />
+                                        <img
+                                          src="images/icons/car.png"
+                                          alt=""
+                                        />
                                       </a>
                                     ) : null;
                                   })()}
@@ -1098,16 +1589,31 @@ const MySchedule = () => {
                                     href="#!"
                                     data-bs-toggle="offcanvas"
                                     data-bs-target="#Employee_Shift"
-                                    onClick={() => handleEmployeeShiftClick(employee, day)}
+                                    onClick={() =>
+                                      handleEmployeeShiftClick(employee, day)
+                                    }
                                   >
-                                    {employee[`SETime${day}`].split("!")[0].split("<BR>")[0]}
+                                    {
+                                      employee[`SETime${day}`]
+                                        .split("!")[0]
+                                        .split("<BR>")[0]
+                                    }
                                     <br />
-                                    {employee[`SETime${day}`].split("!")[0].split("<BR>")[1]}
+                                    {
+                                      employee[`SETime${day}`]
+                                        .split("!")[0]
+                                        .split("<BR>")[1]
+                                    }
                                   </a>
                                   {(() => {
-                                    const timeString = employee[`SETime${day}`]?.split("!")[0];
-                                    const [pickupTime, dropTime] = timeString?.split("<BR>") || [];
-                                    const showIcon = employee[`SETime${day}`]?.split("!")[1] === "true";
+                                    const timeString =
+                                      employee[`SETime${day}`]?.split("!")[0];
+                                    const [pickupTime, dropTime] =
+                                      timeString?.split("<BR>") || [];
+                                    const showIcon =
+                                      employee[`SETime${day}`]?.split(
+                                        "!"
+                                      )[1] === "true";
 
                                     const extractTime = (str) => {
                                       if (!str) return null;
@@ -1115,10 +1621,12 @@ const MySchedule = () => {
                                       return timeMatch ? timeMatch[0] : null;
                                     };
 
-                                    const pickupTimeValue = extractTime(pickupTime);
+                                    const pickupTimeValue =
+                                      extractTime(pickupTime);
                                     const dropTimeValue = extractTime(dropTime);
 
-                                    return (pickupTimeValue || dropTimeValue) && showIcon ? (
+                                    return (pickupTimeValue || dropTimeValue) &&
+                                      showIcon ? (
                                       <a
                                         href="#!"
                                         className="d-block"
@@ -1129,7 +1637,10 @@ const MySchedule = () => {
                                         }}
                                         data-bs-target="#trips"
                                       >
-                                        <img src="images/icons/car.png" alt="" />
+                                        <img
+                                          src="images/icons/car.png"
+                                          alt=""
+                                        />
                                       </a>
                                     ) : null;
                                   })()}
@@ -1154,8 +1665,9 @@ const MySchedule = () => {
                     <ul className="pagination mb-0">
                       {/* Previous button */}
                       <li
-                        className={`page-item ${currentPage === 1 ? "disabled" : ""
-                          }`}
+                        className={`page-item ${
+                          currentPage === 1 ? "disabled" : ""
+                        }`}
                       >
                         <button
                           className="page-link"
@@ -1170,8 +1682,9 @@ const MySchedule = () => {
                       {[...Array(totalPages)].map((_, index) => (
                         <li
                           key={index}
-                          className={`page-item ${currentPage === index + 1 ? "active" : ""
-                            }`}
+                          className={`page-item ${
+                            currentPage === index + 1 ? "active" : ""
+                          }`}
                         >
                           <button
                             className="page-link"
@@ -1184,8 +1697,9 @@ const MySchedule = () => {
 
                       {/* Next button */}
                       <li
-                        className={`page-item ${currentPage === totalPages ? "disabled" : ""
-                          }`}
+                        className={`page-item ${
+                          currentPage === totalPages ? "disabled" : ""
+                        }`}
                       >
                         <button
                           className="page-link"
@@ -1248,11 +1762,11 @@ const MySchedule = () => {
         tabindex="-1"
         id="Employee_Shift"
         aria-labelledby="offcanvasRightLabel"
-        data-bs-backdrop="true"
+        data-bs-backdrop="false"
       >
         <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
           <h5 class="subtitle fw-normal">
-            Employee Shift Detail -{" "}
+            Employee Shift Details -{" "}
             {employeeSchedule && employeeSchedule.length > 0
               ? `${employeeSchedule[0].empCode} ${employeeSchedule[0].empName} `
               : "Loading..."}
@@ -1267,32 +1781,6 @@ const MySchedule = () => {
         </div>
         <div class="offcanvas-body px-4">
           <div class="row">
-            <div class="col-12">
-              <div className="alert  alert-light offcanvas_alert" role="alert">
-                {employeeSchedule && employeeSchedule.length > 0 && (
-                  <>
-                    <small>
-                      * Login. Last Updated By -{" "}
-                      {employeeSchedule[0].lastUpdatedBy || "N/A"}| At -{" "}
-                      {employeeSchedule[0].lastUpdatedAt
-                        ? new Date(
-                          employeeSchedule[0].lastUpdatedAt
-                        ).toLocaleString()
-                        : "N/A"}
-                    </small>
-                    <small>
-                      * Logout. Last Updated By -{" "}
-                      {employeeSchedule[0].lastUpdatedBy || "N/A"} | At -{" "}
-                      {employeeSchedule[0].lastUpdatedAt
-                        ? new Date(
-                          employeeSchedule[0].lastUpdatedAt
-                        ).toLocaleString()
-                        : "N/A"}
-                    </small>
-                  </>
-                )}
-              </div>
-            </div>
             <div class="col-12 mb-3">
               <ul class="offcanvas_list">
                 {employeeSchedule && employeeSchedule.length > 0 && (
@@ -1307,13 +1795,13 @@ const MySchedule = () => {
                       <small>Shift Date</small>{" "}
                       {employeeSchedule[0].startDate
                         ? new Date(
-                          employeeSchedule[0].startDate
-                        ).toLocaleDateString("en-US", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })
+                            employeeSchedule[0].startDate
+                          ).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })
                         : "N/A"}
                     </li>
                     <li>
@@ -1329,6 +1817,7 @@ const MySchedule = () => {
                 className="form-select"
                 value={selectedloginfacility}
                 onChange={handleLoginFacilityChangeInModal}
+                disabled={shiftLockStatus.loginFacilityDisabled}
               >
                 {loginFacilities.map((facility) => (
                   <option key={facility.Id} value={facility.Id}>
@@ -1343,6 +1832,7 @@ const MySchedule = () => {
                 className="form-select"
                 value={selectedlogoutfacility}
                 onChange={(e) => setSelectedlogoutfacility(e.target.value)}
+                disabled={shiftLockStatus.logoutFacilityDisabled}
               >
                 {logoutFacilities.map((facility) => (
                   <option key={facility.Id} value={facility.Id}>
@@ -1353,56 +1843,116 @@ const MySchedule = () => {
             </div>
             <div className="col-6">
               {/* <label className="form-label">Login Shift Time</label> */}
-              <select
-                className="form-select"
-                id="loginShiftDropdown"
-                value={selectedShiftTime}
-                onChange={(e) => setSelectedShiftTime(e.target.value)}
-              >
-                <option value="">NA</option>
-                {Array.isArray(availableShiftTimes) &&
+              {shiftLockStatus.loginTimeVisible ? (
+                <select
+                  className="form-select"
+                  id="loginShiftDropdown"
+                  value={selectedShiftTime}
+                  onChange={(e) => setSelectedShiftTime(e.target.value)}
+                  disabled={shiftLockStatus.loginTimeDisabled}
+                >
+                  <option value="">NA</option>
+                  {Array.isArray(availableShiftTimes) &&
                   availableShiftTimes.length > 0
-                  ? availableShiftTimes.map((shift) => (
-                    <option
-                      key={shift.shiftTime}
-                      value={shift.ShiftValue || shift.shiftTime}
-                    >
-                      {shift.shiftTime}
-                    </option>
-                  ))
-                  : // If no available shift times, but we have a selected time, add it as an option
-                  selectedShiftTime && (
-                    <option value={selectedShiftTime}>
-                      {selectedShiftTime}
-                    </option>
-                  )}
-              </select>
+                    ? availableShiftTimes.map((shift) => (
+                        <option
+                          key={shift.shiftTime}
+                          value={shift.ShiftValue || shift.shiftTime}
+                        >
+                          {shift.shiftTime}
+                        </option>
+                      ))
+                    : // If no available shift times, but we have a selected time, add it as an option
+                      selectedShiftTime && (
+                        <option value={selectedShiftTime}>
+                          {selectedShiftTime}
+                        </option>
+                      )}
+                </select>
+              ) : (
+                <div
+                  className="form-control-plaintext"
+                  style={{
+                    minHeight: "38px",
+                    padding: "8px 12px",
+                    background: "#f8f9fa",
+                    borderRadius: "4px",
+                    border: "1px solid #ced4da",
+                  }}
+                >
+                  {shiftLockStatus.loginTimeLabel}
+                </div>
+              )}
             </div>
             <div class="col-6">
-              <select
-                className="form-select"
-                id="logoutShiftDropdown"
-                value={selectedLogoutShiftTime}
-                onChange={(e) => setSelectedLogoutShiftTime(e.target.value)}
-              >
-                <option value="">NA</option>
-                {Array.isArray(availableLogoutShiftTimes) &&
+              {shiftLockStatus.logoutTimeVisible ? (
+                <select
+                  className="form-select"
+                  id="logoutShiftDropdown"
+                  value={selectedLogoutShiftTime}
+                  onChange={(e) => setSelectedLogoutShiftTime(e.target.value)}
+                  disabled={shiftLockStatus.logoutTimeDisabled}
+                >
+                  <option value="">NA</option>
+                  {Array.isArray(availableLogoutShiftTimes) &&
                   availableLogoutShiftTimes.length > 0
-                  ? availableLogoutShiftTimes.map((shift) => (
-                    <option
-                      key={shift.shiftTime}
-                      value={shift.ShiftValue || shift.shiftTime}
-                    >
-                      {shift.shiftTime}
-                    </option>
-                  ))
-                  : // If no available shift times, but we have a selected time, add it as an option
-                  selectedLogoutShiftTime && (
-                    <option value={selectedLogoutShiftTime}>
-                      {selectedLogoutShiftTime}
-                    </option>
-                  )}
-              </select>
+                    ? availableLogoutShiftTimes.map((shift) => (
+                        <option
+                          key={shift.shiftTime}
+                          value={shift.ShiftValue || shift.shiftTime}
+                        >
+                          {shift.shiftTime}
+                        </option>
+                      ))
+                    : // If no available shift times, but we have a selected time, add it as an option
+                      selectedLogoutShiftTime && (
+                        <option value={selectedLogoutShiftTime}>
+                          {selectedLogoutShiftTime}
+                        </option>
+                      )}
+                </select>
+              ) : (
+                <label className="form-label">
+                  {shiftLockStatus.logoutTimeLabel}
+                </label>
+              )}
+            </div>
+            {shiftLockStatus.tptForMessage && (
+              <div className="col-12">
+                <span className="text-danger">
+                  {shiftLockStatus.tptForMessage}
+                </span>
+              </div>
+            )}
+            <div class="col-12">
+              <div
+                className="alert  alert-light offcanvas_alert"
+                role="alert"
+                style={{ marginTop: "30px" }}
+              >
+                {employeeSchedule && employeeSchedule.length > 0 && (
+                  <>
+                    <small>
+                      * Login. Last Updated By -{" "}
+                      {employeeSchedule[0].lastUpdatedBy || "N/A"}| At -{" "}
+                      {employeeSchedule[0].lastUpdatedAt
+                        ? new Date(
+                            employeeSchedule[0].lastUpdatedAt
+                          ).toLocaleString()
+                        : "N/A"}
+                    </small>
+                    <small>
+                      * Logout. Last Updated By -{" "}
+                      {employeeSchedule[0].lastUpdatedBy || "N/A"} | At -{" "}
+                      {employeeSchedule[0].lastUpdatedAt
+                        ? new Date(
+                            employeeSchedule[0].lastUpdatedAt
+                          ).toLocaleString()
+                        : "N/A"}
+                    </small>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1414,7 +1964,14 @@ const MySchedule = () => {
           >
             Cancel
           </button>
-          <button class="btn btn-success mx-3">Submit</button>
+          {shiftLockStatus.saveButtonVisible && (
+            <button
+              class="btn btn-success mx-3"
+              onClick={handleUpdateEmpSchedule}
+            >
+              Submit
+            </button>
+          )}
         </div>
       </div>
       {/* {<!-- Employee Shift Detail  -->} */}
@@ -1424,9 +1981,15 @@ const MySchedule = () => {
         tabindex="-1"
         id="trips"
         aria-labelledby="offcanvasRightLabel"
+        data-bs-backdrop="false"
       >
         <div class="offcanvas-header bg-secondary text-white offcanvas-header-lg">
-          <h5 class="subtitle fw-normal">Trips of the days</h5>
+          <h5 class="subtitle fw-normal">
+            Employee Trip Details -{" "}
+            {selectedEmployeeForTrips
+              ? `${selectedEmployeeForTrips.name.replace(/-/g, " ")}`
+              : "Select Employee"}
+          </h5>
           <button
             type="button"
             class="btn-close btn-close-white"
@@ -1435,7 +1998,6 @@ const MySchedule = () => {
             onClick={() => {
               setIsTripsModalOpen(false);
               setSelectedRouteId(null); // Reset the selected route ID to hide the collapsible section
-
             }}
           ></button>
         </div>
@@ -1460,8 +2022,8 @@ const MySchedule = () => {
                         <tr>
                           <td>
                             {trip.routeid &&
-                              (trip.routeid.includes("Trip Not Generated") ||
-                                trip.routeid.includes("Not Finalized")) ? (
+                            (trip.routeid.includes("Trip Not Generated") ||
+                              trip.routeid.includes("Not Finalized")) ? (
                               <span>{trip.routeid.replace(/<br>/g, "-")}</span> // Display as read-only
                             ) : (
                               <a
@@ -1474,19 +2036,34 @@ const MySchedule = () => {
                                 data-bs-target={`#collapseExample-${trip.id}`} // Unique target for each trip
                               >
                                 {trip.routeid && trip.routeid.includes("<br>")
-                                  ? trip.routeid.replace(/<br>/g, "-").split("<br>")[0]
+                                  ? trip.routeid
+                                      .replace(/<br>/g, "-")
+                                      .split("<br>")[0]
                                   : trip.routeid}
                               </a>
                             )}
                           </td>
-                          <td>{trip.shiftdate || "N/A"}</td>
+                          <td>
+                            {trip.shiftdate
+                              ? new Date(trip.shiftdate).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    year: "numeric",
+                                  }
+                                )
+                              : "N/A"}
+                          </td>
                           <td>
                             {" "}
-                            <span id="tripType"
-                              className={`badge text-bg-${trip.triptype === "PickUp"
-                                ? "primary"
-                                : "danger"
-                                } rounded-pill text-uppercase`}
+                            <span
+                              id="tripType"
+                              className={`badge text-bg-${
+                                trip.triptype === "PickUp"
+                                  ? "primary"
+                                  : "danger"
+                              } rounded-pill text-uppercase`}
                             >
                               {trip.triptype || "N/A"}
                             </span>
@@ -1505,7 +2082,10 @@ const MySchedule = () => {
                           </td>
                         </tr>
                         {selectedRouteId === trip.routeid && (
-                          <tr className="collapse show" id={`collapseExample-${trip.id}`}>
+                          <tr
+                            className="collapse show"
+                            id={`collapseExample-${trip.id}`}
+                          >
                             <td colSpan="6" className="p-2 bg-secondary">
                               <table className="table trip_tb mb-0">
                                 <thead className="table-dark">
@@ -1518,23 +2098,37 @@ const MySchedule = () => {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {Array.isArray(routeDetails) && routeDetails.length > 0 ? (
+                                  {Array.isArray(routeDetails) &&
+                                  routeDetails.length > 0 ? (
                                     routeDetails.map((detail, index) => (
                                       <tr key={index}>
-                                        <td>{detail.empName || 'N/A'}</td>
+                                        <td>{detail.empName || "N/A"}</td>
                                         <td>
-                                          <span className={`badge ${detail.Gender === 'M' ? 'bg-primary-subtle' : 'bg-danger-subtle'} rounded-pill text-dark`}>
-                                            {detail.Gender || 'N/A'}
+                                          <span
+                                            className={`badge ${
+                                              detail.Gender === "M"
+                                                ? "bg-primary-subtle"
+                                                : "bg-danger-subtle"
+                                            } rounded-pill text-dark`}
+                                          >
+                                            {detail.Gender || "N/A"}
                                           </span>
                                         </td>
-                                        <td>{detail.address || 'N/A'}</td>
-                                        <td>{detail.stopNo || 'N/A'}</td>
-                                        <td>{detail.ETAhh !== null && detail.ETAmm !== null ? `${detail.ETAhh}:${detail.ETAmm}` : 'N/A'}</td>
+                                        <td>{detail.address || "N/A"}</td>
+                                        <td>{detail.stopNo || "N/A"}</td>
+                                        <td>
+                                          {detail.ETAhh !== null &&
+                                          detail.ETAmm !== null
+                                            ? `${detail.ETAhh}:${detail.ETAmm}`
+                                            : "N/A"}
+                                        </td>
                                       </tr>
                                     ))
                                   ) : (
                                     <tr>
-                                      <td colSpan="5" className="text-center">No route details available.</td>
+                                      <td colSpan="5" className="text-center">
+                                        No route details available.
+                                      </td>
                                     </tr>
                                   )}
                                 </tbody>
@@ -1569,6 +2163,7 @@ const MySchedule = () => {
         tabIndex="-1"
         id="raise_Feedback"
         aria-labelledby="offcanvasRightLabel"
+        data-bs-backdrop="false"
       >
         <div className="offcanvas-header bg-secondary text-white offcanvas-header-lg">
           <h5 className="subtitle fw-bold">New Schedule</h5>
@@ -1577,6 +2172,7 @@ const MySchedule = () => {
             className="btn-close btn-close-white"
             data-bs-dismiss="offcanvas"
             aria-label="Close"
+            onClick={resetFormValues}
           ></button>
         </div>
         <div className="offcanvas-body">
@@ -1623,7 +2219,7 @@ const MySchedule = () => {
                 value={selectedProcess}
                 onChange={handleProcessChange}
               >
-                <option value="0">Select Project</option>
+                <option value="0">Select Process</option>
                 {processes.map((process) => (
                   <option key={process.id} value={process.id}>
                     {process.processName}
@@ -1636,7 +2232,7 @@ const MySchedule = () => {
               <input
                 type="date"
                 className="form-control"
-                value={lockDetails?.lockSDate}
+                value={fromDate}
                 onChange={handleFromDateChange}
                 id="txtNewfromDate"
               />
@@ -1646,10 +2242,7 @@ const MySchedule = () => {
               <input
                 type="date"
                 className="form-control"
-                value={addDay(
-                  lockDetails?.lockSDate,
-                  lockDetails?.lockDiffDays - 2
-                )}
+                value={toDate}
                 onChange={handleToDateChange}
                 id="txtNewtoDate"
               />
@@ -1894,77 +2487,79 @@ const MySchedule = () => {
           </div>
 
           {/* <!-- Table start --> */}
-          {mgrassociate.length > 0 && (
-            <table
-              className="tb_raiseAdhoc table table-borderless table-hover"
-              id="tblMgrAssociate"
-            >
-              <thead>
-                <tr>
-                  <th width="4%">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="flexCheckDefault"
-                      onChange={(e) => {
-                        const isChecked = e.target.checked;
-                        setMgrassociate((prev) =>
-                          prev.map((item) => ({
-                            ...item,
-                            isChecked: isChecked, // Add isChecked property to each item
-                          }))
-                        );
-                      }}
-                    />
-                  </th>
-                  <th>Employee</th>
-                  <th>Gender</th>
-                  <th>Process</th>
-                  <th>Manager</th>
-                  <th>Facility</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mgrassociate.map((mgrassociate) => (
-                  <tr key={mgrassociate.EmployeeID}>
-                    <td>
+          {selectedProcess &&
+            selectedProcess !== "0" &&
+            mgrassociate.length > 0 && (
+              <table
+                className="tb_raiseAdhoc table table-borderless table-hover"
+                id="tblMgrAssociate"
+              >
+                <thead>
+                  <tr>
+                    <th width="4%">
                       <input
                         className="form-check-input"
                         type="checkbox"
-                        checked={mgrassociate.isChecked || false} // Use isChecked property
-                        onChange={() => {
+                        id="flexCheckDefault"
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
                           setMgrassociate((prev) =>
-                            prev.map((item) =>
-                              item.EmployeeID === mgrassociate.EmployeeID
-                                ? { ...item, isChecked: !item.isChecked }
-                                : item
-                            )
+                            prev.map((item) => ({
+                              ...item,
+                              isChecked: isChecked, // Add isChecked property to each item
+                            }))
                           );
                         }}
                       />
-                    </td>
-                    <td>
-                      {mgrassociate.EmpName}
-                      {mgrassociate.geoCode !== "Y" && (
-                        <span className="material-icons md-18 text-danger mx-2">
-                          location_off
-                        </span>
-                      )}
-                      {mgrassociate.tptReq !== "Y" && (
-                        <span className="material-icons md-18 text-danger">
-                          no_transfer
-                        </span>
-                      )}
-                    </td>
-                    <td>{mgrassociate.Gender}</td>
-                    <td>{mgrassociate.processName}</td>
-                    <td>{mgrassociate.Manager}</td>
-                    <td>{mgrassociate.facility}</td>
+                    </th>
+                    <th>Employee</th>
+                    <th>Gender</th>
+                    <th>Process</th>
+                    <th>Manager</th>
+                    <th>Facility</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {mgrassociate.map((mgrassociate) => (
+                    <tr key={mgrassociate.EmployeeID}>
+                      <td>
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={mgrassociate.isChecked || false} // Use isChecked property
+                          onChange={() => {
+                            setMgrassociate((prev) =>
+                              prev.map((item) =>
+                                item.EmployeeID === mgrassociate.EmployeeID
+                                  ? { ...item, isChecked: !item.isChecked }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </td>
+                      <td>
+                        {mgrassociate.EmpName}
+                        {mgrassociate.geoCode !== "Y" && (
+                          <span className="material-icons md-18 text-danger mx-2">
+                            location_off
+                          </span>
+                        )}
+                        {mgrassociate.tptReq !== "Y" && (
+                          <span className="material-icons md-18 text-danger">
+                            no_transfer
+                          </span>
+                        )}
+                      </td>
+                      <td>{mgrassociate.Gender}</td>
+                      <td>{mgrassociate.processName}</td>
+                      <td>{mgrassociate.Manager}</td>
+                      <td>{mgrassociate.facility}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
         </div>
 
         {/* Add more form fields */}
@@ -1972,10 +2567,15 @@ const MySchedule = () => {
           <button
             className="btn btn-outline-secondary"
             data-bs-dismiss="offcanvas"
+            onClick={resetFormValues}
           >
             Cancel
           </button>
-          <button className="btn btn-success mx-3" id="SubmitSchedule" onClick={handleSubmit}>
+          <button
+            className="btn btn-success mx-3"
+            id="SubmitSchedule"
+            onClick={handleSubmit}
+          >
             Submit
           </button>
         </div>

@@ -288,11 +288,9 @@ export default function RouteMap() {
           stopNo: emp.stopNo,
           address: emp.address,
           empCode: emp.empCode,
-          empName: emp.empName,
           eta: emp.ETA,
           locationX: emp.GeoX,
           locationY: emp.GeoY,
-          gender: emp.Gender
         }));
         return {
           ...existingRouteMeta,
@@ -642,9 +640,9 @@ export default function RouteMap() {
     </div>
   );
 
-    const componentStyles = `
+  const componentStyles = `
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+    
     /* Sidebar Styles */
     .sidebar-react {
       position: absolute;
@@ -729,17 +727,17 @@ export default function RouteMap() {
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
     .route-summary.active {
-      background-color: #3b82f6;
+      background-color: #3b82f6; 
       color: white;
       border-color: #3b82f6;
     }
-    .route-summary.active .route-name span {
+    .route-summary.active .route-name span { 
         color: white;
     }
     .route-summary .route-name {
       font-size: 14px;
       font-weight: 600;
-      color: #111827;
+      color: #111827; 
       margin-bottom: 12px;
       display: flex;
       justify-content: space-between;
@@ -755,7 +753,7 @@ export default function RouteMap() {
     .route-icons-container img {
       width: 20px;
       height: 20px;
-      object-fit: contain;
+      object-fit: contain; 
     }
     .route-summary.active .route-icons-container img {
        opacity: 0.7; /* Or your preferred active style */
@@ -791,82 +789,89 @@ export default function RouteMap() {
       background: rgba(255,255,255,0.92);
     }
     .route-summary.active .route-stats .stat-label {
-      color: #2563eb;
+      color: #2563eb; 
     }
     .route-summary.active .route-stats .stat-value {
-      color: #2563eb;
+      color: #2563eb; 
     }
 
     /* Popup (Info Window) Styles */
     .info-window {
       font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      max-width: 200px;
+      font-size: 12px; 
+      max-width: 200px; 
       padding: 0;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      background: white; 
+      border-radius: 8px; 
+      overflow: hidden; 
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1); 
     }
     .info-header {
-      font-weight: 700;
-      font-size: 13px;
+      font-weight: 700; 
+      font-size: 13px; 
       padding: 6px 28px 6px 12px; /* Increased right padding for close button */
-      color: white;
+      color: white; 
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--route-color, #2563eb);
-      border-bottom: none;
-      position: relative;
+      background: var(--route-color, #2563eb); 
+      border-bottom: none; 
+      position: relative; 
     }
-    .info-header span {
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.9);
-      background: rgba(0, 0, 0, 0.1);
-      padding: 1px 6px;
-      border-radius: 3px;
-      font-size: 10px;
+    .info-header span { 
+      font-weight: 500; 
+      color: rgba(255, 255, 255, 0.9); 
+      background: rgba(0, 0, 0, 0.1); 
+      padding: 1px 6px; 
+      border-radius: 3px; 
+      font-size: 10px; 
     }
     .employee-details {
       list-style: none;
-      padding: 8px 10px;
+      padding: 8px 10px; 
       margin: 0;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 4px 8px;
-      background: rgba(var(--route-color-rgb, 37, 99, 235), 0.08);
+      display: grid; 
+      grid-template-columns: auto 1fr; 
+      gap: 4px 8px; 
+      background: rgba(var(--route-color-rgb, 37, 99, 235), 0.08); 
     }
     .employee-details li { display: contents; }
     .employee-details strong {
-      color: #475569;
-      font-size: 9px;
+      color: #475569; 
+      font-size: 9px; 
       text-transform: uppercase;
       letter-spacing: 0.5px;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 3px;
-      grid-column: 1;
-      padding-bottom: 4px;
-      border-bottom: 1px solid #cbd5e1;
+      gap: 3px; 
+      grid-column: 1; 
+      padding-bottom: 4px; 
+      border-bottom: 1px solid #cbd5e1; 
     }
-    /* REMOVED .employee-details strong::before rule from here */
-    .employee-details li > span {
-      color: #1e293b;
-      font-size: 11px;
-      font-weight: 500;
-      line-height: 1.3;
-      text-align: right;
-      word-break: break-word;
-      grid-column: 2;
-      padding-bottom: 4px;
-      border-bottom: 1px solid #cbd5e1;
+     .employee-details strong::before {
+       content: '';
+       display: inline-block;
+       width: 4px; 
+       height: 4px; 
+       background: var(--route-color, #2563eb); 
+       border-radius: 50%; 
+     }
+    .employee-details li > span { 
+      color: #1e293b; 
+      font-size: 11px; 
+      font-weight: 500; 
+      line-height: 1.3; 
+      text-align: right; 
+      word-break: break-word; 
+      grid-column: 2; 
+      padding-bottom: 4px; 
+      border-bottom: 1px solid #cbd5e1; 
     }
     .employee-details li:last-child strong,
     .employee-details li:last-child span {
-        border-bottom: none;
-        padding-bottom: 0;
+        border-bottom: none; 
+        padding-bottom: 0; 
     }
 
     /* Leaflet Popup Overrides */
@@ -876,21 +881,21 @@ export default function RouteMap() {
       padding: 0 !important;
     }
     .leaflet-popup-content-wrapper {
-      border-radius: 8px !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-      background-color: transparent !important;
+      border-radius: 8px !important; 
+      box-shadow: none !important; 
+      padding: 0 !important; 
+      background-color: transparent !important; 
     }
     .leaflet-popup-tip {
-       background-color: white !important;
+       background-color: white !important; 
        box-shadow: none !important;
     }
     .leaflet-popup-close-button {
-      color: rgba(255, 255, 255, 0.85) !important;
-      font-size: 18px !important;
+      color: rgba(255, 255, 255, 0.85) !important; 
+      font-size: 18px !important; 
       font-weight: bold !important;
-      line-height: 20px !important;
-      text-align: center !important;
+      line-height: 20px !important; 
+      text-align: center !important; 
       text-decoration: none !important;
       transition: all 0.2s ease !important;
       position: absolute !important;
@@ -898,17 +903,16 @@ export default function RouteMap() {
       right: 4px !important;   /* Adjust to position from right of header */
       width: 20px !important;  /* Smaller clickable area */
       height: 20px !important; /* Smaller clickable area */
-      background: transparent !important;
+      background: transparent !important; 
       border-radius: 50% !important; /* Circular button */
-      z-index: 10 !important;
+      z-index: 10 !important; 
       padding: 0 !important;
     }
     .leaflet-popup-close-button:hover {
-      color: white !important;
-      background: rgba(0, 0, 0, 0.2) !important;
+      color: white !important; 
+      background: rgba(0, 0, 0, 0.2) !important; 
     }
   `;
-
 
   return (
     <div
@@ -1089,7 +1093,6 @@ export default function RouteMap() {
                 route.stops.map((stop, sidx) => {
                   const lat = parseFloat(stop.locationY);
                   const lng = parseFloat(stop.locationX);
-                  console.log("Stop Coordinates:", stop);
                   if (isNaN(lat) || isNaN(lng)) return null;
                   return (
                     <Marker
@@ -1110,10 +1113,6 @@ export default function RouteMap() {
                           </div>
                           <ul className="employee-details">
                             <li>
-                              <strong>Emp Name</strong>
-                              <span>{stop.empName || "N/A"}</span>
-                            </li>
-                            <li>
                               <strong>Emp Code</strong>
                               <span>{stop.empCode || "N/A"}</span>
                             </li>
@@ -1124,10 +1123,6 @@ export default function RouteMap() {
                             <li>
                               <strong>ETA</strong>
                               <span>{stop.eta || "N/A"}</span>
-                            </li>
-                            <li>
-                              <strong>Gender</strong>
-                              <span>{stop.gender || "N/A"}</span>
                             </li>
                           </ul>
                         </div>
