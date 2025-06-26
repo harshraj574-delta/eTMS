@@ -22,6 +22,7 @@ import { OverlayPanel } from "primereact/overlaypanel";
 import { Tooltip } from "primereact/tooltip";
 
 import * as XLSX from "xlsx";
+import { set } from "lodash";
 
 const AddressColumnTemplate = (rowData) => {
   const maxLength = 40;
@@ -208,15 +209,15 @@ const ManageRoute = () => {
 
       const fileExtension = file.name.split(".").pop().toLowerCase();
       if (!["xlsx", "xls", "csv"].includes(fileExtension)) {
-        toastService.warn("Please select Excel or CSV files only");
+        toastService.warn("Please upload only Excel or CSV files.");
         return;
       }
 
       setSelectedFile(file); // Store the selected file
-      toastService.success("File selected successfully");
+      toastService.success("The file was selected successfully.");
     } catch (error) {
       console.error("Error selecting file:", error);
-      toastService.error("There was an error selecting the file");
+      toastService.error("There was an error during file selection.");
       setSelectedFile(null);
     }
   };
@@ -242,13 +243,17 @@ const ManageRoute = () => {
         // Assuming bulkRouteData is already in the format expected by UpdateTripsheetDetail
         await pushDataToUpdateTripsheetDetail(bulkRouteData);
         console.log("Bulk route data pushed successfully:", bulkRouteData);
-        toastService.success("Routes finalized and data pushed successfully!");
+        toastService.success(
+          "Route finalization and data push completed successfully."
+        );
       } else {
-        toastService.warn("No route data to finalize.");
+        toastService.warn("No route data available to finalize.");
       }
     } catch (error) {
       console.error("Error finalizing routes:", error);
-      toastService.error("Failed to finalize routes and push data.");
+      toastService.error(
+        "Finalization and data push failed. Please try again."
+      );
     } finally {
       setIsFinalizing(false);
     }
@@ -274,12 +279,12 @@ const ManageRoute = () => {
           response.statusText
         );
         toastService.error(
-          `Failed to push data: ${response.status} ${response.statusText}`
+          `Failed to push data. Status:  ${response.status} ${response.statusText}`
         );
       }
     } catch (error) {
       console.error("Error pushing data to UpdateTripsheetDetail:", error);
-      toastService.error("Failed to push data.");
+      toastService.error("Data push failed.");
     }
   };
 
@@ -301,13 +306,13 @@ const ManageRoute = () => {
       };
 
       const response = await ManageRouteService.AutoVendorAllocationNew(params);
-      toastService.success("Vendor Allocation completed successfully");
+      toastService.success("Vendor allocation process completed successfully.");
       setVendorAllocated(true);
       await handleSubmit(); // Refresh the routes after allocation
       console.log("Vendor allocation response:", response);
     } catch (error) {
       console.error("Error during auto vendor allocation:", error);
-      toastService.error("Failed to complete Vendor Allocation");
+      toastService.error("Vendor allocation process failed to complete.");
       setVendorAllocated(false); // Ensure it's false in case of error
     } finally {
       setIsLoading(false);
@@ -336,7 +341,7 @@ const ManageRoute = () => {
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      toastService.error("There was an error uploading the file");
+      toastService.error("An error occurred during file upload.");
     }
   };
 
@@ -363,7 +368,7 @@ const ManageRoute = () => {
       setFacilities(formattedData);
     } catch (error) {
       console.error("Failed to fetch facilities:", error);
-      toastService.error("Failed to load facilities");
+      toastService.error("An error occurred while loading facilities.");
       // toast.current.show({
       //     severity: "error",
       //     summary: "Error",
@@ -398,7 +403,7 @@ const ManageRoute = () => {
       }
     } catch (error) {
       console.error("Failed to fetch shifts:", error);
-      toastService.error("Failed to load shifts");
+      toastService.error("An error occurred while loading shifts.");
       // toast.current.show({
       //     severity: "error",
       //     summary: "Error",
@@ -591,10 +596,10 @@ const ManageRoute = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toastService.success("Excel file downloaded successfully");
+      toastService.success("Download of Excel file completed successfully.");
     } catch (error) {
       console.error("Error exporting to Excel:", error);
-      toastService.error("Failed to export to Excel");
+      toastService.error("Excel export failed. Please try again.");
     }
   };
   const handleGenerateRoute = async () => {
@@ -748,7 +753,9 @@ const ManageRoute = () => {
       setShowButtons(true);
       setTimeout(() => {
         setShowProgressDialog(false);
-        toastService.success("Routes generated and saved successfully");
+        toastService.success(
+          "Route generation and save completed successfully."
+        );
       }, 2000);
     } catch (error) {
       console.error("Error in route generation:", error);
@@ -756,9 +763,12 @@ const ManageRoute = () => {
       setProgressStatus((prev) => ({
         ...prev,
         isError: true,
-        errorMessage: error.message || "Failed to generate route",
+        errorMessage:
+          error.message || "Route generation failed. Please try again.",
       }));
-      toastService.error(error.message || "Failed to generate route");
+      toastService.error(
+        error.message || "Route generation failed. Please try again."
+      );
     } finally {
       setShowProgressDialog(false);
     }
@@ -776,7 +786,7 @@ const ManageRoute = () => {
       });
       setShowButtons(false);
       if (!selectedFacility) {
-        toastService.warn("Please select Facility");
+        toastService.warn("Please select a facility.");
         return;
       }
       if (selectedShifts.length === 0) {
@@ -819,7 +829,7 @@ const ManageRoute = () => {
         const parsedResponse =
           typeof response === "string" ? JSON.parse(response) : response;
         setTableData(parsedResponse || []);
-        toastService.success("Routes loaded successfully");
+        toastService.success("Route data loaded successfully.");
         // Call the vendor summary API
         const params = {
           sdate: shiftDate,
@@ -1150,7 +1160,6 @@ const ManageRoute = () => {
 
   return (
     <>
-      
       {/* <style>{overlayStyles}</style> */}
       {/* Add the loading overlay */}
       {/* {isLoading && (
@@ -1359,6 +1368,30 @@ const ManageRoute = () => {
                 className="btn btn-outline-secondary me-3"
                 id="VendorAllocation"
                 onClick={handleAutoVendorAllocation}
+                disabled={isLoading}
+              >
+                {isLoading ? "Allocating..." : "Auto Vendor Allocation"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                id="FinalizeRoute"
+                onClick={handleFinalizeRoute}
+                disabled={isFinalizing}
+              >
+                {isFinalizing ? "Finalizing..." : "Finalize Route"}
+              </button>
+            </div>
+          </div>
+        )}
+        {/* {showButtons && (
+          <div className="row mt-3">
+            <div className="col-12">
+              <button
+                type="button"
+                className="btn btn-outline-secondary me-3"
+                id="VendorAllocation"
+                onClick={handleAutoVendorAllocation}
                 disabled={isLoading || vendorAllocated}
               >
                 {isLoading ? "Allocating..." : "Auto Vendor Allocation"}
@@ -1376,7 +1409,7 @@ const ManageRoute = () => {
               )}
             </div>
           </div>
-        )}
+        )} */}
         {/* {showButtons && (
           <div className="row mt-3">
             <div className="col-12">
@@ -1455,7 +1488,7 @@ const ManageRoute = () => {
                 emptyMessage="No Record Found."
                 paginator
                 rows={50}
-                rowsPerPageOptions={[5, 10, 25, 50]}
+                rowsPerPageOptions={[50,100,150,200,250]}
                 sortField={sortField}
                 sortOrder={sortOrder}
                 onSort={(e) => {
@@ -1976,11 +2009,14 @@ const ManageRoute = () => {
                   </li>
                 </ol>
               </div>
-              <div class="cobl-12">
+              <div
+                class="cobl-12"
+                style={{ maxHeight: "220px", overflowY: "auto" }}
+              >
                 <table class="table table-bordered mt-4 shadow">
                   <thead>
                     <tr>
-                      <th colSpan="4" class="text-center">
+                      <th colSpan="5" class="text-center">
                         Vendor Summary
                       </th>
                     </tr>
@@ -1989,14 +2025,17 @@ const ManageRoute = () => {
                       <th>S</th>
                       <th>M</th>
                       <th>L</th>
+                      <th>Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {vendorSummary.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="text-center">
-                          0
-                        </td>
+                        <td className="text-center">-</td>
+                        <td className="text-center">0</td>
+                        <td className="text-center">0</td>
+                        <td className="text-center">0</td>
+                        <td className="text-center">0</td>
                       </tr>
                     ) : (
                       vendorSummary.map((vendor, index) => (
@@ -2005,6 +2044,7 @@ const ManageRoute = () => {
                           <td>{vendor.smallvehiclecount}</td>
                           <td>{vendor.mediumvehiclecount}</td>
                           <td>{vendor.largevehiclecount}</td>
+                          <td>{vendor.totaltrip}</td>
                         </tr>
                       ))
                     )}
