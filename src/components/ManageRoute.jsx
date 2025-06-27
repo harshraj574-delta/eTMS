@@ -643,7 +643,7 @@ const ManageRoute = () => {
       }));
       // Step 2: Call local OSRM server for route generation
       const osrmResponse = await fetch(
-        "http://localhost:5001/api/route-generation/generate",
+        "https://ftqbvxxmpm.ap-south-1.awsapprunner.com/api/route-generation/generate",
         {
           method: "POST",
           headers: {

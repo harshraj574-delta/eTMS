@@ -2012,7 +2012,7 @@ const MySchedule = () => {
                     <th>Trip Type</th>
                     <th>Shift</th>
                     <th>Facility</th>
-                    <th>Action</th>
+                    <th style={{display:"none"}}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2070,7 +2070,7 @@ const MySchedule = () => {
                           </td>
                           <td>{trip.shifttime || "N/A"}</td>
                           <td>{trip.facility || "N/A"}</td>
-                          <td>
+                          <td style={{display:"none"}}>
                             {" "}
                             {trip.enableds === "TRUE" && (
                               <img
