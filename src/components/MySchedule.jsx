@@ -56,6 +56,7 @@ const MySchedule = () => {
   const navigate = useNavigate();
   const facID = sessionManager.getUserSession().FacilityID;
   const empid = sessionManager.getUserSession().ID;
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedShiftDate, setSelectedShiftDate] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [shiftLockStatus, setShiftLockStatus] = useState({
@@ -428,11 +429,13 @@ const MySchedule = () => {
     setSelectedlogoutfacility(e.target.value);
   };
   const handleUpdateEmpSchedule = async () => {
+    setIsSubmitting(true); // Loader ON
     try {
       // Employee schedule se values le lo
       const empSchedule = employeeSchedule && employeeSchedule[0];
       if (!empSchedule) {
         alert("No employee schedule found!");
+        setIsSubmitting(false); // Loader OFF
         return;
       }
 
@@ -473,6 +476,7 @@ const MySchedule = () => {
           response = JSON.parse(response);
         } catch (e) {
           toastService.error("Invalid response from server.");
+          setIsSubmitting(false); // Loader OFF
           return;
         }
       }
@@ -482,6 +486,8 @@ const MySchedule = () => {
 
       if (response) {
         toastService.success("Schedule updated successfully!");
+        // Properly close the Bootstrap Offcanvas using JS API
+ 
         setIsEmployeeShiftOpen(false);
         // ---- Force table to reload from today's date ----
         const today = new Date().toISOString().split("T")[0];
@@ -499,6 +505,8 @@ const MySchedule = () => {
       }
     } catch (error) {
       toastService.error("Error updating schedule: " + error);
+    } finally {
+      setIsSubmitting(false); // Loader OFF
     }
   };
   const handleEmployeeShiftClick = async (employee, day) => {
@@ -1320,7 +1328,44 @@ const MySchedule = () => {
       }))
     );
   };
+  // Loader ke liye
+  useEffect(() => {
+    if (isSubmitting) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isSubmitting]);
+
+  // Offcanvas ke liye
+  useEffect(() => {
+    const offcanvas = document.getElementById("raise_Feedback");
+    function handleOffcanvasHidden() {
+      if (!isSubmitting) {
+        document.body.style.overflow = "";
+      }
+    }
+    if (offcanvas) {
+      offcanvas.addEventListener("hidden.bs.offcanvas", handleOffcanvasHidden);
+    }
+    return () => {
+      if (offcanvas) {
+        offcanvas.removeEventListener(
+          "hidden.bs.offcanvas",
+          handleOffcanvasHidden
+        );
+      }
+    };
+  }, [isSubmitting]);
+
   const handleSubmit = async () => {
+    setIsSubmitting(true); // Loader ON
+    // Get selected dates from state (or directly from input if you want)
+  const fromDateValue = document.getElementById("txtNewfromDate")?.value || fromDate;
+  const toDateValue = document.getElementById("txtNewtoDate")?.value || toDate;
     const selectedEmployees = mgrassociate
       .filter((emp) => emp.isChecked)
       .map((emp) => emp.EmployeeID);
@@ -1329,13 +1374,14 @@ const MySchedule = () => {
       toastService.error(
         "Please select at least one employee and complete all required fields before saving."
       );
+      setIsSubmitting(false); // Loader OFF
       return; // Exit the function if no employees are selected
     }
 
     const params = {
       empID: selectedEmployees, // Assuming you have the employee ID from the session
-      fromDate: lockDetails.lockSDate,
-      toDate: addDay(lockDetails.lockSDate, lockDetails.lockDiffDays - 2),
+      fromDate: fromDateValue,
+      toDate: toDateValue,
       facilityIn: selectedloginfacility,
       facilityOut: selectedlogoutfacility,
       logIn: document.getElementById("ddlNewLoginShift").value,
@@ -1399,6 +1445,8 @@ const MySchedule = () => {
       toastService.error(
         "Failed to save the schedule. Please try again later."
       ); // Show error toast
+    } finally {
+      setIsSubmitting(false); // Loader OFF
     }
   };
   const handleReplicateClick = () => {
@@ -1408,6 +1456,30 @@ const MySchedule = () => {
 
   return (
     <div className="container-fluid p-0">
+      {isSubmitting && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(255,255,255,0.7)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            className="spinner-border text-primary"
+            style={{ width: 60, height: 60, fontSize: 32 }}
+            role="status"
+          >
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      )}
       <Header pageTitle="My Schedule" showNewButton={true} />
       <Sidebar />
 
@@ -2012,7 +2084,7 @@ const MySchedule = () => {
                     <th>Trip Type</th>
                     <th>Shift</th>
                     <th>Facility</th>
-                    <th>Action</th>
+                    <th style={{ display: "none" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2070,7 +2142,7 @@ const MySchedule = () => {
                           </td>
                           <td>{trip.shifttime || "N/A"}</td>
                           <td>{trip.facility || "N/A"}</td>
-                          <td>
+                          <td style={{ display: "none" }}>
                             {" "}
                             {trip.enableds === "TRUE" && (
                               <img

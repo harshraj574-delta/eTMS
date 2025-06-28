@@ -136,6 +136,7 @@ const ManageRoute = () => {
   const [vendorAllocated, setVendorAllocated] = useState(false);
   const [vendorSummary, setVendorSummary] = useState([]);
   const [isFinalizing, setIsFinalizing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
   const tripTypeOptions = [
     { label: "Pick", value: "P" },
     { label: "Drop", value: "D" },
@@ -223,6 +224,7 @@ const ManageRoute = () => {
   };
   // button
   const handleFinalizeRoute = async () => {
+    setIsSubmitting(true);
     setIsFinalizing(true);
     try {
       // Step 1: Call WBS_GetBulkRouteData API
@@ -256,6 +258,7 @@ const ManageRoute = () => {
       );
     } finally {
       setIsFinalizing(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -293,10 +296,10 @@ const ManageRoute = () => {
   };
 
   const confirmAutoVendorAllocation = async () => {
+      setIsSubmitting(true);
     try {
       setShowAutoVendorAllocationDialog(false);
       setIsLoading(true);
-
       const params = {
         facid: selectedFacility,
         sDate: shiftDate,
@@ -316,6 +319,7 @@ const ManageRoute = () => {
       setVendorAllocated(false); // Ensure it's false in case of error
     } finally {
       setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
   const handleSaveFile = async () => {
@@ -642,8 +646,8 @@ const ManageRoute = () => {
         progress: 50,
       }));
       // Step 2: Call local OSRM server for route generation
-      const osrmResponse = await fetch(
-        "http://localhost:5001/api/route-generation/generate",
+     const osrmResponse = await fetch(
+        "https://ftqbvxxmpm.ap-south-1.awsapprunner.com/api/route-generation/generate",
         {
           method: "POST",
           headers: {
@@ -1160,6 +1164,30 @@ const ManageRoute = () => {
 
   return (
     <>
+      {isSubmitting && (
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(255,255,255,0.7)",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          className="spinner-border text-primary"
+          style={{ width: 60, height: 60, fontSize: 32 }}
+          role="status"
+        >
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    )}
       {/* <style>{overlayStyles}</style> */}
       {/* Add the loading overlay */}
       {/* {isLoading && (
