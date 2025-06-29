@@ -10,7 +10,7 @@ import { Column } from "primereact/column";
 const ViewMyRoutes = () => {
   return (
     <>
-      <Header pageTitle="Manage Employee" showNewButton={true} />
+      <Header pageTitle="Manage Employee"  />
       <Sidebar />
       <div className="middle">
         <div className="row">
@@ -33,7 +33,7 @@ const ViewMyRoutes = () => {
                 <div className="col-2">
                   <label htmlFor="">Employee Name </label>
                   <Dropdown
-                    placeholder="Select Vendor"
+                    placeholder="Select Employee"
                     className="w-100"
                     filter
                   />

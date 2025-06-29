@@ -18,6 +18,7 @@ import { Sidebar as PrimeSidebar } from "primereact/sidebar"; // Renamed to avoi
 import { Button } from 'primereact/button'; // Import Button component from PrimeReact
 import { InputText } from 'primereact/inputtext'; // Import InputText component from PrimeReact
 import { InputTextarea } from 'primereact/inputtextarea'; // Import InputTextarea component from PrimeReact
+import { Offcanvas } from "bootstrap";
 
 const MyFeedback = () => {
   const [feedbackData, setFeedbackData] = useState([]);
@@ -248,7 +249,14 @@ const MyFeedback = () => {
   const handleOpenRaiseFeedback = () => {
     setIsRaiseFeedbackOpen(true);
   };
-
+ const handleNewButtonClick = () => {
+    const offcanvasElement = document.getElementById("raise_Feedback");
+    if (offcanvasElement) {
+      const offcanvas = new Offcanvas(offcanvasElement);
+      offcanvas.show();
+    }
+    // optional: resetFormValues();
+  };
   return (
     <div className="container-fluid p-0">
       {/* Header */}
@@ -256,7 +264,7 @@ const MyFeedback = () => {
         pageTitle={"My Feedback"}
         showNewButton={true}
         //onNewClick={handleOpenRaiseFeedback} // This now has a defined function
-        onNewButtonClick={setAddRaiseFeedback}
+        onNewButtonClick={handleNewButtonClick}
       />
 
       {/* Sidebar */}
@@ -556,7 +564,7 @@ const MyFeedback = () => {
               </label>
               <input type="date" id="travelDate" className="form-control" />
             </div>
-            <div className="col-12 mb-3">
+            <div className="col-12 mb-3" style={{ display: "none" }}>
               <label className="form-label" htmlFor="tripIdSelect">
                 Trip Id (Optional)
               </label>

@@ -10,38 +10,43 @@ const SidebarMenu = () => {
   useEffect(() => {
     const path = location.pathname;
     // Check if current path matches any menu category
-    if ([
-      "/dashboard",
-      "/AdhocManagement",
-      "/MyAdhocRequest",
-      "/MyFeedback",
-      "/MySchedule",
-      "/ReplicateSchedule",
-      "/ViewMyRoutes",
-    ].includes(path)) {
+    if (
+      [
+        "/MySchedule",
+        "/AdhocManagement",
+        "/MyAdhocRequest",
+        "/MyFeedback",
+        "/ReplicateSchedule",
+        "/ViewMyRoutes",
+      ].includes(path)
+    ) {
       setActiveMenu("etms");
-    } else if ([
-      "/ManageEmployee",
-      "/FacilityMaster",
-      "/DriverMaster",
-      "/VehicleMaster",
-      "/VehicleTypeMaster",
-      "/VendorMaster",
-      "/GuardMaster",
-      "/Location",
-    ].includes(path)) {
+    } else if (
+      [
+        "/ManageEmployee",
+        "/FacilityMaster",
+        "/DriverMaster",
+        "/VehicleMaster",
+        "/VehicleTypeMaster",
+        "/VendorMaster",
+        "/GuardMaster",
+        "/Location",
+      ].includes(path)
+    ) {
       setActiveMenu("master");
-    } else if ([
-      "/ManageRoute",
-      "/CostMaster",
-      "/CostMasterPackage",
-      "/VendorWiseBilling",
-      "/SummaryPackageReport",
-      "/PenaltyMaster",
-      "/ComplianceCheck",
-      "/DetailedBillingReport",
-      "/EmployeeWiseBillingReport",
-    ].includes(path)) {
+    } else if (
+      [
+        "/ManageRoute",
+        "/CostMaster",
+        "/CostMasterPackage",
+        "/VendorWiseBilling",
+        "/SummaryPackageReport",
+        "/PenaltyMaster",
+        "/ComplianceCheck",
+        "/DetailedBillingReport",
+        "/EmployeeWiseBillingReport",
+      ].includes(path)
+    ) {
       setActiveMenu("transport");
     }
   }, [location.pathname]);
@@ -78,12 +83,11 @@ const SidebarMenu = () => {
 
   // ETMS menu items
   const etmsMenuItems = [
-    { path: "/dashboard", name: "Dashboard" },
+    { path: "/MySchedule", name: "My Schedule" },
     { path: "/AdhocManagement", name: "Adhoc Management" },
     { path: "/MyAdhocRequest", name: "My Adhoc Request" },
     { path: "/MyFeedback", name: "My Feedback" },
-    { path: "/MySchedule", name: "My Schedule" },
-    { path: "/ReplicateSchedule", name: "Replicate Schedule" },
+    // { path: "/ReplicateSchedule", name: "Replicate Schedule" },
     { path: "/ViewMyRoutes", name: "View My Routes" },
   ];
 
@@ -157,7 +161,10 @@ const SidebarMenu = () => {
               >
                 {item.name}
                 {isExternalUrl(item.path) && (
-                  <span className="material-icons ms-1" style={{ fontSize: "16px" }}>
+                  <span
+                    className="material-icons ms-1"
+                    style={{ fontSize: "16px" }}
+                  >
                     open_in_new
                   </span>
                 )}
@@ -186,9 +193,7 @@ const SidebarMenu = () => {
       <div className="cardx help p-3">
         <span className="material-icons mb-3">help</span>
         <p className="overline_text_sm">Need help?</p>
-        <p className="small mt-2 mb-3">
-          Please connect with our support team.
-        </p>
+        <p className="small mt-2 mb-3">Please connect with our support team.</p>
         <div className="d-grid">
           <button className="btn btn-sm btn-outline-secondary fw-bold">
             <small>GET IN TOUCH</small>

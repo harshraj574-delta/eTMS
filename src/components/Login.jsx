@@ -83,7 +83,7 @@ const Login = () => {
           //sessionStorage.setItem('ManagerId', userdetails[0].ManagerId);
           //sessionStorage.setItem('userName', userdetails[0].userName);
           // Navigate to dashboard
-          navigate('/Dashboard');
+          navigate('/MySchedule');
         }
         else{
           setSubmitError(response.Message || 'User Not found!!');

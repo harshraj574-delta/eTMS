@@ -11,7 +11,7 @@ import { Dropdown } from 'primereact/dropdown';
 function MyAdhocRequest() {
     return (
         <>
-            <Header pageTitle="" showNewButton={true} onNewButtonClick={() => setVisibleLeft(true)} />
+            <Header pageTitle="" />
             <Sidebar />
             <div className="middle">
                 <div className="row">

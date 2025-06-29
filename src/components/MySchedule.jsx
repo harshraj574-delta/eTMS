@@ -8,6 +8,7 @@ import { toastService } from "../services/toastService.js";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
+import { Offcanvas } from "bootstrap";
 
 const addDay = (dateString, days) => {
   if (!dateString) return "";
@@ -135,10 +136,24 @@ const MySchedule = () => {
     lockweekenddrophrs: "",
     pickLockDateTime: "",
   });
-  const [fromDate, setFromDate] = useState(lockDetails?.lockSDate || "");
-  const [toDate, setToDate] = useState(
-    addDay(lockDetails?.lockSDate, lockDetails?.lockDiffDays - 2) || ""
-  );
+  const addMonth = (dateString, months) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  date.setMonth(date.getMonth() + months);
+  return date.toISOString().split("T")[0];
+};
+  // const addMonth = (dateString, months) => {
+  // if (!dateString) return "";
+  // const date = new Date(dateString);
+  // date.setMonth(date.getMonth() + months);
+  // return date.toISOString().split("T")[0];
+  // };
+  const todayStr = new Date().toISOString().split("T")[0];
+  const [fromDate, setFromDate] = useState(todayStr);
+  // const [toDate, setToDate] = useState(
+  //   addDay(lockDetails?.lockSDate, lockDetails?.lockDiffDays - 2) || ""
+  // );
+  const [toDate, setToDate] = useState(addMonth(todayStr, 1));
   // useEffect(() => {
 
   // }, []);
@@ -151,10 +166,10 @@ const MySchedule = () => {
     setWeekDays(days);
     fetchLockDetails();
     fetchFacilityDetails();
-    setFromDate(lockDetails?.lockSDate || "");
-    setToDate(
-      addDay(lockDetails?.lockSDate, lockDetails?.lockDiffDays - 2) || ""
-    );
+    // setFromDate(lockDetails?.lockSDate || "");
+    // setToDate(
+    //   addDay(lockDetails?.lockSDate, lockDetails?.lockDiffDays - 2) || ""
+    // );
     // const offcanvasElement = document.getElementById("Employee_Shift");
     // if (offcanvasElement) {
     //   offcanvasElement.addEventListener("hidden.bs.offcanvas", resetFormValues);
@@ -401,8 +416,11 @@ const MySchedule = () => {
 
   // Add this function to handle date changes
   const handleFromDateChange = (e) => {
-    setFromDate(e.target.value);
-
+  //   setFromDate(e.target.value);
+  // setToDate(addMonth(newFromDate, 1)); // 1 month आगे set करें
+const newFromDate = e.target.value;
+  setFromDate(newFromDate);
+  setToDate(addMonth(newFromDate, 1)); // 
     // You can add validation or additional logic here if needed
   };
 
@@ -1284,19 +1302,38 @@ const MySchedule = () => {
     }
 
     // Reset date states and inputs
-    const defaultFromDate =
-      lockDetails.lockSDate || new Date().toISOString().split("T")[0];
-    const defaultToDate =
-      addDay(lockDetails.lockSDate, lockDetails.lockDiffDays - 2) ||
-      new Date().toISOString().split("T")[0];
-    setFromDate(defaultFromDate);
-    setToDate(defaultToDate);
+    // const defaultFromDate =
+    //   lockDetails.lockSDate || new Date().toISOString().split("T")[0];
+    // const defaultToDate =
+    //   addDay(lockDetails.lockSDate, lockDetails.lockDiffDays - 2) ||
+    //   new Date().toISOString().split("T")[0];
+    // setFromDate(defaultFromDate);
+    // setToDate(defaultToDate);
 
-    const fromDateInput = document.getElementById("txtNewfromDate");
-    const toDateInput = document.getElementById("txtNewtoDate");
-    if (fromDateInput) fromDateInput.value = defaultFromDate;
-    if (toDateInput) toDateInput.value = defaultToDate;
+    // const fromDateInput = document.getElementById("txtNewfromDate");
+    // const toDateInput = document.getElementById("txtNewtoDate");
+    // if (fromDateInput) fromDateInput.value = defaultFromDate;
+    // if (toDateInput) toDateInput.value = defaultToDate;
+   // const defaultFromDate = new Date().toISOString().split("T")[0];
+  // const defaultToDate = addMonth(defaultFromDate, 1);
 
+  // setFromDate(defaultFromDate);
+  // setToDate(defaultToDate);
+
+  // const fromDateInput = document.getElementById("txtNewfromDate");
+  // const toDateInput = document.getElementById("txtNewtoDate");
+  // if (fromDateInput) fromDateInput.value = defaultFromDate;
+  // if (toDateInput) toDateInput.value = defaultToDate;
+const defaultFromDate = new Date().toISOString().split("T")[0];
+  const defaultToDate = addMonth(defaultFromDate, 1);
+
+  setFromDate(defaultFromDate);
+  setToDate(defaultToDate);
+
+  const fromDateInput = document.getElementById("txtNewfromDate");
+  const toDateInput = document.getElementById("txtNewtoDate");
+  if (fromDateInput) fromDateInput.value = defaultFromDate;
+  if (toDateInput) toDateInput.value = defaultToDate;
     // Reset weekend days
     setWeekendDays({ sat: true, sun: true });
 
@@ -1364,8 +1401,8 @@ const MySchedule = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true); // Loader ON
     // Get selected dates from state (or directly from input if you want)
-  const fromDateValue = document.getElementById("txtNewfromDate")?.value || fromDate;
-  const toDateValue = document.getElementById("txtNewtoDate")?.value || toDate;
+  const fromDateValue = document.getElementById("txtNewfromDate")?.value;
+  const toDateValue = document.getElementById("txtNewtoDate")?.value ;
     const selectedEmployees = mgrassociate
       .filter((emp) => emp.isChecked)
       .map((emp) => emp.EmployeeID);
@@ -1452,6 +1489,14 @@ const MySchedule = () => {
   const handleReplicateClick = () => {
     navigate("/ReplicateSchedule");
   };
+  const handleNewButtonClick = () => {
+    const offcanvasElement = document.getElementById("raise_Feedback");
+    if (offcanvasElement) {
+      const offcanvas = new Offcanvas(offcanvasElement);
+      offcanvas.show();
+    }
+    // optional: resetFormValues();
+  };
   // Function to refresh trip data
 
   return (
@@ -1480,7 +1525,7 @@ const MySchedule = () => {
           </div>
         </div>
       )}
-      <Header pageTitle="My Schedule" showNewButton={true} />
+      <Header pageTitle="My Schedule" showNewButton={true} onNewButtonClick={handleNewButtonClick} />
       <Sidebar />
 
       {/* Middle Section */}
@@ -1659,8 +1704,8 @@ const MySchedule = () => {
                                 <>
                                   <a
                                     href="#!"
-                                    data-bs-toggle="offcanvas"
-                                    data-bs-target="#Employee_Shift"
+                                    // data-bs-toggle="offcanvas"
+                                    // data-bs-target="#Employee_Shift"
                                     onClick={() =>
                                       handleEmployeeShiftClick(employee, day)
                                     }

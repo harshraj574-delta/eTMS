@@ -53,7 +53,7 @@ return (
         <span className="material-icons me-2">add_circle</span> add Adhoc</button>
       )}
        {showNewButton && (
-      <button className="btn btn-primary ms-auto" data-bs-toggle="offcanvas" data-bs-target="#raise_Feedback" onClick={onNewButtonClick} aria-controls="offcanvasRight">
+      <button className="btn btn-primary ms-auto"  onClick={onNewButtonClick} aria-controls="offcanvasRight">
         <span className="material-icons me-2">add_circle</span> New
       </button>
       )}
