@@ -12,7 +12,7 @@ import { Col } from "react-bootstrap";
 import { SelectButton } from "primereact/selectbutton";
 import AdhocmanagementService from "../services/compliance/AdhocmanagementService";
 import { toastService } from "../services/toastService";
-import { ConfirmDialog } from 'primereact/confirmdialog'; // Add this import
+import { ConfirmDialog } from "primereact/confirmdialog"; // Add this import
 
 const AdhocManagement = () => {
   const [adhocData, setAdhocData] = useState([]);
@@ -24,6 +24,11 @@ const AdhocManagement = () => {
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [employeeData, setEmployeeData] = useState([]);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [totalAdhocs, setTotalAdhocs] = useState(0); // Initialize totalAdhocs to 0
+  const [myRequests, setMyRequests] = useState(0);
+  const [approved, setApproved] = useState(0);
+  const [pending, setPending] = useState(0);
+  const [rejected, setRejected] = useState(0);
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -44,7 +49,6 @@ const AdhocManagement = () => {
   const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
   const [selectedItemToDelete, setSelectedItemToDelete] = useState(null);
 
-
   // Update the reason dropdown component
   // const handleRequestTypeChange = (e) => {
   //   setSelectedRequestType(e.value);
@@ -60,6 +64,10 @@ const AdhocManagement = () => {
   //     );
   //   };
   useEffect(() => {
+    fetchTotalAdhocCount();
+    fetchAdhocRequestCount();
+  }, []);
+  useEffect(() => {
     fetchAdhocData();
     fetchManagerData();
     fetchFacilityDropdown();
@@ -68,6 +76,80 @@ const AdhocManagement = () => {
       fetchShiftData();
     }
   }, [selectedFacility, selectedDate, value]);
+  const fetchAdhocRequestCount = async () => {
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setFullYear(startDate.getFullYear() - 3);
+
+      const formattedStartDate = startDate.toISOString().split("T")[0];
+      const formattedEndDate = endDate.toISOString().split("T")[0];
+
+      const empId = sessionStorage.getItem("ID");
+
+      let response = await AdhocmanagementService.getAdhocRequestCount({
+        empid: empId,
+        sdate: formattedStartDate,
+        edate: formattedEndDate,
+      });
+      console.log("Adhoc Request Count Response:", response);
+      if (typeof response === "string") {
+        response = JSON.parse(response);
+      }
+
+      if (Array.isArray(response) && response.length > 0) {
+        setMyRequests(response[0].MyRequest || 0);
+        setApproved(response[0].Approved || 0);
+        setPending(response[0].Pending || 0);
+        setRejected(response[0].Rejected || 0);
+      } else {
+        setMyRequests(0);
+        setApproved(0);
+        setPending(0);
+        setRejected(0);
+      }
+    } catch (error) {
+      setMyRequests(0);
+      setApproved(0);
+      setPending(0);
+      setRejected(0);
+      console.error("Error fetching adhoc request count:", error);
+    }
+  };
+  const fetchTotalAdhocCount = async () => {
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setFullYear(startDate.getFullYear() - 3);
+
+      const formattedStartDate = startDate.toISOString().split("T")[0];
+      const formattedEndDate = endDate.toISOString().split("T")[0];
+
+      const empId = sessionStorage.getItem("ID");
+
+      // Call your API function (make sure it's imported from your service)
+      let response = await AdhocmanagementService.getTotalAdhocCount({
+        empid: empId,
+        sdate: formattedStartDate,
+        edate: formattedEndDate,
+      });
+      console.log("Total Adhoc Count Response:", response);
+      // If response is a string, parse it
+      if (typeof response === "string") {
+        response = JSON.parse(response);
+      }
+
+      // Set the count in state
+      if (Array.isArray(response) && response.length > 0) {
+        setTotalAdhocs(response[0].TotalAdhocRequest || 0);
+      } else {
+        setTotalAdhocs(0);
+      }
+    } catch (error) {
+      setTotalAdhocs(0);
+      console.error("Error fetching total adhoc count:", error);
+    }
+  };
   // Add handler for request type change
   const handleRequestTypeChange = async (e) => {
     setSelectedRequestType(e.value);
@@ -79,10 +161,11 @@ const AdhocManagement = () => {
           triptype: e.value,
         });
         console.log("GetAdhocReason Response:", response);
-        const data = typeof response === 'string' ? JSON.parse(response) : response;
+        const data =
+          typeof response === "string" ? JSON.parse(response) : response;
         setReasonData(data || []);
       } catch (error) {
-        console.error('Error fetching reason data:', error);
+        console.error("Error fetching reason data:", error);
         setReasonData([]);
       }
     }
@@ -93,7 +176,7 @@ const AdhocManagement = () => {
         facilityid: selectedFacility,
         sDate: selectedDate,
         type: value === "Pick Up" ? "P" : "D",
-        processid: 0 // Default processid as 0
+        processid: 0, // Default processid as 0
       };
 
       let response;
@@ -103,10 +186,11 @@ const AdhocManagement = () => {
         response = await AdhocmanagementService.getdropshiftadhoc(params);
       }
 
-      const data = typeof response === 'string' ? JSON.parse(response) : response;
+      const data =
+        typeof response === "string" ? JSON.parse(response) : response;
       setShiftData(data || []);
     } catch (error) {
-      console.error('Error fetching shift data:', error);
+      console.error("Error fetching shift data:", error);
       setShiftData([]);
     }
   };
@@ -194,7 +278,7 @@ const AdhocManagement = () => {
       setFacilityData(facilities);
 
       // Set default facility if available
-      const defaultFacility = facilities.find(facility => facility.Id === 1);
+      const defaultFacility = facilities.find((facility) => facility.Id === 1);
       if (defaultFacility) {
         setSelectedFacility(defaultFacility.Id);
       } else if (facilities.length > 0) {
@@ -213,7 +297,7 @@ const AdhocManagement = () => {
     try {
       setLoading(true);
       const params = {
-        backupmgrid: sessionStorage.getItem("ID")
+        backupmgrid: sessionStorage.getItem("ID"),
       };
       const response = await AdhocmanagementService.GetBackupMgrId(params);
       // Remove JSON.parse since response is already an object
@@ -246,7 +330,9 @@ const AdhocManagement = () => {
   const handleSaveChanges = async () => {
     try {
       if (!shiftData || shiftData.length === 0) {
-        toastService.warn("No shifts available for selected date and trip type");
+        toastService.warn(
+          "No shifts available for selected date and trip type"
+        );
         return;
       }
       if (!selectedShift || selectedShift.length === 0) {
@@ -264,7 +350,9 @@ const AdhocManagement = () => {
         return;
       }
       // Get employee IDs from selected employees
-      const employeeIds = selectedEmployees.map(emp => emp.employeeid).join(',');
+      const employeeIds = selectedEmployees
+        .map((emp) => emp.employeeid)
+        .join(",");
       // Get current user ID from session storage for Raisedby
       const currentUserId = sessionStorage.getItem("ID");
       // Prepare parameters for API call
@@ -277,7 +365,7 @@ const AdhocManagement = () => {
         adhocdate: selectedDate,
         adflag: 1,
         reasonid: selectedReason,
-        AdhocType: selectedRequestType
+        AdhocType: selectedRequestType,
       };
       console.log("Save change params ", params);
       // Call the AddAdhocRequest API
@@ -309,13 +397,15 @@ const AdhocManagement = () => {
     try {
       const params = {
         id: rowData.id, // Get the adhocid from the row data
-        userid: parseInt(sessionStorage.getItem("ID"))
+        userid: parseInt(sessionStorage.getItem("ID")),
       };
 
       const response = await AdhocmanagementService.DeleteAdhoc(params);
       if (response) {
         // Remove the deleted row from the local state
-        const updatedData = adhocData.filter(item => item.adhocid !== rowData.adhocid);
+        const updatedData = adhocData.filter(
+          (item) => item.adhocid !== rowData.adhocid
+        );
         setAdhocData(updatedData);
 
         toastService.success("Adhoc request deleted successfully");
@@ -348,10 +438,11 @@ const AdhocManagement = () => {
       return <span>Expired</span>;
     }
   };
+
   return (
     <>
       <Header
-        pageTitle="Adhoc's Management"
+        pageTitle="Adhoc Management"
         showNewButton={true}
         onNewButtonClick={() => setVisibleLeft(true)}
       />
@@ -380,40 +471,39 @@ const AdhocManagement = () => {
               onClick={() => {
                 setVisibleLeft(true);
               }}
-            >
-            </h6>
+            ></h6>
           </div>
         </div>
         <div className="row mt-3">
           <div className="col">
             <div className="cardNew p-4 bg-secondary text-white">
-              <h3>37</h3>
+              <h3>{totalAdhocs}</h3>
               <span class="subtitle_sm text-white">Total Adhocs</span>
             </div>
           </div>
           <div className="col">
             <div className="cardNew p-4">
               <h3>
-                <strong>10</strong>
+                <strong>{myRequests}</strong>
               </h3>
               <span class="subtitle_sm">My Requests</span>
             </div>
           </div>
           <div className="col">
             <div className="cardNew p-4">
-              <h3 className="text-warning">04</h3>
+              <h3 className="text-warning">{pending}</h3>
               <span class="subtitle_sm">Pendings</span>
             </div>
           </div>
           <div className="col">
             <div className="cardNew p-4">
-              <h3 className="text-success">02</h3>
+              <h3 className="text-success">{approved}</h3>
               <span class="subtitle_sm">Approved</span>
             </div>
           </div>
           <div className="col">
             <div className="cardNew p-4">
-              <h3 className="text-danger">11</h3>
+              <h3 className="text-danger">{rejected}</h3>
               <span class="subtitle_sm">Rejected</span>
             </div>
           </div>
@@ -467,7 +557,7 @@ const AdhocManagement = () => {
                 icon="pi pi-times"
                 className="p-button-rounded p-button-text text-white"
                 onClick={handleSidebarClose}
-                style={{ color: 'white' }}
+                style={{ color: "white" }}
               />
             </div>
             <div className="sidebarBody p-3">
@@ -510,7 +600,9 @@ const AdhocManagement = () => {
                       />
                     </div>
                     <div className="field col-2 mb-3">
-                      <label>Shift <span className="text-danger">*</span></label>
+                      <label>
+                        Shift <span className="text-danger">*</span>
+                      </label>
                       <Dropdown
                         value={selectedShift}
                         options={shiftData}
@@ -535,7 +627,9 @@ const AdhocManagement = () => {
                     </div>
 
                     <div className="field col-2 mb-3">
-                      <label>Reason <span className="text-danger">*</span></label>
+                      <label>
+                        Reason <span className="text-danger">*</span>
+                      </label>
                       <Dropdown
                         value={selectedReason}
                         options={reasonData}
@@ -570,13 +664,17 @@ const AdhocManagement = () => {
                     </div>
                     <div className="col-12">
                       <div className="card_tb">
-                        <DataTable value={employeeData}
+                        <DataTable
+                          value={employeeData}
                           selectionMode="multiple"
                           selection={selectedEmployees}
-                          onSelectionChange={(e) => setSelectedEmployees(e.value)}
+                          onSelectionChange={(e) =>
+                            setSelectedEmployees(e.value)
+                          }
                           paginator
                           rows={5}
-                          rowsPerPageOptions={[5, 10, 25, 50]}>
+                          rowsPerPageOptions={[5, 10, 25, 50]}
+                        >
                           <Column
                             selectionMode="multiple"
                             headerStyle={{ width: "3rem" }}
@@ -587,18 +685,39 @@ const AdhocManagement = () => {
                             header=""
                             body={(rowData) => (
                               <div className="d-flex align-items-center">
-                                <span className="material-icons md-18 text-danger" title={rowData.tptreq === 'Y' ? 'Transport' : 'NoTransport'}>
-                                  {rowData.tptreq === 'Y' ? 'directions_bus' : 'no_transfer'}
+                                <span
+                                  className="material-icons md-18 text-danger"
+                                  title={
+                                    rowData.tptreq === "Y"
+                                      ? "Transport"
+                                      : "NoTransport"
+                                  }
+                                >
+                                  {rowData.tptreq === "Y"
+                                    ? "directions_bus"
+                                    : "no_transfer"}
                                 </span>
-                                <span className="material-icons md-18 text-danger mx-2" title={rowData.geoCode === 'Y' ? 'Geocoded' : 'NoGeocoded'}>
-                                  {rowData.geoCode === 'Y' ? 'location_on' : 'location_off'}
+                                <span
+                                  className="material-icons md-18 text-danger mx-2"
+                                  title={
+                                    rowData.geoCode === "Y"
+                                      ? "Geocoded"
+                                      : "NoGeocoded"
+                                  }
+                                >
+                                  {rowData.geoCode === "Y"
+                                    ? "location_on"
+                                    : "location_off"}
                                 </span>
                               </div>
                             )}
                           ></Column>
                           <Column field="empName" header="Employee"></Column>
                           <Column field="processName" header="Project"></Column>
-                          <Column field="facilityName" header="Facility"></Column>
+                          <Column
+                            field="facilityName"
+                            header="Facility"
+                          ></Column>
                         </DataTable>
                       </div>
                     </div>

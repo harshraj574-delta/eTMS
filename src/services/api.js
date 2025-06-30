@@ -193,7 +193,7 @@ export const apiService = {
         pickFacilityID: params.pickFacilityID,
         dropFacilityID: params.dropFacilityID,
         userName: params.userName,
-        pickadflag:params.pickadflag,
+        pickadflag: params.pickadflag,
         dropadflag: params.dropadflag,
         remark: params.remark,
       });
@@ -450,6 +450,21 @@ export const apiService = {
         : [];
       console.log("Type DropDown Data:", DropDown);
       return DropDown;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+  //Get Feedback Count
+  getFeedbackcount: async (credentials) => {
+    try {
+      const response = await api.post("/getFeedbackcount", {
+        empid: credentials.empid,
+        sdate: credentials.sdate,
+        edate: credentials.edate,
+      });
+      console.log("Feedback Count Response:", response.data);
+      return response.data;
     } catch (error) {
       console.error("API Error:", error);
       throw error.response?.data || error.message;

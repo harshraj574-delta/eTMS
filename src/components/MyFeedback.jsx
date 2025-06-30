@@ -3,22 +3,23 @@ import Sidebar from "./Master/SidebarMenu";
 import Notifications from "./Master/Notifications";
 import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap CSS
 import "bootstrap/dist/js/bootstrap.bundle.min.js"; // Import Bootstrap JS
-import * as bootstrap from 'bootstrap'; // Add this line to import Bootstrap as a namespace
+import * as bootstrap from "bootstrap"; // Add this line to import Bootstrap as a namespace
 import "../components/css/style.css";
 import Header from "./Master/Header";
 import { apiService } from "../services/api";
 import sessionManager from "../utils/SessionManager.js";
 import { toastService } from "../services/toastService";
 import { DataTable } from "primereact/datatable";
-import { Column } from 'primereact/column';
-import 'primereact/resources/themes/lara-light-blue/theme.css';  // Theme
-import 'primereact/resources/primereact.min.css';                // Core CSS
-import 'primeicons/primeicons.css';                              // Icons
+import { Column } from "primereact/column";
+import "primereact/resources/themes/lara-light-blue/theme.css"; // Theme
+import "primereact/resources/primereact.min.css"; // Core CSS
+import "primeicons/primeicons.css"; // Icons
 import { Sidebar as PrimeSidebar } from "primereact/sidebar"; // Renamed to avoid conflict with your Sidebar component
-import { Button } from 'primereact/button'; // Import Button component from PrimeReact
-import { InputText } from 'primereact/inputtext'; // Import InputText component from PrimeReact
-import { InputTextarea } from 'primereact/inputtextarea'; // Import InputTextarea component from PrimeReact
+import { Button } from "primereact/button"; // Import Button component from PrimeReact
+import { InputText } from "primereact/inputtext"; // Import InputText component from PrimeReact
+import { InputTextarea } from "primereact/inputtextarea"; // Import InputTextarea component from PrimeReact
 import { Offcanvas } from "bootstrap";
+import { api } from "../services/axios/api.js";
 
 const MyFeedback = () => {
   const [feedbackData, setFeedbackData] = useState([]);
@@ -31,7 +32,11 @@ const MyFeedback = () => {
   const [isRaiseFeedbackOpen, setIsRaiseFeedbackOpen] = useState(false); // State for Raise Feedback offcanvas
   const [feedbackText, setFeedbackText] = useState(""); // State for feedback text
   const [reopenRemark, setReopenRemark] = useState(""); // State for the remark entered in the offcanvas
-
+  const [feedbackCount, setFeedbackCount] = useState({
+    total: 0,
+    open: 0,
+    closed: 0,
+  });
   const [addRaiseFeedback, setAddRaiseFeedback] = useState(false);
 
   const handleReopen = (ticketNo) => {
@@ -41,27 +46,28 @@ const MyFeedback = () => {
   useEffect(() => {
     fetchFeedbackData();
     fetchCategories();
+    fetchFeedbackCount();
 
     // Add event listeners for Bootstrap offcanvas events
-    const reopenOffcanvas = document.getElementById('raise_Reopen');
+    const reopenOffcanvas = document.getElementById("raise_Reopen");
     if (reopenOffcanvas) {
-      reopenOffcanvas.addEventListener('hidden.bs.offcanvas', () => {
+      reopenOffcanvas.addEventListener("hidden.bs.offcanvas", () => {
         setIsOffcanvasOpen(false);
         refreshData();
       });
     }
 
-    const feedbackOffcanvas = document.getElementById('raise_Feedback');
+    const feedbackOffcanvas = document.getElementById("raise_Feedback");
     if (feedbackOffcanvas) {
-      feedbackOffcanvas.addEventListener('hidden.bs.offcanvas', () => {
+      feedbackOffcanvas.addEventListener("hidden.bs.offcanvas", () => {
         setIsRaiseFeedbackOpen(false);
         refreshData();
       });
     }
 
-    const ticketOffcanvas = document.getElementById('ticketNumber');
+    const ticketOffcanvas = document.getElementById("ticketNumber");
     if (ticketOffcanvas) {
-      ticketOffcanvas.addEventListener('hidden.bs.offcanvas', () => {
+      ticketOffcanvas.addEventListener("hidden.bs.offcanvas", () => {
         // Reset ticket replies when the offcanvas is closed
         setTicketReplies([]);
       });
@@ -70,13 +76,13 @@ const MyFeedback = () => {
     // Cleanup event listeners on component unmount
     return () => {
       if (reopenOffcanvas) {
-        reopenOffcanvas.removeEventListener('hidden.bs.offcanvas', () => { });
+        reopenOffcanvas.removeEventListener("hidden.bs.offcanvas", () => {});
       }
       if (feedbackOffcanvas) {
-        feedbackOffcanvas.removeEventListener('hidden.bs.offcanvas', () => { });
+        feedbackOffcanvas.removeEventListener("hidden.bs.offcanvas", () => {});
       }
       if (ticketOffcanvas) {
-        ticketOffcanvas.removeEventListener('hidden.bs.offcanvas', () => { });
+        ticketOffcanvas.removeEventListener("hidden.bs.offcanvas", () => {});
       }
     };
   }, []);
@@ -159,7 +165,7 @@ const MyFeedback = () => {
     //const FeedTypeId = document.getElementById("complaintTypeSelect").value;
 
     // Check if required fields are filled
-    const selectedCategory = document.getElementById('categorySelect').value;
+    const selectedCategory = document.getElementById("categorySelect").value;
     if (!selectedCategory) {
       toastService.warn("Please select a category type");
       return;
@@ -249,7 +255,58 @@ const MyFeedback = () => {
   const handleOpenRaiseFeedback = () => {
     setIsRaiseFeedbackOpen(true);
   };
- const handleNewButtonClick = () => {
+  // Function to fetch feedback count
+  const fetchFeedbackCount = async (credentials = {}) => {
+    try {
+      const empid = sessionManager.getUserSession()?.ID;
+
+      // Set endDate and startDate from credentials or defaults
+      const endDate = credentials.endDate
+        ? new Date(credentials.endDate)
+        : new Date();
+      let startDate = credentials.startDate
+        ? new Date(credentials.startDate)
+        : new Date(endDate);
+
+      if (!credentials.startDate) {
+        startDate.setFullYear(endDate.getFullYear() - 1);
+      }
+
+      // Format dates as "YYYY-MM-DD 00:00:00.000"
+      const sDate = `${startDate.toISOString().split("T")[0]} 00:00:00.000`;
+      const eDate = `${endDate.toISOString().split("T")[0]} 00:00:00.000`;
+
+      let resultArr = await apiService.getFeedbackcount({
+        empid,
+        sdate: sDate,
+        edate: eDate,
+      });
+
+      // If response is a string, parse it
+      if (typeof resultArr === "string") {
+        try {
+          resultArr = JSON.parse(resultArr);
+          console.log("Parsed Feedback Count Result:", resultArr);
+        } catch (parseError) {
+          console.error("Error parsing feedback count JSON:", parseError);
+          resultArr = [];
+        }
+      }
+
+      // resultArr is an array, so get the first object
+      const result =
+        Array.isArray(resultArr) && resultArr.length > 0 ? resultArr[0] : {};
+
+      setFeedbackCount({
+        total: result.Totolfeedback || 0, // spelling exactly as in API response
+        open: result.OpenCount || 0,
+        closed: result.ClosedCount || 0,
+      });
+    } catch (error) {
+      setFeedbackCount({ total: 0, open: 0, closed: 0 });
+    }
+  };
+  const handleNewButtonClick = () => {
     const offcanvasElement = document.getElementById("raise_Feedback");
     if (offcanvasElement) {
       const offcanvas = new Offcanvas(offcanvasElement);
@@ -278,15 +335,21 @@ const MyFeedback = () => {
               <div className="col">
                 <div className="cardx p-3 bg-secondary text-white">
                   <h3>
-                    <strong className="text-white">16</strong>
+                    <strong className="text-white">
+                      {feedbackCount.total}
+                    </strong>
                   </h3>
-                  <span className="subtitle_sm text-white">Total Feedbacks</span>
+                  <span className="subtitle_sm text-white">
+                    Total Feedbacks
+                  </span>
                 </div>
               </div>
               <div className="col">
                 <div className="cardx p-3">
                   <h3>
-                    <strong className="text-warning">04</strong>
+                    <strong className="text-warning">
+                      {feedbackCount.open}
+                    </strong>
                   </h3>
                   <span className="subtitle_sm">Open Tickets</span>
                 </div>
@@ -294,7 +357,9 @@ const MyFeedback = () => {
               <div className="col">
                 <div className="cardx p-3">
                   <h3>
-                    <strong className="text-dark text-opacity-50">0</strong>
+                    <strong className="text-dark text-opacity-50">
+                      {feedbackCount.closed}
+                    </strong>
                   </h3>
                   <span className="subtitle_sm">Closed Tickets</span>
                 </div>
@@ -310,12 +375,15 @@ const MyFeedback = () => {
               <DataTable
                 value={feedbackData}
                 paginator
-                rows={10}
+                rows={50}
+                rowsPerPageOptions={[50,100,150,200]}
                 loading={loading}
                 emptyMessage="No feedback data available"
                 className="p-datatable-sm"
                 rowClassName={(data) =>
-                  data && data.Status && data.Status.toLowerCase() === "closed" ? 'column' : ''
+                  data && data.Status && data.Status.toLowerCase() === "closed"
+                    ? "column"
+                    : ""
                 }
               >
                 <Column
@@ -355,7 +423,7 @@ const MyFeedback = () => {
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
                       }}
-                    // Remove the ref and onMouseLeave handlers that use bootstrap
+                      // Remove the ref and onMouseLeave handlers that use bootstrap
                     >
                       {rowData.Desrp}
                     </div>
@@ -368,10 +436,13 @@ const MyFeedback = () => {
                   header="Status"
                   body={(rowData) => (
                     <span
-                      className={`badgee ${rowData && rowData.Status && rowData.Status.toLowerCase() === "open"
-                        ? "badge_warning"
-                        : "badge_muted"
-                        }`}
+                      className={`badgee ${
+                        rowData &&
+                        rowData.Status &&
+                        rowData.Status.toLowerCase() === "open"
+                          ? "badge_warning"
+                          : "badge_muted"
+                      }`}
                     >
                       {rowData && rowData.Status ? rowData.Status : "N/A"}
                     </span>
@@ -384,12 +455,17 @@ const MyFeedback = () => {
                       data-bs-toggle="offcanvas"
                       data-bs-target="#raise_Reopen"
                       aria-controls="offcanvasRightReope"
-                      className={`btn btn-sm ${rowData && rowData.Status && rowData.Status.toLowerCase() === "closed"
-                        ? "btn-outline-success"
-                        : "btn-outline-danger"
-                        }`}
+                      className={`btn btn-sm ${
+                        rowData &&
+                        rowData.Status &&
+                        rowData.Status.toLowerCase() === "closed"
+                          ? "btn-outline-success"
+                          : "btn-outline-danger"
+                      }`}
                       onClick={() =>
-                        rowData && rowData.ReOpenStatus && handleReopen(rowData.TicketNo)
+                        rowData &&
+                        rowData.ReOpenStatus &&
+                        handleReopen(rowData.TicketNo)
                       }
                       disabled={!rowData.ReOpenStatus}
                     >
@@ -401,8 +477,6 @@ const MyFeedback = () => {
                 />
               </DataTable>
             </div>
-
-
           </div>
         </div>
       </div>
@@ -500,7 +574,9 @@ const MyFeedback = () => {
 
       {/* <!-- Raise Feedback Rightbar --> */}
       <div
-        className={`offcanvas offcanvas-end ${isRaiseFeedbackOpen ? "show" : ""}`}
+        className={`offcanvas offcanvas-end ${
+          isRaiseFeedbackOpen ? "show" : ""
+        }`}
         tabIndex="-1"
         id="raise_Feedback"
         aria-labelledby="offcanvasRightLabel"
@@ -598,7 +674,10 @@ const MyFeedback = () => {
           >
             Cancel
           </button>
-          <button className="btn btn-success mx-3" onClick={handleSubmitFeedback}>
+          <button
+            className="btn btn-success mx-3"
+            onClick={handleSubmitFeedback}
+          >
             Submit
           </button>
         </div>

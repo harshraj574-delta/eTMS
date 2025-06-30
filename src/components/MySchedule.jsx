@@ -166,6 +166,7 @@ const MySchedule = () => {
     setWeekDays(days);
     fetchLockDetails();
     fetchFacilityDetails();
+    // console.log("MySchedule component mounted",empid, facID);
     // setFromDate(lockDetails?.lockSDate || "");
     // setToDate(
     //   addDay(lockDetails?.lockSDate, lockDetails?.lockDiffDays - 2) || ""
@@ -1399,6 +1400,7 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
   }, [isSubmitting]);
 
   const handleSubmit = async () => {
+
     setIsSubmitting(true); // Loader ON
     // Get selected dates from state (or directly from input if you want)
   const fromDateValue = document.getElementById("txtNewfromDate")?.value;
@@ -1490,6 +1492,9 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
     navigate("/ReplicateSchedule");
   };
   const handleNewButtonClick = () => {
+     const userFacilityId = sessionManager.getUserSession().FacilityID;
+  setSelectedloginfacility(userFacilityId);
+  setSelectedlogoutfacility(userFacilityId);
     const offcanvasElement = document.getElementById("raise_Feedback");
     if (offcanvasElement) {
       const offcanvas = new Offcanvas(offcanvasElement);
@@ -2371,7 +2376,7 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                 value={selectedloginfacility}
                 onChange={handleLoginFacilityChange}
                 id="ddlNewLoginFacility"
-                disabled
+                
               >
                 {loginfacility.map((loginfacility) => (
                   <option key={loginfacility.Id} value={loginfacility.Id}>
@@ -2387,7 +2392,6 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                 value={selectedlogoutfacility}
                 onChange={handleLogoutFacilityChange}
                 id="ddlNewLogoutFacility"
-                disabled
               >
                 {loginfacility.map((loginfacility) => (
                   <option key={loginfacility.Id} value={loginfacility.Id}>
@@ -2397,7 +2401,6 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
               </select>
             </div>
           </div>
-
           <div className="row mb-4">
             <div className="col-12">
               <div className="form-check form-check-inline ps-0">

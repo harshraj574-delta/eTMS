@@ -14,7 +14,7 @@ const SidebarMenu = () => {
       [
         "/MySchedule",
         "/AdhocManagement",
-        "/MyAdhocRequest",
+        // "/MyAdhocRequest",
         "/MyFeedback",
         "/ReplicateSchedule",
         "/ViewMyRoutes",
@@ -85,7 +85,7 @@ const SidebarMenu = () => {
   const etmsMenuItems = [
     { path: "/MySchedule", name: "My Schedule" },
     { path: "/AdhocManagement", name: "Adhoc Management" },
-    { path: "/MyAdhocRequest", name: "My Adhoc Request" },
+    // { path: "/MyAdhocRequest", name: "My Adhoc Request" },
     { path: "/MyFeedback", name: "My Feedback" },
     // { path: "/ReplicateSchedule", name: "Replicate Schedule" },
     { path: "/ViewMyRoutes", name: "View My Routes" },
