@@ -11,11 +11,14 @@ import { Column } from "primereact/column";
 import sessionManager from "../utils/SessionManager";
 import CostMasterService from "../services/compliance/CostMasterService";
 import { toastService } from "../services/toastService";
+import { set } from "lodash";
 
 const CostMaster = () => {
   // Separate states for different dropdowns
   const [facilities, setFacilities] = useState([]);
-  const [vendors, setVendors] = useState([]);
+  const [vendors, setVendors] = useState([
+    { label: "-All Vendors-", value: 0 },
+  ]);
   const [acCost, setAcCost] = useState("");
   const [acCostError, setAcCostError] = useState("");
   const [nonAcCost, setNonAcCost] = useState("");
@@ -24,6 +27,12 @@ const CostMaster = () => {
   const [fuelRateError, setFuelRateError] = useState("");
   const [guardRate, setGuardRate] = useState("");
   const [guardRateError, setGuardRateError] = useState("");
+  const [editRowData, setEditRowData] = useState(null);
+  const [editAcCost, setEditAcCost] = useState("");
+  const [editNonAcCost, setEditNonAcCost] = useState("");
+  const [editFuelRate, setEditFuelRate] = useState("");
+  const [editGuardRate, setEditGuardRate] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateAcCost = (value) => {
     if (!value) {
@@ -42,7 +51,6 @@ const CostMaster = () => {
     setAcCostError("");
     return true;
   };
-
   const validateNonAcCost = (value) => {
     if (!value) {
       setNonAcCostError("Enter New Non Ac Cost");
@@ -117,8 +125,7 @@ const CostMaster = () => {
     { label: "Front", value: "N" },
     { label: "Back-to-Back", value: "B" },
   ]);
-  const [zones, setZones] = useState([]);
-  // Initialize costData as an empty array instead of undefined
+  const [zones, setZones] = useState([{ label: "-All Zones-", value: 0 }]); // Initialize costData as an empty array instead of undefined
   const [costData, setCostData] = useState([]);
   const [vendorsNew, setVendorsNew] = useState([]);
   const [zonesNew, setZonesNew] = useState([]);
@@ -126,11 +133,11 @@ const CostMaster = () => {
   // Selected values
   const [selectedFacility, setSelectedFacility] = useState(1);
   const [selectedFacilityNew, setSelectedFacilityNew] = useState(1);
-  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [selectedVendor, setSelectedVendor] = useState(0);
   const [selectedVendorNew, setSelectedVendorNew] = useState(null);
   const [selectedVehicleType, setSelectedVehicleType] = useState(null);
   const [selectedVehicleTypeNew, setSelectedVehicleTypeNew] = useState(null);
-  const [selectedZone, setSelectedZone] = useState(null);
+  const [selectedZone, setSelectedZone] = useState(0);
   const [selectedZoneNew, setSelectedZoneNew] = useState(null);
   const [selectedRouteType, setSelectedRouteType] = useState(null);
   const [selectedRouteTypeNew, setSelectedRouteTypeNew] = useState(null);
@@ -229,7 +236,7 @@ const CostMaster = () => {
             value: item.Id, // Using Id from your API response
           }))
         : [];
-      setVendors(formattedData);
+      setVendors([{ label: "-All Vendors-", value: 0 }, ...formattedData]); // <-- Array, not object
       setLoading(false);
     } catch (error) {
       console.error("Error fetching vendors:", error);
@@ -249,7 +256,7 @@ const CostMaster = () => {
             value: item.id, // Using Id from your API response
           }))
         : [];
-      setZones(formattedData);
+      setZones([{ label: "-All Zones-", value: 0 }, ...formattedData]); // <-- Array, not object
       setLoading(false);
     } catch (error) {
       console.error("Error fetching zones:", error);
@@ -257,6 +264,7 @@ const CostMaster = () => {
   };
   // Function to handle adding new cost
   const AddNewCostHandler = () => {
+    setIsSubmitting(true);
     // Validate all fields before allowing to add new cost
     const isAcCostValid = validateAcCost(acCost);
     const isNonAcCostValid = validateNonAcCost(nonAcCost);
@@ -269,6 +277,8 @@ const CostMaster = () => {
       !isGuardRateValid
     ) {
       toastService.error("Please fill all required fields correctly.");
+      setIsSubmitting(false);
+
       return;
     }
     // Proceed with adding new cost
@@ -301,10 +311,14 @@ const CostMaster = () => {
       .catch((error) => {
         console.error("Error adding new cost:", error);
         toastService.error("Error adding new cost");
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
   };
 
-  const handleasearch = async () => {
+  const handleSearch = async () => {
+    setIsSubmitting(true);
     setLoading(true);
     const params = {
       vendorid: selectedVendor,
@@ -341,6 +355,43 @@ const CostMaster = () => {
       setCostData([]); // Set empty array on error
       setLoading(false);
       toastService.error("Error fetching cost data");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const handleUpdateCost = async () => {
+    setIsSubmitting(true);
+    try {
+      const params = {
+        id: editRowData?.id, // ya jis field me aapke row ki primary id ho
+        Cost: editAcCost,
+        NonAcCost: editNonAcCost,
+        UpdatedBy: UserID,
+        guardcost: editGuardRate,
+        fuelrate: editFuelRate,
+      };
+      const res = await CostMasterService.sprUpdateCost(params);
+      console.log("sprUpdateCost response:", res);
+      // If response is string, parse it
+      if (typeof res === "string") {
+        try {
+          res = JSON.parse(res);
+        } catch (e) {
+          setIsSubmitting(false);
+          // Not a JSON string, leave as is
+        }
+
+        toastService.success("Record Updated Successfully!");
+        setEditNewCost(false);
+        handleSearch(); // Refresh table data
+      } else {
+        toastService.error("Failed to update record!");
+      }
+    } catch (error) {
+      console.error("Error updating cost:", error);
+      toastService.error("Error updating cost");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   // Add this function for Excel export
@@ -356,7 +407,7 @@ const CostMaster = () => {
       type="button"
       icon="pi pi-refresh"
       text
-      onClick={() => handleasearch()}
+      onClick={() => handleSearch()}
     />
   );
   const paginatorRight = (
@@ -365,6 +416,30 @@ const CostMaster = () => {
 
   return (
     <>
+      {isSubmitting && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(255,255,255,0.7)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            className="spinner-border text-primary"
+            style={{ width: 60, height: 60, fontSize: 32 }}
+            role="status"
+          >
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      )}
       <Header
         pageTitle="Cost Master"
         showNewButton={true}
@@ -442,9 +517,9 @@ const CostMaster = () => {
                 </div>
                 <div className="col-2">
                   <Button
-                    label="Search"
+                    label="Show Data"
                     className="btn btn-primary no-label"
-                    onClick={handleasearch}
+                    onClick={handleSearch}
                   />
                 </div>
               </div>
@@ -476,7 +551,18 @@ const CostMaster = () => {
                   header="Vendor"
                   sortable
                   body={(rowData) => (
-                    <a href="#" onClick={() => setEditNewCost(true)}>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setEditRowData(rowData);
+                        setEditAcCost(rowData.Cost || "0");
+                        setEditNonAcCost(rowData.NonAcCost || "0");
+                        setEditFuelRate(rowData.fuelrate || "0");
+                        setEditGuardRate(rowData.guardcost || "0");
+                        setEditNewCost(true);
+                      }}
+                    >
                       {rowData.vendorname}
                     </a>
                   )}
@@ -488,8 +574,46 @@ const CostMaster = () => {
                 <Column field="NonAcCost" header="Non-AC Cost" sortable />
                 <Column field="fuelrate" header="Fuel Rate" sortable />
                 <Column field="guardcost" header="Guard Cost" sortable />
-                <Column field="DATE" header="From Date" sortable />
-                <Column field="Enddate" header="To Date" sortable />
+                <Column
+                  field="DATE"
+                  header="From Date"
+                  sortable
+                  body={(rowData) => {
+                    const value = rowData.DATE;
+                    if (!value) return value ?? ""; // null, undefined, empty string
+                    const dateObj = new Date(value);
+                    if (!isNaN(dateObj.getTime())) {
+                      return dateObj.toLocaleDateString("en-US", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "numeric",
+                      });
+                    }
+                    // If not a valid date, show as is
+                    return value;
+                  }}
+                />
+                <Column
+                  field="Enddate"
+                  header="To Date"
+                  sortable
+                  body={(rowData) => {
+                    // Try to parse date, if invalid, show as is
+                    const value = rowData.Enddate;
+                    if (!value) return value ?? ""; // null, undefined, empty string
+                    const dateObj = new Date(value);
+                    // Check if date is valid
+                    if (!isNaN(dateObj.getTime())) {
+                      return dateObj.toLocaleDateString("en-US", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "numeric",
+                      });
+                    }
+                    // If not a valid date, show as is
+                    return value;
+                  }}
+                />
               </DataTable>
             </div>
           </div>
@@ -718,7 +842,7 @@ const CostMaster = () => {
       >
         {/* Sidebar content */}
         <div className="sidebarHeader d-flex justify-content-between align-items-center sidebarTitle p-0">
-          <h6 className="sidebarTitle">Sea Hawk</h6>
+          <h6 className="sidebarTitle">{editRowData?.vendorname || ""}</h6>
           <Button
             icon="pi pi-times"
             className="p-button-rounded p-button-text"
@@ -729,61 +853,70 @@ const CostMaster = () => {
         </div>
         <div className="sidebarBody">
           <div className="row">
-            <div className="col-6 mb-3">
+            <div className="col-6 mb-3" style={{ display: "none" }}>
               <label>
-                Facility <span>*</span>
+                Facility <span></span>
               </label>
-              <Dropdown
-                optionLabel="name"
-                placeholder="Select Facility"
-                className="w-100"
-                filter
+              <InputText
+                className="form-control"
+                value={editRowData?.facilityName || ""}
+                readOnly
               />
             </div>
             <div className="col-6 mb-3">
               <label>
-                Vendor <span>*</span>
+                Vendor <span></span>
               </label>
-              <Dropdown
-                optionLabel="name"
-                placeholder="Select Facility"
-                className="w-100"
-                filter
+              <InputText
+                className="form-control"
+                value={editRowData?.vendorname || ""}
+                readOnly
               />
             </div>
             <div className="col-6 mb-3">
               <label>Vehicle Type</label>
-              <Dropdown
-                optionLabel="name"
-                placeholder="Select Facility"
-                className="w-100"
-                filter
+              <InputText
+                className="form-control"
+                value={editRowData?.VehicleType || ""}
+                readOnly
               />
             </div>
             <div className="col-6 mb-3">
-              <label>Effective Date</label>
-              <Calendar className="w-100"></Calendar>
+              <label>From Date</label>
+              {/* <Calendar className="w-100"></Calendar> */}
+              <InputText
+                className="form-control"
+                value={editRowData?.DATE || ""}
+                readOnly
+              />
             </div>
             <div className="col-6 mb-3">
-              <label>
-                Route Zone <span>*</span>
-              </label>
-              <Dropdown
-                optionLabel="name"
-                placeholder="Select Route Zone"
-                className="w-100"
-                filter
+              <label>To Date</label>
+              {/* <Calendar className="w-100"></Calendar> */}
+              <InputText
+                className="form-control"
+                value={editRowData?.Enddate || ""}
+                readOnly
               />
             </div>
             <div className="col-6 mb-3">
               <label>
-                Route Type <span>*</span>
+                Route Zone <span></span>
               </label>
-              <Dropdown
-                optionLabel="name"
-                placeholder="Select Route Type"
-                className="w-100"
-                filter
+              <InputText
+                className="form-control"
+                value={editRowData?.ZoneName || ""}
+                readOnly
+              />
+            </div>
+            <div className="col-6 mb-3">
+              <label>
+                Route Type <span></span>
+              </label>
+              <InputText
+                className="form-control"
+                value={editRowData?.routetype || ""}
+                readOnly
               />
             </div>
             <div className="col-6 mb-3">
@@ -792,8 +925,8 @@ const CostMaster = () => {
               </label>
               <InputText
                 className="form-control"
-                name=""
-                placeholder="Enter Ac Cost"
+                value={editAcCost}
+                onChange={(e) => setEditAcCost(e.target.value)}
               />
             </div>
             <div className="col-6 mb-3">
@@ -802,8 +935,8 @@ const CostMaster = () => {
               </label>
               <InputText
                 className="form-control"
-                name=""
-                placeholder="Enter Non-Ac Cost"
+                value={editNonAcCost}
+                onChange={(e) => setEditNonAcCost(e.target.value)}
               />
             </div>
             <div className="col-6 mb-3">
@@ -812,8 +945,8 @@ const CostMaster = () => {
               </label>
               <InputText
                 className="form-control"
-                name=""
-                placeholder="Enter Fuel Rate"
+                value={editFuelRate}
+                onChange={(e) => setEditFuelRate(e.target.value)}
               />
             </div>
             <div className="col-6 mb-3">
@@ -822,8 +955,8 @@ const CostMaster = () => {
               </label>
               <InputText
                 className="form-control"
-                name=""
-                placeholder="Enter Guard Rate"
+                value={editGuardRate}
+                onChange={(e) => setEditGuardRate(e.target.value)}
               />
             </div>
           </div>
@@ -837,7 +970,11 @@ const CostMaster = () => {
                 setEditNewCost(false);
               }}
             />
-            <Button label="Save" className="btn btn-success" />
+            <Button
+              label="Save"
+              className="btn btn-success"
+              onClick={handleUpdateCost}
+            />
           </div>
         </div>
       </PrimeSidebar>

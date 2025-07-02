@@ -32,6 +32,7 @@ const MyFeedback = () => {
   const [isRaiseFeedbackOpen, setIsRaiseFeedbackOpen] = useState(false); // State for Raise Feedback offcanvas
   const [feedbackText, setFeedbackText] = useState(""); // State for feedback text
   const [reopenRemark, setReopenRemark] = useState(""); // State for the remark entered in the offcanvas
+  const [feedbackFilter, setFeedbackFilter] = useState("total"); // "all", "open", "closed", "total"
   const [feedbackCount, setFeedbackCount] = useState({
     total: 0,
     open: 0,
@@ -329,11 +330,15 @@ const MyFeedback = () => {
 
       {/* Middle Content */}
       <div className="middle">
-        <div className="row">
+        {/* <div className="row">
           <div className="col-lg-12">
             <div className="row">
               <div className="col">
-                <div className="cardx p-3 bg-secondary text-white">
+                <div
+                  className="cardx p-3 bg-secondary text-white"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFeedbackFilter("total")}
+                >
                   <h3>
                     <strong className="text-white">
                       {feedbackCount.total}
@@ -345,7 +350,11 @@ const MyFeedback = () => {
                 </div>
               </div>
               <div className="col">
-                <div className="cardx p-3">
+                <div
+                  className="cardx p-3"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFeedbackFilter("open")}
+                >
                   <h3>
                     <strong className="text-warning">
                       {feedbackCount.open}
@@ -355,7 +364,11 @@ const MyFeedback = () => {
                 </div>
               </div>
               <div className="col">
-                <div className="cardx p-3">
+                <div
+                  className="cardx p-3"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFeedbackFilter("closed")}
+                >
                   <h3>
                     <strong className="text-dark text-opacity-50">
                       {feedbackCount.closed}
@@ -366,17 +379,122 @@ const MyFeedback = () => {
               </div>
             </div>
           </div>
+        </div> */}
+        <div className="row">
+          <div className="col-lg-12">
+            <div className="row">
+              <div className="col">
+                <div
+                  className={`cardx p-3 ${
+                    feedbackFilter === "total"
+                      ? "bg-secondary text-white"
+                      : "bg-white"
+                  }`}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFeedbackFilter("total")}
+                >
+                  <h3>
+                    <strong
+                      className={
+                        feedbackFilter === "total" ? "text-white" : "text-dark"
+                      }
+                    >
+                      {feedbackCount.total}
+                    </strong>
+                  </h3>
+                  <span
+                    className={`subtitle_sm ${
+                      feedbackFilter === "total" ? "text-white" : "text-dark"
+                    }`}
+                  >
+                    Total Feedbacks
+                  </span>
+                </div>
+              </div>
+              <div className="col">
+                <div
+                  className={`cardx p-3 ${
+                    feedbackFilter === "open"
+                      ? "bg-secondary text-white"
+                      : "bg-white"
+                  }`}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFeedbackFilter("open")}
+                >
+                  <h3>
+                    <strong
+                      className={
+                        feedbackFilter === "open" ? "text-warning" : "text-dark"
+                      }
+                    >
+                      {feedbackCount.open}
+                    </strong>
+                  </h3>
+                  <span
+                    className={`subtitle_sm ${
+                      feedbackFilter === "open" ? "text-white" : "text-dark"
+                    }`}
+                  >
+                    Open Tickets
+                  </span>
+                </div>
+              </div>
+              <div className="col">
+                <div
+                  className={`cardx p-3 ${
+                    feedbackFilter === "closed"
+                      ? "bg-secondary text-white"
+                      : "bg-white"
+                  }`}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFeedbackFilter("closed")}
+                >
+                  <h3>
+                    <strong
+                      className={
+                        feedbackFilter === "closed"
+                          ? "text-white text-opacity-50"
+                          : "text-dark"
+                      }
+                    >
+                      {feedbackCount.closed}
+                    </strong>
+                  </h3>
+                  <span
+                    className={`subtitle_sm ${
+                      feedbackFilter === "closed" ? "text-white" : "text-dark"
+                    }`}
+                  >
+                    Closed Tickets
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
         {/* Feedback Table */}
         <div className="row">
           <div className="col-12">
             <div className="card_tb">
               <DataTable
-                value={feedbackData}
+                value={
+                  feedbackFilter === "total"
+                    ? feedbackData // Total feedbacks ka data (ya sabhi)
+                    : feedbackFilter === "open"
+                    ? feedbackData.filter(
+                        (item) =>
+                          item.Status && item.Status.toLowerCase() === "open"
+                      )
+                    : feedbackFilter === "closed"
+                    ? feedbackData.filter(
+                        (item) =>
+                          item.Status && item.Status.toLowerCase() === "closed"
+                      )
+                    : feedbackData
+                }
                 paginator
                 rows={50}
-                rowsPerPageOptions={[50,100,150,200]}
+                rowsPerPageOptions={[50, 100, 150, 200]}
                 loading={loading}
                 emptyMessage="No feedback data available"
                 className="p-datatable-sm"

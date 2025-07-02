@@ -29,6 +29,8 @@ const AdhocManagement = () => {
   const [approved, setApproved] = useState(0);
   const [pending, setPending] = useState(0);
   const [rejected, setRejected] = useState(0);
+  const [cancelled, setCancelled] = useState(0); // Initialize cancelled to 0
+  const [adhocFilter, setAdhocFilter] = useState("total"); // NEW: filter state
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -102,17 +104,20 @@ const AdhocManagement = () => {
         setApproved(response[0].Approved || 0);
         setPending(response[0].Pending || 0);
         setRejected(response[0].Rejected || 0);
+        setCancelled(response[0].Cancelled || 0);
       } else {
         setMyRequests(0);
         setApproved(0);
         setPending(0);
         setRejected(0);
+        setCancelled(0);
       }
     } catch (error) {
       setMyRequests(0);
       setApproved(0);
       setPending(0);
       setRejected(0);
+      setCancelled(0);
       console.error("Error fetching adhoc request count:", error);
     }
   };
@@ -223,8 +228,42 @@ const AdhocManagement = () => {
 
       console.log("AdhocManagement Details", respData);
       setAdhocData(respData);
+      // Set counts for all cards
+      setTotalAdhocs(respData.length);
+      setMyRequests(
+        respData.filter(
+          (item) => item.Status && item.Status.toLowerCase() === "myrequest"
+        ).length
+      );
+      setPending(
+        respData.filter(
+          (item) => item.Status && item.Status.toLowerCase() === "pending"
+        ).length
+      );
+      setApproved(
+        respData.filter(
+          (item) => item.Status && item.Status.toLowerCase() === "approved"
+        ).length
+      );
+      setRejected(
+        respData.filter(
+          (item) => item.Status && item.Status.toLowerCase() === "rejected"
+        ).length
+      );
+      setCancelled(
+        respData.filter(
+          (item) => item.Status && item.Status.toLowerCase() === "cancelled"
+        ).length
+      );
     } catch (error) {
       console.log("Error", error);
+      setAdhocData([]);
+      setTotalAdhocs(0);
+      setMyRequests(0);
+      setPending(0);
+      setApproved(0);
+      setRejected(0);
+      setCancelled(0);
     } finally {
       setLoading(false);
     }
@@ -474,7 +513,7 @@ const AdhocManagement = () => {
             ></h6>
           </div>
         </div>
-        <div className="row mt-3">
+        {/* <div className="row mt-3">
           <div className="col">
             <div className="cardNew p-4 bg-secondary text-white">
               <h3>{totalAdhocs}</h3>
@@ -507,6 +546,168 @@ const AdhocManagement = () => {
               <span class="subtitle_sm">Rejected</span>
             </div>
           </div>
+          <div className="col">
+            <div className="cardNew p-4">
+              <h3 className="text-danger">{cancelled}</h3>
+              <span class="subtitle_sm">Cancelled</span>
+            </div>
+          </div>
+        </div> */}
+        <div className="row mt-3">
+          <div className="col">
+            <div
+              className={`cardNew p-4 ${
+                adhocFilter === "total" ? "bg-secondary text-white" : "bg-white"
+              }`}
+              style={{ cursor: "pointer" }}
+              onClick={() => setAdhocFilter("total")}
+            >
+              <h3
+                className={adhocFilter === "total" ? "text-white" : "text-dark"}
+              >
+                {totalAdhocs}
+              </h3>
+              <span
+                className={`subtitle_sm ${
+                  adhocFilter === "total" ? "text-white" : "text-dark"
+                }`}
+              >
+                Total Adhocs
+              </span>
+            </div>
+          </div>
+          <div className="col">
+            <div
+              className={`cardNew p-4 ${
+                adhocFilter === "myRequests"
+                  ? "bg-secondary text-white"
+                  : "bg-white"
+              }`}
+              style={{ cursor: "pointer" }}
+              onClick={() => setAdhocFilter("myRequests")}
+            >
+              <h3>
+                <strong
+                  className={
+                    adhocFilter === "myRequests" ? "text-white" : "text-dark"
+                  }
+                >
+                  {myRequests}
+                </strong>
+              </h3>
+              <span
+                className={`subtitle_sm ${
+                  adhocFilter === "myRequests" ? "text-white" : "text-dark"
+                }`}
+              >
+                My Requests
+              </span>
+            </div>
+          </div>
+          <div className="col">
+            <div
+              className={`cardNew p-4 ${
+                adhocFilter === "pending"
+                  ? "bg-secondary text-white"
+                  : "bg-white"
+              }`}
+              style={{ cursor: "pointer" }}
+              onClick={() => setAdhocFilter("pending")}
+            >
+              <h3
+                className={
+                  adhocFilter === "pending" ? "text-white" : "text-warning"
+                }
+              >
+                {pending}
+              </h3>
+              <span
+                className={`subtitle_sm ${
+                  adhocFilter === "pending" ? "text-white" : "text-dark"
+                }`}
+              >
+                Pendings
+              </span>
+            </div>
+          </div>
+          <div className="col">
+            <div
+              className={`cardNew p-4 ${
+                adhocFilter === "approved"
+                  ? "bg-secondary text-white"
+                  : "bg-white"
+              }`}
+              style={{ cursor: "pointer" }}
+              onClick={() => setAdhocFilter("approved")}
+            >
+              <h3
+                className={
+                  adhocFilter === "approved" ? "text-white" : "text-success"
+                }
+              >
+                {approved}
+              </h3>
+              <span
+                className={`subtitle_sm ${
+                  adhocFilter === "approved" ? "text-white" : "text-dark"
+                }`}
+              >
+                Approved
+              </span>
+            </div>
+          </div>
+          <div className="col">
+            <div
+              className={`cardNew p-4 ${
+                adhocFilter === "rejected"
+                  ? "bg-secondary text-white"
+                  : "bg-white"
+              }`}
+              style={{ cursor: "pointer" }}
+              onClick={() => setAdhocFilter("rejected")}
+            >
+              <h3
+                className={
+                  adhocFilter === "rejected" ? "text-white" : "text-danger"
+                }
+              >
+                {rejected}
+              </h3>
+              <span
+                className={`subtitle_sm ${
+                  adhocFilter === "rejected" ? "text-white" : "text-dark"
+                }`}
+              >
+                Rejected
+              </span>
+            </div>
+          </div>
+          <div className="col">
+            <div
+              className={`cardNew p-4 ${
+                adhocFilter === "cancelled"
+                  ? "bg-secondary text-white"
+                  : "bg-white"
+              }`}
+              style={{ cursor: "pointer" }}
+              onClick={() => setAdhocFilter("cancelled")}
+            >
+              <h3
+                className={
+                  adhocFilter === "cancelled" ? "text-white" : "text-danger"
+                }
+              >
+                {cancelled}
+              </h3>
+              <span
+                className={`subtitle_sm ${
+                  adhocFilter === "cancelled" ? "text-white" : "text-dark"
+                }`}
+              >
+                Cancelled
+              </span>
+            </div>
+          </div>
         </div>
 
         <div className="row">
@@ -517,7 +718,17 @@ const AdhocManagement = () => {
                 <div>Loading...</div>
               ) : adhocData.length > 0 ? (
                 <DataTable
-                  value={adhocData}
+                  value={
+                    adhocFilter === "total"
+                      ? adhocData
+                      : adhocData.filter((item) =>
+                          adhocFilter === "myRequests"
+                            ? item.Status &&
+                              item.Status.toLowerCase() === "myrequest"
+                            : item.Status &&
+                              item.Status.toLowerCase() === adhocFilter
+                        )
+                  }
                   paginator
                   rows={10}
                   rowsPerPageOptions={[5, 10, 25, 50]}

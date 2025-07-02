@@ -453,7 +453,7 @@ const newFromDate = e.target.value;
       // Employee schedule se values le lo
       const empSchedule = employeeSchedule && employeeSchedule[0];
       if (!empSchedule) {
-        alert("No employee schedule found!");
+        toastService.error("No employee schedule found!");
         setIsSubmitting(false); // Loader OFF
         return;
       }
