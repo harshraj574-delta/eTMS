@@ -1,3 +1,4 @@
+import { Path } from "leaflet";
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -10,44 +11,46 @@ const SidebarMenu = () => {
   useEffect(() => {
     const path = location.pathname;
     // Check if current path matches any menu category
-    if (
-      [
-        "/MySchedule",
-        "/AdhocManagement",
-        // "/MyAdhocRequest",
-        "/MyFeedback",
-        "/ReplicateSchedule",
-        "/ViewMyRoutes",
-      ].includes(path)
-    ) {
+    if ([
+      "/dashboard",
+      "/AdhocManagement",
+      "/MyAdhocRequest",
+      "/MyFeedback",
+      "/MySchedule",
+      "/ReplicateSchedule",
+      "/ViewMyRoutes",
+    ].includes(path)) {
       setActiveMenu("etms");
-    } else if (
-      [
-        "/ManageEmployee",
-        "/FacilityMaster",
-        "/DriverMaster",
-        "/VehicleMaster",
-        "/VehicleTypeMaster",
-        "/VendorMaster",
-        "/GuardMaster",
-        "/Location",
-      ].includes(path)
-    ) {
+    } else if ([
+      "/ManageEmployee",
+      "/FacilityMaster",
+      "/DriverMaster",
+      "/VehicleMaster",
+      "/VehicleTypeMaster",
+      "/VendorMaster",
+      "/GuardMaster",
+      "/Location",
+    ].includes(path)) {
       setActiveMenu("master");
-    } else if (
-      [
-        "/ManageRoute",
-        "/CostMaster",
-        "/CostMasterPackage",
-        "/VendorWiseBilling",
-        "/SummaryPackageReport",
-        "/PenaltyMaster",
-        "/ComplianceCheck",
-        "/DetailedBillingReport",
-        "/EmployeeWiseBillingReport",
-      ].includes(path)
-    ) {
+    } else if ([
+      "/ManageRoute",
+      "/CostMaster",
+      "/CostMasterPackage",
+      "/VendorWiseBilling",
+      "/SummaryPackageReport",
+      "/PenaltyMaster",
+      "/ComplianceCheck",
+      "/DetailedBillingReport",
+      "/EmployeeWiseBillingReport",
+      "/VendorAllocation",
+      
+    ].includes(path)) {
       setActiveMenu("transport");
+    } else if ([
+      "/ShiftTimeMaster",
+      "/SystemSetting",
+    ].includes(path)) {
+      setActiveMenu("Super Admin");
     }
   }, [location.pathname]);
 
@@ -83,11 +86,12 @@ const SidebarMenu = () => {
 
   // ETMS menu items
   const etmsMenuItems = [
-    { path: "/MySchedule", name: "My Schedule" },
+    { path: "/dashboard", name: "Dashboard" },
     { path: "/AdhocManagement", name: "Adhoc Management" },
-    // { path: "/MyAdhocRequest", name: "My Adhoc Request" },
+    { path: "/MyAdhocRequest", name: "My Adhoc Request" },
     { path: "/MyFeedback", name: "My Feedback" },
-    // { path: "/ReplicateSchedule", name: "Replicate Schedule" },
+    { path: "/MySchedule", name: "My Schedule" },
+    { path: "/ReplicateSchedule", name: "Replicate Schedule" },
     { path: "/ViewMyRoutes", name: "View My Routes" },
   ];
 
@@ -101,6 +105,14 @@ const SidebarMenu = () => {
     { path: "/VendorMaster", name: "Vendor Master" },
     { path: "/GuardMaster", name: "Guard Master" },
     { path: "/Location", name: "Location" },
+  ];
+
+  const superAdminMenuItems = [
+   {
+      path: "/ShiftTimeMaster", name: "Shift Time Master"
+    },
+    { path: "/SystemSetting", name: "System Setting" },
+    
   ];
 
   // Transport menu items
@@ -121,6 +133,8 @@ const SidebarMenu = () => {
       path: "https://etmsonline.in/etmsaccen/RouteUploadExl.aspx",
       name: "Route Excel Upload",
     },
+    { path: "/VendorAllocation", name: "Vendor Allocation" },
+   
   ];
 
   // Render menu section
@@ -161,10 +175,7 @@ const SidebarMenu = () => {
               >
                 {item.name}
                 {isExternalUrl(item.path) && (
-                  <span
-                    className="material-icons ms-1"
-                    style={{ fontSize: "16px" }}
-                  >
+                  <span className="material-icons ms-1" style={{ fontSize: "16px" }}>
                     open_in_new
                   </span>
                 )}
@@ -184,16 +195,19 @@ const SidebarMenu = () => {
         {renderMenuSection(
           "transport",
           "Transport",
-          "directions_car",   
+          "directions_car",
           transpMenuItems
         )}
+       {renderMenuSection("Super Admin", "Super Admin", "admin_panel_settings", superAdminMenuItems)}
       </div>
 
       {/* Help Card */}
       <div className="cardx help p-3">
         <span className="material-icons mb-3">help</span>
         <p className="overline_text_sm">Need help?</p>
-        <p className="small mt-2 mb-3">Please connect with our support team.</p>
+        <p className="small mt-2 mb-3">
+          Please connect with our support team.
+        </p>
         <div className="d-grid">
           <button className="btn btn-sm btn-outline-secondary fw-bold">
             <small>GET IN TOUCH</small>

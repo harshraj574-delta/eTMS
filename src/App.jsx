@@ -31,6 +31,7 @@ import DetailedBillingReport from "./components/DetailedBillingReport";
 import EmployeeWiseBillingReport from "./components/EmployeeWiseBillingReport";
 import "primereact/resources/themes/saga-blue/theme.css";
 import RouteMap from "./components/RouteMap";
+import SystemSetting from "./components/SystemSetting";
 
 // Deepak
 import Location from "./components/MasterPages/Location";
@@ -85,6 +86,7 @@ function App() {
         <Route path="/ComplianceCheck" element={<ComplianceCheck />} />
         <Route path="/DetailedBillingReport" element={<DetailedBillingReport />} />
         <Route path="/EmployeeWiseBillingReport" element={<EmployeeWiseBillingReport />} />
+        <Route path="/SystemSetting" element={<SystemSetting />} />
       </Routes>
     </>
   );
