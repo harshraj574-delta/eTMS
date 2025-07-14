@@ -261,7 +261,7 @@ const GuardMaster = () => {
   return (
     <>
       <Header
-        pageTitle="Vehicle Master"
+        pageTitle="Guard Master"
         showNewButton={true}
         onNewButtonClick={handleAddGuardClick}
       />
