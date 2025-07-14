@@ -370,7 +370,7 @@ const CostMaster = () => {
         guardcost: editGuardRate,
         fuelrate: editFuelRate,
       };
-      const res = await CostMasterService.sprUpdateCost(params);
+      let res = await CostMasterService.sprUpdateCost(params);
       console.log("sprUpdateCost response:", res);
       // If response is string, parse it
       if (typeof res === "string") {

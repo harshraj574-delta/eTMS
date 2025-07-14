@@ -397,14 +397,14 @@ export const apiService = {
       // Format the response data
       const formattedData = Array.isArray(response.data)
         ? response.data.map((item) => ({
-            TicketNo: item.TicketNo || "",
-            empCode: item.empCode || "",
-            empName: item.empName || "",
-            Descp: item.Descp || "",
-            UpdatedAt: item.UpdatedAt || new Date().toISOString(),
-            Status: item.Status || "",
-            StatusId: item.StatusId || 0,
-          }))
+          TicketNo: item.TicketNo || "",
+          empCode: item.empCode || "",
+          empName: item.empName || "",
+          Descp: item.Descp || "",
+          UpdatedAt: item.UpdatedAt || new Date().toISOString(),
+          Status: item.Status || "",
+          StatusId: item.StatusId || 0,
+        }))
         : [];
 
       console.log("Reply Data:", formattedData);
@@ -422,9 +422,9 @@ export const apiService = {
       });
       const DropDown = Array.isArray(response.data)
         ? response.data.map((item) => ({
-            id: item.id || 0,
-            Category: item.Category || "",
-          }))
+          id: item.id || 0,
+          Category: item.Category || "",
+        }))
         : [];
       console.log("Category DropDown Data:", DropDown);
       return DropDown;
@@ -441,12 +441,12 @@ export const apiService = {
       });
       const DropDown = Array.isArray(response.data)
         ? response.data.map((item) => ({
-            id: item.id || 0,
-            Category: item.Category || "",
-            CompName: item.CompName || "",
-            C_Type: item.C_Type || "",
-            severity: item.severity || 0,
-          }))
+          id: item.id || 0,
+          Category: item.Category || "",
+          CompName: item.CompName || "",
+          C_Type: item.C_Type || "",
+          severity: item.severity || 0,
+        }))
         : [];
       console.log("Type DropDown Data:", DropDown);
       return DropDown;
@@ -505,4 +505,269 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
+  //Get EmpGeoCodeDetails MyProfile Page
+  GetEmpGeoCodeDetails: async (credentials) => {
+    try {
+      const response = await api.post("/GetEmpGeoCodeDetails", {
+        empid: credentials.empid,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+  //Dashboard Stats Api's
+  Getchart_RouteCount: async (credentials) => {
+    try {
+      const response = await api.post("/Getchart_RouteCount", {
+        sDate: credentials.sDate,
+        eDate: credentials.eDate,
+        locationid: credentials.locationid || 0,
+        facilityid: credentials.facilityid || 0,
+        vendorid: credentials.vendorid || 0,
+        triptype: credentials.triptype || "",
+      });
+
+      //console.log("Getchart_RouteCount Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  //Dashboard Map Api's
+  GetPickDropcount_shiftwise: async (credentials) => {
+    try {
+      const response = await api.post("/GetPickDropcount_shiftwise", {
+        sDate: credentials.sDate,
+        eDate: credentials.eDate,
+        locationid: credentials.locationid || 0,
+        facilityid: credentials.facilityid || 0,
+        vendorid: credentials.vendorid || 0,
+        triptype: credentials.triptype || "",
+      });
+
+      //console.log("GetPickDropcount_shiftwise Response -------->:", response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Normal vs Adhoc Trips
+  GetNormalAdhoc_shiftwise: async (credentials) => {
+    try {
+      const response = await api.post("/GetNormalAdhoc_shiftwise", {
+        sDate: credentials.sDate,
+        eDate: credentials.eDate,
+        locationid: credentials.locationid || 0,
+        facilityid: credentials.facilityid || 0,
+        vendorid: credentials.vendorid || 0,
+        triptype: credentials.triptype || "",
+      });
+
+      console.log(
+        "Get Normal Adhoc Shiftwise Response -------->:",
+        response.data
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Drop Safe Overview
+  GetDropSafe_shiftwise: async (credentials) => {
+    try {
+      const response = await api.post("/GetDropSafe_shiftwise", {
+        sDate: credentials.sDate,
+        eDate: credentials.eDate,
+        locationid: credentials.locationid,
+        facilityid: credentials.facilityid,
+        vendorid: credentials.vendorid,
+        triptype: credentials.triptype,
+      });
+
+      //console.log("Drop Safe Overview Response API.JS -------->:", response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Get Drop Safe Count
+  GetDropSafecount: async (credentials) => {
+    try {
+      const response = await api.post("/GetDropSafecount", {
+        sDate: credentials.sDate,
+        eDate: credentials.eDate,
+        locationid: credentials.locationid || 0,
+        facilityid: credentials.facilityid || 0,
+        vendorid: credentials.vendorid || 0,
+        triptype: credentials.triptype || "",
+      });
+      //console.log("Get Drop Safe Count API.JS -------->:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  //getchart_ Cancel Reallocation
+  getchart_CancelReallocation: async (credentials) => {
+    try {
+      const response = await api.post("/getchart_CancelReallocation", {
+        sDate: credentials.sDate,
+        eDate: credentials.eDate,
+        locationid: credentials.locationid || 0,
+        facilityid: credentials.facilityid || 0,
+        vendorid: credentials.vendorid || 0,
+        triptype: credentials.triptype || "",
+      });
+
+      //console.log("Cancel Reallocation -------->:", response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  //Shift Completion Vs Pending
+  // getchart_CancelReallocation: async (credentials) => {
+  //   try {
+
+  //     const response = await api.post("/getchart_CancelReallocation", {
+  //       sDate: credentials.sDate,
+  //       eDate: credentials.eDate,
+  //       locationid: credentials.locationid || 0,
+  //       facilityid: credentials.facilityid || 0,
+  //       vendorid: credentials.vendorid || 0,
+  //       triptype: credentials.triptype || "",
+  //     });
+
+  //     console.log("Shift Completion Vs Pending -------->:", response.data);
+
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("API Error:", error);
+  //     throw error.response?.data || error.message;
+  //   }
+  // },
+
+  //Shift Completion Progress
+  getShiftCompletePending: async (body) => {
+    try {
+      const response = await api.post("/getchart_completePending", {
+        sDate: body.sDate,
+        eDate: body.eDate,
+        locationid: body.locationid || 0,
+        facilityid: body.facilityid || 0,
+        vendorid: body.vendorid || 0,
+        triptype: body.triptype || "",
+      });
+      console.log("Shift Completion Vs Pending -------->:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  sp_getAllLocation: async () => {
+    try {
+      const response = await api.post("/sp_getAllLocation");
+      //console.log("get AllLocation DashBoard ---->", response);
+      return response.data;
+    } catch (error) {
+      console.log("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  //Shift/Employee/Occupancy per Trip
+  GetEmpOccupancy: async (body) => {
+    try {
+      const response = await api.post("/GetEmpOccupancy_shiftwise", {
+        sDate: body.sDate,
+        eDate: body.eDate,
+        locationid: body.locationid || 0,
+        facilityid: body.facilityid || 0,
+        vendorid: body.vendorid || 0,
+        triptype: body.triptype || "",
+      });
+      console.log(
+        "Shift/Employee/Occupancy per Trip -------->:",
+        response.data
+      );
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getRoutedEmpGeocode: async (params) => {
+    try {
+      const response = await api.post("/sp_getRoutedEmpGeocode", {
+        facilityid: params.facilityid,
+        sDate: params.sDate,
+        triptype: params.triptype,
+        type: params.type,
+      });
+      console.log("Get Routed Emp Geocode Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Error: map", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  get_VProutecount: async (credentials) => {
+    try {
+      const response = await api.post("/sp_VProutecount", {
+        sDate: credentials.sDate,
+        eDate: credentials.eDate,
+        locationid: credentials.locationid,
+        facilityid: credentials.facilityid,
+        vendorid: credentials.vendorid,
+        triptype: credentials.triptype,
+      });
+
+      console.log("VP Route Count -------->:", response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+  GetChart_VUcount: async (credentials) => {
+    try {
+      const response = await api.post("/GetChart_VUcount", {
+        sDate: credentials.sDate,
+        eDate: credentials.eDate,
+        locationid: credentials.locationid,
+        facilityid: credentials.facilityid,
+        vendorid: credentials.vendorid,
+        triptype: credentials.triptype
+      });
+      console.log("GetChart_VUcount Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error.response?.data || error.message;
+    }
+  },
+
 };

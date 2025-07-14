@@ -137,11 +137,11 @@ const MySchedule = () => {
     pickLockDateTime: "",
   });
   const addMonth = (dateString, months) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  date.setMonth(date.getMonth() + months);
-  return date.toISOString().split("T")[0];
-};
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    date.setMonth(date.getMonth() + months);
+    return date.toISOString().split("T")[0];
+  };
   // const addMonth = (dateString, months) => {
   // if (!dateString) return "";
   // const date = new Date(dateString);
@@ -417,11 +417,11 @@ const MySchedule = () => {
 
   // Add this function to handle date changes
   const handleFromDateChange = (e) => {
-  //   setFromDate(e.target.value);
-  // setToDate(addMonth(newFromDate, 1)); // 1 month आगे set करें
-const newFromDate = e.target.value;
-  setFromDate(newFromDate);
-  setToDate(addMonth(newFromDate, 1)); // 
+    //   setFromDate(e.target.value);
+    // setToDate(addMonth(newFromDate, 1)); // 1 month आगे set करें
+    const newFromDate = e.target.value;
+    setFromDate(newFromDate);
+    setToDate(addMonth(newFromDate, 1)); // 
     // You can add validation or additional logic here if needed
   };
 
@@ -506,7 +506,7 @@ const newFromDate = e.target.value;
       if (response) {
         toastService.success("Schedule updated successfully!");
         // Properly close the Bootstrap Offcanvas using JS API
- 
+
         setIsEmployeeShiftOpen(false);
         // ---- Force table to reload from today's date ----
         const today = new Date().toISOString().split("T")[0];
@@ -1090,8 +1090,8 @@ const newFromDate = e.target.value;
       // Get the process ID from the employee schedule if available
       const processId =
         employeeSchedule &&
-        employeeSchedule.length > 0 &&
-        employeeSchedule[0].processId
+          employeeSchedule.length > 0 &&
+          employeeSchedule[0].processId
           ? employeeSchedule[0].processId
           : selectedProcess || "0";
 
@@ -1315,26 +1315,26 @@ const newFromDate = e.target.value;
     // const toDateInput = document.getElementById("txtNewtoDate");
     // if (fromDateInput) fromDateInput.value = defaultFromDate;
     // if (toDateInput) toDateInput.value = defaultToDate;
-   // const defaultFromDate = new Date().toISOString().split("T")[0];
-  // const defaultToDate = addMonth(defaultFromDate, 1);
+    // const defaultFromDate = new Date().toISOString().split("T")[0];
+    // const defaultToDate = addMonth(defaultFromDate, 1);
 
-  // setFromDate(defaultFromDate);
-  // setToDate(defaultToDate);
+    // setFromDate(defaultFromDate);
+    // setToDate(defaultToDate);
 
-  // const fromDateInput = document.getElementById("txtNewfromDate");
-  // const toDateInput = document.getElementById("txtNewtoDate");
-  // if (fromDateInput) fromDateInput.value = defaultFromDate;
-  // if (toDateInput) toDateInput.value = defaultToDate;
-const defaultFromDate = new Date().toISOString().split("T")[0];
-  const defaultToDate = addMonth(defaultFromDate, 1);
+    // const fromDateInput = document.getElementById("txtNewfromDate");
+    // const toDateInput = document.getElementById("txtNewtoDate");
+    // if (fromDateInput) fromDateInput.value = defaultFromDate;
+    // if (toDateInput) toDateInput.value = defaultToDate;
+    const defaultFromDate = new Date().toISOString().split("T")[0];
+    const defaultToDate = addMonth(defaultFromDate, 1);
 
-  setFromDate(defaultFromDate);
-  setToDate(defaultToDate);
+    setFromDate(defaultFromDate);
+    setToDate(defaultToDate);
 
-  const fromDateInput = document.getElementById("txtNewfromDate");
-  const toDateInput = document.getElementById("txtNewtoDate");
-  if (fromDateInput) fromDateInput.value = defaultFromDate;
-  if (toDateInput) toDateInput.value = defaultToDate;
+    const fromDateInput = document.getElementById("txtNewfromDate");
+    const toDateInput = document.getElementById("txtNewtoDate");
+    if (fromDateInput) fromDateInput.value = defaultFromDate;
+    if (toDateInput) toDateInput.value = defaultToDate;
     // Reset weekend days
     setWeekendDays({ sat: true, sun: true });
 
@@ -1403,8 +1403,8 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
 
     setIsSubmitting(true); // Loader ON
     // Get selected dates from state (or directly from input if you want)
-  const fromDateValue = document.getElementById("txtNewfromDate")?.value;
-  const toDateValue = document.getElementById("txtNewtoDate")?.value ;
+    const fromDateValue = document.getElementById("txtNewfromDate")?.value;
+    const toDateValue = document.getElementById("txtNewtoDate")?.value;
     const selectedEmployees = mgrassociate
       .filter((emp) => emp.isChecked)
       .map((emp) => emp.EmployeeID);
@@ -1492,9 +1492,9 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
     navigate("/ReplicateSchedule");
   };
   const handleNewButtonClick = () => {
-     const userFacilityId = sessionManager.getUserSession().FacilityID;
-  setSelectedloginfacility(userFacilityId);
-  setSelectedlogoutfacility(userFacilityId);
+    const userFacilityId = sessionManager.getUserSession().FacilityID;
+    setSelectedloginfacility(userFacilityId);
+    setSelectedlogoutfacility(userFacilityId);
     const offcanvasElement = document.getElementById("raise_Feedback");
     if (offcanvasElement) {
       const offcanvas = new Offcanvas(offcanvasElement);
@@ -1618,11 +1618,10 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                       currentItems.map((employee, index) => (
                         <tr
                           key={index}
-                          className={`${index > 0 ? "column" : ""} ${
-                            employee.geoCode !== "Y" || employee.tptReq !== "Y"
+                          className={`${index > 0 ? "column" : ""} ${employee.geoCode !== "Y" || employee.tptReq !== "Y"
                               ? "disabled-row"
                               : ""
-                          }`}
+                            }`}
                         >
                           <td>
                             <span className="text-muted">
@@ -1648,7 +1647,7 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                           {[0, 1, 2, 3, 4, 5, 6].map((day) => (
                             <td key={day} id={employee.EmployeeID}>
                               {employee.geoCode !== "Y" ||
-                              employee.tptReq !== "Y" ? (
+                                employee.tptReq !== "Y" ? (
                                 // Read-only view for disabled rows
                                 <>
                                   <span>
@@ -1787,9 +1786,8 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                     <ul className="pagination mb-0">
                       {/* Previous button */}
                       <li
-                        className={`page-item ${
-                          currentPage === 1 ? "disabled" : ""
-                        }`}
+                        className={`page-item ${currentPage === 1 ? "disabled" : ""
+                          }`}
                       >
                         <button
                           className="page-link"
@@ -1804,9 +1802,8 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                       {[...Array(totalPages)].map((_, index) => (
                         <li
                           key={index}
-                          className={`page-item ${
-                            currentPage === index + 1 ? "active" : ""
-                          }`}
+                          className={`page-item ${currentPage === index + 1 ? "active" : ""
+                            }`}
                         >
                           <button
                             className="page-link"
@@ -1819,9 +1816,8 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
 
                       {/* Next button */}
                       <li
-                        className={`page-item ${
-                          currentPage === totalPages ? "disabled" : ""
-                        }`}
+                        className={`page-item ${currentPage === totalPages ? "disabled" : ""
+                          }`}
                       >
                         <button
                           className="page-link"
@@ -1917,13 +1913,13 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                       <small>Shift Date</small>{" "}
                       {employeeSchedule[0].startDate
                         ? new Date(
-                            employeeSchedule[0].startDate
-                          ).toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })
+                          employeeSchedule[0].startDate
+                        ).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
                         : "N/A"}
                     </li>
                     <li>
@@ -1975,21 +1971,21 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                 >
                   <option value="">NA</option>
                   {Array.isArray(availableShiftTimes) &&
-                  availableShiftTimes.length > 0
+                    availableShiftTimes.length > 0
                     ? availableShiftTimes.map((shift) => (
-                        <option
-                          key={shift.shiftTime}
-                          value={shift.ShiftValue || shift.shiftTime}
-                        >
-                          {shift.shiftTime}
-                        </option>
-                      ))
+                      <option
+                        key={shift.shiftTime}
+                        value={shift.ShiftValue || shift.shiftTime}
+                      >
+                        {shift.shiftTime}
+                      </option>
+                    ))
                     : // If no available shift times, but we have a selected time, add it as an option
-                      selectedShiftTime && (
-                        <option value={selectedShiftTime}>
-                          {selectedShiftTime}
-                        </option>
-                      )}
+                    selectedShiftTime && (
+                      <option value={selectedShiftTime}>
+                        {selectedShiftTime}
+                      </option>
+                    )}
                 </select>
               ) : (
                 <div
@@ -2017,21 +2013,21 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                 >
                   <option value="">NA</option>
                   {Array.isArray(availableLogoutShiftTimes) &&
-                  availableLogoutShiftTimes.length > 0
+                    availableLogoutShiftTimes.length > 0
                     ? availableLogoutShiftTimes.map((shift) => (
-                        <option
-                          key={shift.shiftTime}
-                          value={shift.ShiftValue || shift.shiftTime}
-                        >
-                          {shift.shiftTime}
-                        </option>
-                      ))
+                      <option
+                        key={shift.shiftTime}
+                        value={shift.ShiftValue || shift.shiftTime}
+                      >
+                        {shift.shiftTime}
+                      </option>
+                    ))
                     : // If no available shift times, but we have a selected time, add it as an option
-                      selectedLogoutShiftTime && (
-                        <option value={selectedLogoutShiftTime}>
-                          {selectedLogoutShiftTime}
-                        </option>
-                      )}
+                    selectedLogoutShiftTime && (
+                      <option value={selectedLogoutShiftTime}>
+                        {selectedLogoutShiftTime}
+                      </option>
+                    )}
                 </select>
               ) : (
                 <label className="form-label">
@@ -2059,8 +2055,8 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                       {employeeSchedule[0].lastUpdatedBy || "N/A"}| At -{" "}
                       {employeeSchedule[0].lastUpdatedAt
                         ? new Date(
-                            employeeSchedule[0].lastUpdatedAt
-                          ).toLocaleString()
+                          employeeSchedule[0].lastUpdatedAt
+                        ).toLocaleString()
                         : "N/A"}
                     </small>
                     <small>
@@ -2068,8 +2064,8 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                       {employeeSchedule[0].lastUpdatedBy || "N/A"} | At -{" "}
                       {employeeSchedule[0].lastUpdatedAt
                         ? new Date(
-                            employeeSchedule[0].lastUpdatedAt
-                          ).toLocaleString()
+                          employeeSchedule[0].lastUpdatedAt
+                        ).toLocaleString()
                         : "N/A"}
                     </small>
                   </>
@@ -2144,8 +2140,8 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                         <tr>
                           <td>
                             {trip.routeid &&
-                            (trip.routeid.includes("Trip Not Generated") ||
-                              trip.routeid.includes("Not Finalized")) ? (
+                              (trip.routeid.includes("Trip Not Generated") ||
+                                trip.routeid.includes("Not Finalized")) ? (
                               <span>{trip.routeid.replace(/<br>/g, "-")}</span> // Display as read-only
                             ) : (
                               <a
@@ -2159,8 +2155,8 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                               >
                                 {trip.routeid && trip.routeid.includes("<br>")
                                   ? trip.routeid
-                                      .replace(/<br>/g, "-")
-                                      .split("<br>")[0]
+                                    .replace(/<br>/g, "-")
+                                    .split("<br>")[0]
                                   : trip.routeid}
                               </a>
                             )}
@@ -2168,24 +2164,23 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                           <td>
                             {trip.shiftdate
                               ? new Date(trip.shiftdate).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "2-digit",
-                                    day: "2-digit",
-                                    year: "numeric",
-                                  }
-                                )
+                                "en-US",
+                                {
+                                  month: "2-digit",
+                                  day: "2-digit",
+                                  year: "numeric",
+                                }
+                              )
                               : "N/A"}
                           </td>
                           <td>
                             {" "}
                             <span
                               id="tripType"
-                              className={`badge text-bg-${
-                                trip.triptype === "PickUp"
+                              className={`badge text-bg-${trip.triptype === "PickUp"
                                   ? "primary"
                                   : "danger"
-                              } rounded-pill text-uppercase`}
+                                } rounded-pill text-uppercase`}
                             >
                               {trip.triptype || "N/A"}
                             </span>
@@ -2221,17 +2216,16 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                                 </thead>
                                 <tbody>
                                   {Array.isArray(routeDetails) &&
-                                  routeDetails.length > 0 ? (
+                                    routeDetails.length > 0 ? (
                                     routeDetails.map((detail, index) => (
                                       <tr key={index}>
                                         <td>{detail.empName || "N/A"}</td>
                                         <td>
                                           <span
-                                            className={`badge ${
-                                              detail.Gender === "M"
+                                            className={`badge ${detail.Gender === "M"
                                                 ? "bg-primary-subtle"
                                                 : "bg-danger-subtle"
-                                            } rounded-pill text-dark`}
+                                              } rounded-pill text-dark`}
                                           >
                                             {detail.Gender || "N/A"}
                                           </span>
@@ -2240,7 +2234,7 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                                         <td>{detail.stopNo || "N/A"}</td>
                                         <td>
                                           {detail.ETAhh !== null &&
-                                          detail.ETAmm !== null
+                                            detail.ETAmm !== null
                                             ? `${detail.ETAhh}:${detail.ETAmm}`
                                             : "N/A"}
                                         </td>
@@ -2376,7 +2370,7 @@ const defaultFromDate = new Date().toISOString().split("T")[0];
                 value={selectedloginfacility}
                 onChange={handleLoginFacilityChange}
                 id="ddlNewLoginFacility"
-                
+
               >
                 {loginfacility.map((loginfacility) => (
                   <option key={loginfacility.Id} value={loginfacility.Id}>

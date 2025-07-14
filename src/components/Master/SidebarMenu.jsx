@@ -12,13 +12,14 @@ const SidebarMenu = () => {
     const path = location.pathname;
     // Check if current path matches any menu category
     if ([
-      "/dashboard",
-      "/AdhocManagement",
-      "/MyAdhocRequest",
-      "/MyFeedback",
       "/MySchedule",
-      "/ReplicateSchedule",
-      "/ViewMyRoutes",
+      "/MyProfile",
+      "/AdhocManagement",
+      "/MyFeedback",
+      // "/ViewMyRoutes",
+      // "/dashboard",
+      // "/ReplicateSchedule",
+      // "/MyAdhocRequest",
     ].includes(path)) {
       setActiveMenu("etms");
     } else if ([
@@ -34,16 +35,16 @@ const SidebarMenu = () => {
       setActiveMenu("master");
     } else if ([
       "/ManageRoute",
-      "/CostMaster",
-      "/CostMasterPackage",
-      "/VendorWiseBilling",
-      "/SummaryPackageReport",
-      "/PenaltyMaster",
-      "/ComplianceCheck",
-      "/DetailedBillingReport",
-      "/EmployeeWiseBillingReport",
+      // "/CostMaster",
+      // "/CostMasterPackage",
+      // "/VendorWiseBilling",
+      // "/SummaryPackageReport",
+      // "/PenaltyMaster",
+      // "/ComplianceCheck",
+      // "/DetailedBillingReport",
+      // "/EmployeeWiseBillingReport",
       "/VendorAllocation",
-      
+
     ].includes(path)) {
       setActiveMenu("transport");
     } else if ([
@@ -51,7 +52,21 @@ const SidebarMenu = () => {
       "/SystemSetting",
     ].includes(path)) {
       setActiveMenu("Super Admin");
+    } else if (
+      ["/report1",
+        "/report2", "/CostMaster",
+        "/CostMasterPackage",
+        "/VendorWiseBilling",
+        "/SummaryPackageReport",
+        "/PenaltyMaster",
+        "/ComplianceCheck",
+        "/DetailedBillingReport",
+        "/EmployeeWiseBillingReport",].includes(path)
+    ) {
+      setActiveMenu("reports");
     }
+
+
   }, [location.pathname]);
 
   // Check if URL is external
@@ -86,18 +101,19 @@ const SidebarMenu = () => {
 
   // ETMS menu items
   const etmsMenuItems = [
-    { path: "/dashboard", name: "Dashboard" },
-    { path: "/AdhocManagement", name: "Adhoc Management" },
-    { path: "/MyAdhocRequest", name: "My Adhoc Request" },
-    { path: "/MyFeedback", name: "My Feedback" },
+    // { path: "/dashboard", name: "Dashboard" },
     { path: "/MySchedule", name: "My Schedule" },
-    { path: "/ReplicateSchedule", name: "Replicate Schedule" },
-    { path: "/ViewMyRoutes", name: "View My Routes" },
+    { path: "/MyProfile", name: "My Profile" },
+    { path: "/AdhocManagement", name: "Adhoc Management" },
+    { path: "/MyFeedback", name: "My Feedback" },
+    // { path: "/MyAdhocRequest", name: "My Adhoc Request" },
+    // { path: "/ReplicateSchedule", name: "Replicate Schedule" },
+    // { path: "/ViewMyRoutes", name: "View My Routes" },
   ];
 
   // Master menu items
   const masterMenuItems = [
-    { path: "/ManageEmployee", name: "Employee Master" },
+    // { path: "/ManageEmployee", name: "Employee Master" },
     { path: "/FacilityMaster", name: "Facility Master" },
     { path: "/DriverMaster", name: "Driver Master" },
     { path: "/VehicleMaster", name: "Vehicle Master" },
@@ -108,16 +124,46 @@ const SidebarMenu = () => {
   ];
 
   const superAdminMenuItems = [
-   {
+    {
       path: "/ShiftTimeMaster", name: "Shift Time Master"
     },
     { path: "/SystemSetting", name: "System Setting" },
-    
+
   ];
 
   // Transport menu items
+  // const transpMenuItems = [
+  //   { path: "/ManageRoute", name: "Manage Route" },
+  //   { path: "/CostMaster", name: "Trip Rate Master" },
+  //   { path: "/CostMasterPackage", name: "Cost Master Package" },
+  //   { path: "/VendorWiseBilling", name: "Vendor Wise Billing" },
+  //   { path: "/SummaryPackageReport", name: "Summary Package Report" },
+  //   { path: "/PenaltyMaster", name: "Penalty Master" },
+  //   { path: "/ComplianceCheck", name: "Compliance Check" },
+  //   { path: "/DetailedBillingReport", name: "Detailed Billing Report" },
+  //   {
+  //     path: "/EmployeeWiseBillingReport",
+  //     name: "Employee Wise Billing Report",
+  //   },
+  //   {
+  //     path: "https://etmsonline.in/etmsaccen/RouteUploadExl.aspx",
+  //     name: "Route Excel Upload",
+  //   },
+  //   { path: "/VendorAllocation", name: "Vendor Allocation" },
+
+  // ];
   const transpMenuItems = [
     { path: "/ManageRoute", name: "Manage Route" },
+
+    {
+      path: "https://etmsonline.in/etmsaccen/RouteUploadExl.aspx",
+      name: "Route Excel Upload",
+    },
+    // { path: "/VendorAllocation", name: "Vendor Allocation" },
+  ];
+
+  const reportMenuItems = [
+    { path: "/dashboard", name: "Dashboard" },
     { path: "/CostMaster", name: "Trip Rate Master" },
     { path: "/CostMasterPackage", name: "Cost Master Package" },
     { path: "/VendorWiseBilling", name: "Vendor Wise Billing" },
@@ -125,26 +171,17 @@ const SidebarMenu = () => {
     { path: "/PenaltyMaster", name: "Penalty Master" },
     { path: "/ComplianceCheck", name: "Compliance Check" },
     { path: "/DetailedBillingReport", name: "Detailed Billing Report" },
-    {
-      path: "/EmployeeWiseBillingReport",
-      name: "Employee Wise Billing Report",
-    },
-    {
-      path: "https://etmsonline.in/etmsaccen/RouteUploadExl.aspx",
-      name: "Route Excel Upload",
-    },
-    { path: "/VendorAllocation", name: "Vendor Allocation" },
-   
+    { path: "/EmployeeWiseBillingReport", name: "Employee Wise Billing Report" },
   ];
+
 
   // Render menu section
   const renderMenuSection = (menuId, title, icon, menuItems) => (
     <div className="accordion-item border-0">
       <a
         href="#!"
-        className={`accordion-button overline_textB ${
-          activeMenu === menuId ? "" : "collapsed"
-        }`}
+        className={`accordion-button overline_textB ${activeMenu === menuId ? "" : "collapsed"
+          }`}
         onClick={(e) => {
           e.preventDefault();
           toggleMenu(menuId);
@@ -153,9 +190,8 @@ const SidebarMenu = () => {
         <span className="material-icons">{icon}</span> {title}
       </a>
       <div
-        className={`accordion-collapse collapse-smooth ${
-          activeMenu === menuId ? "show" : ""
-        }`}
+        className={`accordion-collapse collapse-smooth ${activeMenu === menuId ? "show" : ""
+          }`}
       >
         <ul className="submenu">
           {menuItems.map((item, index) => (
@@ -198,7 +234,9 @@ const SidebarMenu = () => {
           "directions_car",
           transpMenuItems
         )}
-       {renderMenuSection("Super Admin", "Super Admin", "admin_panel_settings", superAdminMenuItems)}
+        {renderMenuSection("Super Admin", "Super Admin", "admin_panel_settings", superAdminMenuItems)}
+        {renderMenuSection("reports", "Reports", "assignment", reportMenuItems)}
+
       </div>
 
       {/* Help Card */}

@@ -32,6 +32,10 @@ import EmployeeWiseBillingReport from "./components/EmployeeWiseBillingReport";
 import "primereact/resources/themes/saga-blue/theme.css";
 import RouteMap from "./components/RouteMap";
 import SystemSetting from "./components/SystemSetting";
+import ShiftTimeMaster from "./components/ShiftTimeMaster";
+import MyProfile from "./components/MyProfile";
+import VendorAllocation from "./components/VendorAllocation";
+
 
 // Deepak
 import Location from "./components/MasterPages/Location";
@@ -87,6 +91,10 @@ function App() {
         <Route path="/DetailedBillingReport" element={<DetailedBillingReport />} />
         <Route path="/EmployeeWiseBillingReport" element={<EmployeeWiseBillingReport />} />
         <Route path="/SystemSetting" element={<SystemSetting />} />
+        <Route path="/ShiftTimeMaster" element={<ShiftTimeMaster />} />
+        <Route path="/MyProfile" element={<MyProfile />} />
+        <Route path="/VendorAllocation" element={<VendorAllocation />} />
+
       </Routes>
     </>
   );
