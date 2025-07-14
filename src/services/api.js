@@ -966,5 +966,130 @@ export const apiService = {
       throw error.response?.data || error.message;
     }
   },
+  //vendor master
+  GetVendorByFacility: async (params) => {
+  try {
+    const response = await api.post("/GetVendorByFacility", {
+      facilityid: params.facilityid,
+    });
+    return JSON.parse(response.data);
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error.response?.data || error.message;
+  }
+},
+ 
+UpdateVendor: async (params) => {
+  try {
+    const response = await api.post("/UpdateVendor", {
+      vendorName: params.vendorName,
+      vendorStrength: params.vendorStrength,
+      vendorContact: params.vendorContact,
+      vendorInfo: params.vendorInfo,
+      facilityId: params.facilityId,
+      vendorType:params.vendorType,
+      attrited: params.attrited,
+      ID: params.ID,
+      EmailId: params.EmailId,
+      vendorStrength2: params.vendorStrength2,
+      vendorStrength3: params.vendorStrength3,
+      Updatedby: params.Updatedby
+    });
+    return JSON.parse(response.data);
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error.response?.data || error.message;
+  }
+},
+ 
+InsertVendor: async (params) => {
+  try {
+    const response = await api.post("/InsertVendor", {
+      vendorName: params.vendorName,
+      vendorStrength: params.vendorStrength,
+      vendorContact: params.vendorContact,
+      vendorInfo: params.vendorInfo,
+      facilityId: params.facilityId,
+      vendorType:params.vendorType,
+      attrited: params.attrited,  
+      EmailId: params.EmailId,
+      vendorStrength2: params.vendorStrength2,
+      vendorStrength3: params.vendorStrength3,
+      Updatedby: params.Updatedby
+    });
+    return JSON.parse(response.data);
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error.response?.data || error.message;
+  }
+},
+ 
+SelectVehicleTypeFacility: async (params) => {
+  try {
+    const response = await api.post("/SelectVehicleTypeFacility?vendorid="+params.vendorid+"&facilityid="+params.facilityid);
+    return JSON.parse(response.data);
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error.response?.data || error.message;
+  }
+},
+ 
+UpdateVehicleType: async (params) => {
+  try {
+    const response = await api.post("/UpdateVehicleType", {
+      vehicle: params.vehicle,
+      cost_ac: params.cost_ac,
+      cost_nonac: params.cost_nonac, 
+      occupancy: params.occupancy,
+      vendorId: params.vendorId,
+      updatedBy: params.updatedBy, 
+      updatedAt: params.updatedAt,
+      scheme: params.scheme,
+      Id: params.Id, 
+    })  
+ 
+    return JSON.parse(response.data);
+  } 
+  catch(error){
+    console.error("API Error:", error);
+    throw error.response?.data || error.message;
+  }
+},
+ 
+ 
+GetSelectedVendor: async (params) => {
+  try {
+    const response = await api.post("/GetSelectedVendor", {
+      vendorid: params.vendorid,
+    });
+    return JSON.parse(response.data);
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error.response?.data || error.message;
+  }
+},
+ 
+ 
+sp_getvehicledetails: async (params) => {
+  try {
+    const response = await api.post("/sp_getvehicledetails", params);
+    return JSON.parse(response.data);
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error.response?.data || error.message;
+  }
+},
+ 
+ 
+SelectVehicleType: async (param) => {
+  try{
+    const response = await api.post("/SelectVehicleType",param);
+    return JSON.parse(response.data);
+  }
+  catch (error) {
+    console.error("API Error:", error);
+    throw error.response?.data || error.message;
+  }
+},
 
 };
