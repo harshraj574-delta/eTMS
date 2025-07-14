@@ -1,0 +1,2 @@
+/api/*  https://www.etmsonline.in/etmsApi/:splat  200
+/*      /index.html  200
